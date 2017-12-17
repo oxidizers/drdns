@@ -1,6 +1,6 @@
 # DrDNS [![Build Status][build-image]][build-link] [![MIT/Apache2.0 Licensed][license-image]][license-link]
 
-[build-image]: https://secure.travis-ci.org/oxidizers/drdns?branch=master
+[build-image]: https://travis-ci.org/oxidizers/drdns.svg?branch=master
 [build-link]: http://travis-ci.org/oxidizers/drdns
 [license-image]: https://img.shields.io/badge/license-MIT/Apache2.0-blue.svg
 [license-link]: https://github.com/oxidizers/drdns#license
