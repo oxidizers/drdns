@@ -1,6 +1,6 @@
 #[no_mangle]
-pub unsafe extern fn case_lowerb(mut s : *mut u8, mut len : u32) {
-    let mut x : u8;
+pub unsafe extern "C" fn case_lowerb(mut s: *mut u8, mut len: u32) {
+    let mut x: u8;
     'loop1: loop {
         if !(len > 0u32) {
             break;

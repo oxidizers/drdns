@@ -1,7 +1,7 @@
 #[no_mangle]
-pub unsafe extern fn str_len(mut s : *const u8) -> u32 {
+pub unsafe extern "C" fn str_len(mut s: *const u8) -> u32 {
     let mut _currentBlock;
-    let mut t : *const u8;
+    let mut t: *const u8;
     t = s;
     'loop1: loop {
         if *t == 0 {
@@ -26,20 +26,16 @@ pub unsafe extern fn str_len(mut s : *const u8) -> u32 {
         t = t.offset(1isize);
     }
     if _currentBlock == 6 {
-        ((t as (isize)).wrapping_sub(
-             s as (isize)
-         ) / ::std::mem::size_of::<u8>() as (isize)) as (u32)
+        ((t as (isize)).wrapping_sub(s as (isize)) / ::std::mem::size_of::<u8>() as (isize)) as
+            (u32)
     } else if _currentBlock == 7 {
-        ((t as (isize)).wrapping_sub(
-             s as (isize)
-         ) / ::std::mem::size_of::<u8>() as (isize)) as (u32)
+        ((t as (isize)).wrapping_sub(s as (isize)) / ::std::mem::size_of::<u8>() as (isize)) as
+            (u32)
     } else if _currentBlock == 8 {
-        ((t as (isize)).wrapping_sub(
-             s as (isize)
-         ) / ::std::mem::size_of::<u8>() as (isize)) as (u32)
+        ((t as (isize)).wrapping_sub(s as (isize)) / ::std::mem::size_of::<u8>() as (isize)) as
+            (u32)
     } else {
-        ((t as (isize)).wrapping_sub(
-             s as (isize)
-         ) / ::std::mem::size_of::<u8>() as (isize)) as (u32)
+        ((t as (isize)).wrapping_sub(s as (isize)) / ::std::mem::size_of::<u8>() as (isize)) as
+            (u32)
     }
 }

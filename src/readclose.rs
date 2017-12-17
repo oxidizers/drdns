@@ -1,44 +1,44 @@
-extern {
-    fn close(arg1 : i32) -> i32;
-    static mut errno : i32;
-    static mut error_intr : i32;
-    fn read(
-        arg1 : i32, arg2 : *mut ::std::os::raw::c_void, arg3 : usize
-    ) -> isize;
-    fn stralloc_copys(arg1 : *mut stralloc, arg2 : *const u8) -> i32;
-    fn stralloc_readyplus(arg1 : *mut stralloc, arg2 : u32) -> i32;
+extern "C" {
+    fn close(arg1: i32) -> i32;
+    static mut errno: i32;
+    static mut error_intr: i32;
+    fn read(arg1: i32, arg2: *mut ::std::os::raw::c_void, arg3: usize) -> isize;
+    fn stralloc_copys(arg1: *mut stralloc, arg2: *const u8) -> i32;
+    fn stralloc_readyplus(arg1: *mut stralloc, arg2: u32) -> i32;
 }
 
 #[derive(Copy)]
 #[repr(C)]
 pub struct stralloc {
-    pub s : *mut u8,
-    pub len : u32,
-    pub a : u32,
+    pub s: *mut u8,
+    pub len: u32,
+    pub a: u32,
 }
 
 impl Clone for stralloc {
-    fn clone(&self) -> Self { *self }
+    fn clone(&self) -> Self {
+        *self
+    }
 }
 
 #[no_mangle]
-pub unsafe extern fn readclose_append(
-    mut fd : i32, mut sa : *mut stralloc, mut bufsize : u32
+pub unsafe extern "C" fn readclose_append(
+    mut fd: i32,
+    mut sa: *mut stralloc,
+    mut bufsize: u32,
 ) -> i32 {
     let mut _currentBlock;
-    let mut r : i32;
+    let mut r: i32;
     'loop1: loop {
-        if stralloc_readyplus(sa,bufsize) == 0 {
+        if stralloc_readyplus(sa, bufsize) == 0 {
             _currentBlock = 7;
             break;
         }
         r = read(
-                fd,
-                (*sa).s.offset(
-                    (*sa).len as (isize)
-                ) as (*mut ::std::os::raw::c_void),
-                bufsize as (usize)
-            ) as (i32);
+            fd,
+            (*sa).s.offset((*sa).len as (isize)) as (*mut ::std::os::raw::c_void),
+            bufsize as (usize),
+        ) as (i32);
         if r == -1i32 {
             if errno == error_intr {
                 continue;
@@ -60,13 +60,11 @@ pub unsafe extern fn readclose_append(
 }
 
 #[no_mangle]
-pub unsafe extern fn readclose(
-    mut fd : i32, mut sa : *mut stralloc, mut bufsize : u32
-) -> i32 {
-    if stralloc_copys(sa,(*b"\0").as_ptr()) == 0 {
+pub unsafe extern "C" fn readclose(mut fd: i32, mut sa: *mut stralloc, mut bufsize: u32) -> i32 {
+    if stralloc_copys(sa, (*b"\0").as_ptr()) == 0 {
         close(fd);
         -1i32
     } else {
-        readclose_append(fd,sa,bufsize)
+        readclose_append(fd, sa, bufsize)
     }
 }

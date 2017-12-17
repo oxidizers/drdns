@@ -1,16 +1,14 @@
-extern {
-    fn scan_ulong(arg1 : *const u8, arg2 : *mut usize) -> u32;
+extern "C" {
+    fn scan_ulong(arg1: *const u8, arg2: *mut usize) -> u32;
 }
 
 #[no_mangle]
-pub unsafe extern fn ip4_scan(
-    mut s : *const u8, mut ip : *mut u8
-) -> u32 {
-    let mut i : u32;
-    let mut len : u32;
-    let mut u : usize;
+pub unsafe extern "C" fn ip4_scan(mut s: *const u8, mut ip: *mut u8) -> u32 {
+    let mut i: u32;
+    let mut len: u32;
+    let mut u: usize;
     len = 0u32;
-    i = scan_ulong(s,&mut u as (*mut usize));
+    i = scan_ulong(s, &mut u as (*mut usize));
     if i == 0 {
         0u32
     } else {
@@ -22,7 +20,7 @@ pub unsafe extern fn ip4_scan(
          } else {
              s = s.offset(1isize);
              len = len.wrapping_add(1u32);
-             i = scan_ulong(s,&mut u as (*mut usize));
+             i = scan_ulong(s, &mut u as (*mut usize));
              (if i == 0 {
                   0u32
               } else {
@@ -34,7 +32,7 @@ pub unsafe extern fn ip4_scan(
                    } else {
                        s = s.offset(1isize);
                        len = len.wrapping_add(1u32);
-                       i = scan_ulong(s,&mut u as (*mut usize));
+                       i = scan_ulong(s, &mut u as (*mut usize));
                        (if i == 0 {
                             0u32
                         } else {
@@ -46,7 +44,7 @@ pub unsafe extern fn ip4_scan(
                              } else {
                                  s = s.offset(1isize);
                                  len = len.wrapping_add(1u32);
-                                 i = scan_ulong(s,&mut u as (*mut usize));
+                                 i = scan_ulong(s, &mut u as (*mut usize));
                                  (if i == 0 {
                                       0u32
                                   } else {

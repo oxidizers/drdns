@@ -1,16 +1,18 @@
 #[derive(Copy)]
 #[repr(C)]
 pub struct tai {
-    pub x : usize,
+    pub x: usize,
 }
 
 impl Clone for tai {
-    fn clone(&self) -> Self { *self }
+    fn clone(&self) -> Self {
+        *self
+    }
 }
 
 #[no_mangle]
-pub unsafe extern fn tai_unpack(mut s : *const u8, mut t : *mut tai) {
-    let mut x : usize;
+pub unsafe extern "C" fn tai_unpack(mut s: *const u8, mut t: *mut tai) {
+    let mut x: usize;
     x = *s.offset(0isize) as (usize);
     x = x << 8i32;
     x = x.wrapping_add(*s.offset(1isize) as (usize));

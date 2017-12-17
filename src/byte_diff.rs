@@ -1,7 +1,5 @@
 #[no_mangle]
-pub unsafe extern fn byte_diff(
-    mut s : *mut u8, mut n : u32, mut t : *mut u8
-) -> i32 {
+pub unsafe extern "C" fn byte_diff(mut s: *mut u8, mut n: u32, mut t: *mut u8) -> i32 {
     let mut _currentBlock;
     'loop0: loop {
         if n == 0 {

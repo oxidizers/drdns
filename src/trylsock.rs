@@ -4,4 +4,6 @@ fn main() {
 }
 
 #[no_mangle]
-pub unsafe extern fn _c_main() -> i32 { 0 }
+pub unsafe extern "C" fn _c_main() -> i32 {
+    0
+}

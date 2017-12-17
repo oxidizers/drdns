@@ -1,29 +1,31 @@
 #[derive(Copy)]
 #[repr(C)]
 pub struct tai {
-    pub x : usize,
+    pub x: usize,
 }
 
 impl Clone for tai {
-    fn clone(&self) -> Self { *self }
+    fn clone(&self) -> Self {
+        *self
+    }
 }
 
 #[derive(Copy)]
 #[repr(C)]
 pub struct taia {
-    pub sec : tai,
-    pub nano : usize,
-    pub atto : usize,
+    pub sec: tai,
+    pub nano: usize,
+    pub atto: usize,
 }
 
 impl Clone for taia {
-    fn clone(&self) -> Self { *self }
+    fn clone(&self) -> Self {
+        *self
+    }
 }
 
 #[no_mangle]
-pub unsafe extern fn taia_less(
-    mut t : *const taia, mut u : *const taia
-) -> i32 {
+pub unsafe extern "C" fn taia_less(mut t: *const taia, mut u: *const taia) -> i32 {
     if (*t).sec.x < (*u).sec.x {
         1i32
     } else if (*t).sec.x > (*u).sec.x {

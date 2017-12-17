@@ -1,7 +1,5 @@
 #[no_mangle]
-pub unsafe extern fn byte_copyr(
-    mut to : *mut u8, mut n : u32, mut from : *mut u8
-) {
+pub unsafe extern "C" fn byte_copyr(mut to: *mut u8, mut n: u32, mut from: *mut u8) {
     let mut _currentBlock;
     to = to.offset(n as (isize));
     from = from.offset(n as (isize));
@@ -11,48 +9,48 @@ pub unsafe extern fn byte_copyr(
             break;
         }
         *{
-             to = to.offset(-1isize);
-             to
-         } = *{
-                  from = from.offset(-1isize);
-                  from
-              };
+            to = to.offset(-1isize);
+            to
+        } = *{
+            from = from.offset(-1isize);
+            from
+        };
         n = n.wrapping_sub(1u32);
         if n == 0 {
             _currentBlock = 8;
             break;
         }
         *{
-             to = to.offset(-1isize);
-             to
-         } = *{
-                  from = from.offset(-1isize);
-                  from
-              };
+            to = to.offset(-1isize);
+            to
+        } = *{
+            from = from.offset(-1isize);
+            from
+        };
         n = n.wrapping_sub(1u32);
         if n == 0 {
             _currentBlock = 7;
             break;
         }
         *{
-             to = to.offset(-1isize);
-             to
-         } = *{
-                  from = from.offset(-1isize);
-                  from
-              };
+            to = to.offset(-1isize);
+            to
+        } = *{
+            from = from.offset(-1isize);
+            from
+        };
         n = n.wrapping_sub(1u32);
         if n == 0 {
             _currentBlock = 6;
             break;
         }
         *{
-             to = to.offset(-1isize);
-             to
-         } = *{
-                  from = from.offset(-1isize);
-                  from
-              };
+            to = to.offset(-1isize);
+            to
+        } = *{
+            from = from.offset(-1isize);
+            from
+        };
         n = n.wrapping_sub(1u32);
     }
     if _currentBlock == 6 {

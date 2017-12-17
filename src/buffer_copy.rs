@@ -1,31 +1,29 @@
-extern {
-    fn buffer_feed(arg1 : *mut buffer) -> i32;
-    fn buffer_put(
-        arg1 : *mut buffer, arg2 : *const u8, arg3 : u32
-    ) -> i32;
+extern "C" {
+    fn buffer_feed(arg1: *mut buffer) -> i32;
+    fn buffer_put(arg1: *mut buffer, arg2: *const u8, arg3: u32) -> i32;
 }
 
 #[derive(Copy)]
 #[repr(C)]
 pub struct buffer {
-    pub x : *mut u8,
-    pub p : u32,
-    pub n : u32,
-    pub fd : i32,
-    pub op : unsafe extern fn() -> i32,
+    pub x: *mut u8,
+    pub p: u32,
+    pub n: u32,
+    pub fd: i32,
+    pub op: unsafe extern "C" fn() -> i32,
 }
 
 impl Clone for buffer {
-    fn clone(&self) -> Self { *self }
+    fn clone(&self) -> Self {
+        *self
+    }
 }
 
 #[no_mangle]
-pub unsafe extern fn buffer_copy(
-    mut bout : *mut buffer, mut bin : *mut buffer
-) -> i32 {
+pub unsafe extern "C" fn buffer_copy(mut bout: *mut buffer, mut bin: *mut buffer) -> i32 {
     let mut _currentBlock;
-    let mut n : i32;
-    let mut x : *mut u8;
+    let mut n: i32;
+    let mut x: *mut u8;
     'loop1: loop {
         n = buffer_feed(bin);
         if n < 0i32 {
@@ -37,7 +35,7 @@ pub unsafe extern fn buffer_copy(
             break;
         }
         x = (*bin).x.offset((*bin).n as (isize));
-        if buffer_put(bout,x as (*const u8),n as (u32)) == -1i32 {
+        if buffer_put(bout, x as (*const u8), n as (u32)) == -1i32 {
             _currentBlock = 5;
             break;
         }

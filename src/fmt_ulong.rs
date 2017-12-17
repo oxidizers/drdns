@@ -1,7 +1,7 @@
 #[no_mangle]
-pub unsafe extern fn fmt_ulong(mut s : *mut u8, mut u : usize) -> u32 {
-    let mut len : u32;
-    let mut q : usize;
+pub unsafe extern "C" fn fmt_ulong(mut s: *mut u8, mut u: usize) -> u32 {
+    let mut len: u32;
+    let mut q: usize;
     len = 1u32;
     q = u;
     'loop1: loop {
@@ -15,11 +15,9 @@ pub unsafe extern fn fmt_ulong(mut s : *mut u8, mut u : usize) -> u32 {
         s = s.offset(len as (isize));
         'loop4: loop {
             *{
-                 s = s.offset(-1isize);
-                 s
-             } = (b'0' as (usize)).wrapping_add(
-                     u.wrapping_rem(10usize)
-                 ) as (u8);
+                s = s.offset(-1isize);
+                s
+            } = (b'0' as (usize)).wrapping_add(u.wrapping_rem(10usize)) as (u8);
             u = u.wrapping_div(10usize);
             if u == 0 {
                 break;

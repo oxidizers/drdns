@@ -1,17 +1,15 @@
-extern {
-    fn dns_domain_equal(arg1 : *const u8, arg2 : *const u8) -> i32;
+extern "C" {
+    fn dns_domain_equal(arg1: *const u8, arg2: *const u8) -> i32;
 }
 
 #[no_mangle]
-pub unsafe extern fn dd(
-    mut q : *const u8, mut base : *const u8, mut ip : *mut u8
-) -> i32 {
+pub unsafe extern "C" fn dd(mut q: *const u8, mut base: *const u8, mut ip: *mut u8) -> i32 {
     let mut _currentBlock;
-    let mut j : i32;
-    let mut x : u32;
+    let mut j: i32;
+    let mut x: u32;
     j = 0i32;
     'loop1: loop {
-        if dns_domain_equal(q,base) != 0 {
+        if dns_domain_equal(q, base) != 0 {
             _currentBlock = 24;
             break;
         }
@@ -27,9 +25,9 @@ pub unsafe extern fn dd(
             _currentBlock = 21;
             break;
         }
-        if *q.offset(1isize) as (i32) < b'0' as (i32) || *q.offset(
-                                                              1isize
-                                                          ) as (i32) > b'9' as (i32) {
+        if *q.offset(1isize) as (i32) < b'0' as (i32) ||
+            *q.offset(1isize) as (i32) > b'9' as (i32)
+        {
             _currentBlock = 20;
             break;
         }
@@ -42,28 +40,30 @@ pub unsafe extern fn dd(
                 _currentBlock = 17;
                 break;
             }
-            if *q.offset(2isize) as (i32) < b'0' as (i32) || *q.offset(
-                                                                  2isize
-                                                              ) as (i32) > b'9' as (i32) {
+            if *q.offset(2isize) as (i32) < b'0' as (i32) ||
+                *q.offset(2isize) as (i32) > b'9' as (i32)
+            {
                 _currentBlock = 16;
                 break;
             }
             x = x.wrapping_mul(10u32).wrapping_add(
-                    (*q.offset(2isize) as (i32) - b'0' as (i32)) as (u32)
-                );
+                (*q.offset(2isize) as (i32) - b'0' as (i32)) as
+                    (u32),
+            );
             if *q as (i32) == 2i32 {
                 *ip.offset(j as (isize)) = x as (u8);
                 q = q.offset(3isize);
             } else {
-                if *q.offset(3isize) as (i32) < b'0' as (i32) || *q.offset(
-                                                                      3isize
-                                                                  ) as (i32) > b'9' as (i32) {
+                if *q.offset(3isize) as (i32) < b'0' as (i32) ||
+                    *q.offset(3isize) as (i32) > b'9' as (i32)
+                {
                     _currentBlock = 14;
                     break;
                 }
                 x = x.wrapping_mul(10u32).wrapping_add(
-                        (*q.offset(3isize) as (i32) - b'0' as (i32)) as (u32)
-                    );
+                    (*q.offset(3isize) as (i32) - b'0' as (i32)) as
+                        (u32),
+                );
                 if x > 255u32 {
                     _currentBlock = 13;
                     break;

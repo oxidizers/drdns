@@ -1,25 +1,25 @@
-extern {
-    static mut error_acces : i32;
-    static mut error_again : i32;
-    static mut error_connrefused : i32;
-    static mut error_exist : i32;
-    static mut error_inprogress : i32;
-    static mut error_intr : i32;
-    static mut error_io : i32;
-    static mut error_isdir : i32;
-    static mut error_nodevice : i32;
-    static mut error_noent : i32;
-    static mut error_nomem : i32;
-    static mut error_perm : i32;
-    static mut error_pipe : i32;
-    static mut error_proto : i32;
-    static mut error_timeout : i32;
-    static mut error_txtbsy : i32;
-    static mut error_wouldblock : i32;
+extern "C" {
+    static mut error_acces: i32;
+    static mut error_again: i32;
+    static mut error_connrefused: i32;
+    static mut error_exist: i32;
+    static mut error_inprogress: i32;
+    static mut error_intr: i32;
+    static mut error_io: i32;
+    static mut error_isdir: i32;
+    static mut error_nodevice: i32;
+    static mut error_noent: i32;
+    static mut error_nomem: i32;
+    static mut error_perm: i32;
+    static mut error_pipe: i32;
+    static mut error_proto: i32;
+    static mut error_timeout: i32;
+    static mut error_txtbsy: i32;
+    static mut error_wouldblock: i32;
 }
 
 #[no_mangle]
-pub unsafe extern fn error_str(mut i : i32) -> *const u8 {
+pub unsafe extern "C" fn error_str(mut i: i32) -> *const u8 {
     if i == 0i32 {
         (*b"no error\0").as_ptr()
     } else if i == error_intr {
