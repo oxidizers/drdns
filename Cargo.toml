@@ -6,6 +6,7 @@ license     = "MIT/Apache-2.0"
 authors     = ["Tony Arcieri <bascule@gmail.com>"]
 homepage    = "https://github.com/oxidizers/drdns"
 repository  = "https://github.com/oxidizers/drdns/tree/master/"
+readme      = "README.md"
 keywords    = ["dns", "networking", "server"]
 categories  = ["network-programming"]
 
