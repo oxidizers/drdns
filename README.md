@@ -21,3 +21,10 @@ Unless you explicitly state otherwise, any contribution intentionally
 submitted for inclusion in the work by you, as defined in the Apache-2.0
 license, shall be dual licensed as above, without any additional terms or
 conditions.
+
+## Code of Conduct
+
+Everyone interacting in the **drdns** project’s codebases, issue trackers, chat
+rooms and mailing lists is expected to follow the [code of conduct].
+
+[code of conduct]: https://github.com/oxidizers/drdns/blob/master/CODE_OF_CONDUCT.md
