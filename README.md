@@ -1,5 +1,7 @@
-# DrDNS [![Build Status][build-image]][build-link] [![MIT/Apache2.0 Licensed][license-image]][license-link]
+# DrDNS [![crate][crate-image]][crate-link] [![Build Status][build-image]][build-link] [![MIT/Apache2.0 Licensed][license-image]][license-link]
 
+[crate-image]: https://img.shields.io/crates/v/drdns.svg
+[crate-link]: https://crates.io/crates/drdns
 [build-image]: https://travis-ci.org/oxidizers/drdns.svg?branch=master
 [build-link]: http://travis-ci.org/oxidizers/drdns
 [license-image]: https://img.shields.io/badge/license-MIT/Apache2.0-blue.svg
