@@ -33,7 +33,8 @@ and ensuring they compile. This will involve:
   leaning on the Rust module system instead
 - Capitalizing the names of structs
 - Replacing `extern` definitions for C standard library functionality with
-  calls to the `libc` crate
+  calls to the `libc` crate. Once complete, the code should be free of all
+  `externs`
 
 Any changes which rename or otherwise change APIs should be made across the
 entire codebase at once, to ensure it (hopefully) continues to compile. This
