@@ -1,18 +1,18 @@
-use byte;
+//! `alloc.rs`: Legacy allocator functionality
+//!
+//! This should eventually be replaced with the Rust global allocator, and in
+//! a perfect world safe Rust that uses `Box` and `Heap`.
 
-extern "C" {
-    static mut errno: i32;
-    static mut error_nomem: i32;
-    fn free(arg1: *mut ::std::os::raw::c_void);
-    fn malloc(__size: usize) -> *mut ::std::os::raw::c_void;
-}
+use byte;
+use errno::{self, Errno};
+use libc;
 
 #[no_mangle]
 pub unsafe extern "C" fn alloc(mut n: u32) -> *mut u8 {
     let mut x: *mut u8;
-    x = malloc(n as (usize)) as (*mut u8);
+    x = libc::malloc(n as (usize)) as (*mut u8);
     if x.is_null() {
-        errno = error_nomem;
+        errno::set_errno(Errno(libc::ENOMEM));
     }
     x
 }
@@ -25,13 +25,13 @@ pub unsafe extern "C" fn alloc_re(mut x: *mut *mut u8, mut m: u32, mut n: u32) -
         0i32
     } else {
         byte::copy(y, m, *x);
-        alloc_free(*x);
+        free(*x);
         *x = y;
         1i32
     }
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn alloc_free(mut x: *mut u8) {
-    free(x as (*mut ::std::os::raw::c_void));
+pub unsafe extern "C" fn free(mut x: *mut u8) {
+    libc::free(x as (*mut libc::c_void));
 }

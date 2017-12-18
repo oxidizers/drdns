@@ -11,6 +11,8 @@ keywords    = ["dns", "networking", "server"]
 categories  = ["network-programming"]
 
 [dependencies]
+libc = "0.2"
+errno = "0.2"
 
 [badges]
 travis-ci = { repository = "oxidizers/drdns" }
