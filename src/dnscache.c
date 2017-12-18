@@ -305,7 +305,7 @@ void t_new(void)
 }
 
 
-iopause_fd io[3 + MAXUDP + MAXTCP];
+iopause_fd io[223];
 iopause_fd *udp53io;
 iopause_fd *tcp53io;
 
@@ -381,7 +381,7 @@ static void doit(void)
 	t_new();
   }
 }
-  
+
 #define FATAL "dnscache: fatal: "
 
 char seed[128];

@@ -5,6 +5,7 @@
 #include "str.h"
 #include "byte.h"
 #include "error.h"
+#include "exit.h"
 #include "ip4.h"
 #include "iopause.h"
 #include "printpacket.h"
