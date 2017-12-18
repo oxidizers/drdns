@@ -1,3 +1,5 @@
+use byte;
+
 extern "C" {
     fn dns_domain_free(arg1: *mut *mut u8);
     fn dns_domain_fromdot(arg1: *mut *mut u8, arg2: *const u8, arg3: u32) -> i32;

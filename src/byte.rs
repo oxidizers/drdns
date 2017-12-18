@@ -1,8 +1,8 @@
 //! `byte.rs`: Byte-related functionality which should probably be replaced by
 //! calls to the standard library
 
-pub unsafe fn chr(mut s: *mut u8, mut n: u32, mut c: i32) -> u32 {
-    let mut ch: u8;
+pub unsafe fn chr(s: *mut u8, mut n: u32, c: i32) -> u32 {
+    let ch: u8;
     let mut t: *mut u8;
     ch = c as (u8);
     t = s;
@@ -44,10 +44,10 @@ pub unsafe fn chr(mut s: *mut u8, mut n: u32, mut c: i32) -> u32 {
 }
 
 pub unsafe fn copy(mut to: *mut u8, mut n: u32, mut from: *mut u8) {
-    let mut _currentBlock;
+    let current_block;
     'loop0: loop {
         if n == 0 {
-            _currentBlock = 8;
+            current_block = 8;
             break;
         }
         *{
@@ -61,7 +61,7 @@ pub unsafe fn copy(mut to: *mut u8, mut n: u32, mut from: *mut u8) {
         };
         n = n.wrapping_sub(1u32);
         if n == 0 {
-            _currentBlock = 7;
+            current_block = 7;
             break;
         }
         *{
@@ -75,7 +75,7 @@ pub unsafe fn copy(mut to: *mut u8, mut n: u32, mut from: *mut u8) {
         };
         n = n.wrapping_sub(1u32);
         if n == 0 {
-            _currentBlock = 6;
+            current_block = 6;
             break;
         }
         *{
@@ -89,7 +89,7 @@ pub unsafe fn copy(mut to: *mut u8, mut n: u32, mut from: *mut u8) {
         };
         n = n.wrapping_sub(1u32);
         if n == 0 {
-            _currentBlock = 5;
+            current_block = 5;
             break;
         }
         *{
@@ -103,19 +103,19 @@ pub unsafe fn copy(mut to: *mut u8, mut n: u32, mut from: *mut u8) {
         };
         n = n.wrapping_sub(1u32);
     }
-    if _currentBlock == 5 {
-    } else if _currentBlock == 6 {
-    } else if _currentBlock == 7 {
+    if current_block == 5 {
+    } else if current_block == 6 {
+    } else if current_block == 7 {
     }
 }
 
 pub unsafe fn copyr(mut to: *mut u8, mut n: u32, mut from: *mut u8) {
-    let mut _currentBlock;
+    let current_block;
     to = to.offset(n as (isize));
     from = from.offset(n as (isize));
     'loop1: loop {
         if n == 0 {
-            _currentBlock = 9;
+            current_block = 9;
             break;
         }
         *{
@@ -127,7 +127,7 @@ pub unsafe fn copyr(mut to: *mut u8, mut n: u32, mut from: *mut u8) {
         };
         n = n.wrapping_sub(1u32);
         if n == 0 {
-            _currentBlock = 8;
+            current_block = 8;
             break;
         }
         *{
@@ -139,7 +139,7 @@ pub unsafe fn copyr(mut to: *mut u8, mut n: u32, mut from: *mut u8) {
         };
         n = n.wrapping_sub(1u32);
         if n == 0 {
-            _currentBlock = 7;
+            current_block = 7;
             break;
         }
         *{
@@ -151,7 +151,7 @@ pub unsafe fn copyr(mut to: *mut u8, mut n: u32, mut from: *mut u8) {
         };
         n = n.wrapping_sub(1u32);
         if n == 0 {
-            _currentBlock = 6;
+            current_block = 6;
             break;
         }
         *{
@@ -163,67 +163,67 @@ pub unsafe fn copyr(mut to: *mut u8, mut n: u32, mut from: *mut u8) {
         };
         n = n.wrapping_sub(1u32);
     }
-    if _currentBlock == 6 {
-    } else if _currentBlock == 7 {
-    } else if _currentBlock == 8 {
+    if current_block == 6 {
+    } else if current_block == 7 {
+    } else if current_block == 8 {
     }
 }
 
 pub unsafe fn diff(mut s: *mut u8, mut n: u32, mut t: *mut u8) -> i32 {
-    let mut _currentBlock;
+    let current_block;
     'loop0: loop {
         if n == 0 {
-            _currentBlock = 13;
+            current_block = 13;
             break;
         }
         if *s as (i32) != *t as (i32) {
-            _currentBlock = 12;
+            current_block = 12;
             break;
         }
         s = s.offset(1isize);
         t = t.offset(1isize);
         n = n.wrapping_sub(1u32);
         if n == 0 {
-            _currentBlock = 11;
+            current_block = 11;
             break;
         }
         if *s as (i32) != *t as (i32) {
-            _currentBlock = 12;
+            current_block = 12;
             break;
         }
         s = s.offset(1isize);
         t = t.offset(1isize);
         n = n.wrapping_sub(1u32);
         if n == 0 {
-            _currentBlock = 10;
+            current_block = 10;
             break;
         }
         if *s as (i32) != *t as (i32) {
-            _currentBlock = 12;
+            current_block = 12;
             break;
         }
         s = s.offset(1isize);
         t = t.offset(1isize);
         n = n.wrapping_sub(1u32);
         if n == 0 {
-            _currentBlock = 9;
+            current_block = 9;
             break;
         }
         if *s as (i32) != *t as (i32) {
-            _currentBlock = 12;
+            current_block = 12;
             break;
         }
         s = s.offset(1isize);
         t = t.offset(1isize);
         n = n.wrapping_sub(1u32);
     }
-    if _currentBlock == 9 {
+    if current_block == 9 {
         0i32
-    } else if _currentBlock == 10 {
+    } else if current_block == 10 {
         0i32
-    } else if _currentBlock == 11 {
+    } else if current_block == 11 {
         0i32
-    } else if _currentBlock == 12 {
+    } else if current_block == 12 {
         *s as (u32) as (i32) - *t as (u32) as (i32)
     } else {
         0i32

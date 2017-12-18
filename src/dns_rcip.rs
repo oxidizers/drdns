@@ -1,3 +1,5 @@
+use byte;
+
 extern "C" {
     fn env_get(arg1: *const u8) -> *mut u8;
     fn ip4_scan(arg1: *const u8, arg2: *mut u8) -> u32;
