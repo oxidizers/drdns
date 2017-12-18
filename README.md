@@ -22,7 +22,33 @@ submitted for inclusion in the work by you, as defined in the Apache-2.0
 license, shall be dual licensed as below, without any additional terms or
 conditions.
 
+### Obtaining original C source code
+
+This project contains only mechanical Rust translations of the original C
+source code which may be hard to understand. If you are working on improving
+the code, you may want to look at the original C sources to better understand
+the intended behavior of the original code.
+
+The easiest way to view the original C source code is by reverting the commit
+which removed it from this repository:
+
+```shell
+$ git revert 0e95d96a7
+```
+
+Please use this only to view the original code. Do not open PRs with this
+commit reverted.
+
+You can also download the original sources from:
+
+https://cr.yp.to/djbdns/djbdns-1.05.tar.gz
+
+The SHA-256 digest of this file should be
+`3ccd826a02f3cde39be088e1fc6aed9fd57756b8f970de5dc99fcd2d92536b48`.
+
 ## License
+
+Copyright (C) 2001 D. J. Bernstein
 
 Licensed under either of:
 
