@@ -1,16 +1,16 @@
-extern {
-    fn dns_domain_copy(arg1 : *mut *mut u8, arg2 : *const u8) -> i32;
-    static mut errno : i32;
-    static mut error_proto : i32;
+extern "C" {
+    fn dns_domain_copy(arg1: *mut *mut u8, arg2: *const u8) -> i32;
+    static mut errno: i32;
+    static mut error_proto: i32;
 }
 
 #[no_mangle]
-pub unsafe extern fn dns_packet_copy(
-    mut buf : *const u8,
-    mut len : u32,
-    mut pos : u32,
-    mut out : *mut u8,
-    mut outlen : u32
+pub unsafe extern "C" fn dns_packet_copy(
+    mut buf: *const u8,
+    mut len: u32,
+    mut pos: u32,
+    mut out: *mut u8,
+    mut outlen: u32,
 ) -> u32 {
     let mut _currentBlock;
     'loop0: loop {
@@ -22,13 +22,11 @@ pub unsafe extern fn dns_packet_copy(
             _currentBlock = 4;
             break;
         }
-        *out = *buf.offset(
-                    {
-                        let _old = pos;
-                        pos = pos.wrapping_add(1u32);
-                        _old
-                    } as (isize)
-                );
+        *out = *buf.offset({
+            let _old = pos;
+            pos = pos.wrapping_add(1u32);
+            _old
+        } as (isize));
         out = out.offset(1isize);
         outlen = outlen.wrapping_sub(1u32);
     }
@@ -41,23 +39,23 @@ pub unsafe extern fn dns_packet_copy(
 }
 
 #[no_mangle]
-pub unsafe extern fn dns_packet_skipname(
-    mut buf : *const u8, mut len : u32, mut pos : u32
+pub unsafe extern "C" fn dns_packet_skipname(
+    mut buf: *const u8,
+    mut len: u32,
+    mut pos: u32,
 ) -> u32 {
     let mut _currentBlock;
-    let mut ch : u8;
+    let mut ch: u8;
     'loop1: loop {
         if pos >= len {
             _currentBlock = 8;
             break;
         }
-        ch = *buf.offset(
-                  {
-                      let _old = pos;
-                      pos = pos.wrapping_add(1u32);
-                      _old
-                  } as (isize)
-              );
+        ch = *buf.offset({
+            let _old = pos;
+            pos = pos.wrapping_add(1u32);
+            _old
+        } as (isize));
         if ch as (i32) >= 192i32 {
             _currentBlock = 7;
             break;
@@ -83,53 +81,48 @@ pub unsafe extern fn dns_packet_skipname(
 }
 
 #[no_mangle]
-pub unsafe extern fn dns_packet_getname(
-    mut buf : *const u8,
-    mut len : u32,
-    mut pos : u32,
-    mut d : *mut *mut u8
+pub unsafe extern "C" fn dns_packet_getname(
+    mut buf: *const u8,
+    mut len: u32,
+    mut pos: u32,
+    mut d: *mut *mut u8,
 ) -> u32 {
     let mut _currentBlock;
-    let mut loopvar : u32 = 0u32;
-    let mut state : u32 = 0u32;
-    let mut firstcompress : u32 = 0u32;
-    let mut where_ : u32;
-    let mut ch : u8;
-    let mut name : [u8; 255];
-    let mut namelen : u32 = 0u32;
+    let mut loopvar: u32 = 0u32;
+    let mut state: u32 = 0u32;
+    let mut firstcompress: u32 = 0u32;
+    let mut where_: u32;
+    let mut ch: u8;
+    let mut name: [u8; 255];
+    let mut namelen: u32 = 0u32;
     'loop1: loop {
         if pos >= len {
             _currentBlock = 21;
             break;
         }
-        ch = *buf.offset(
-                  {
-                      let _old = pos;
-                      pos = pos.wrapping_add(1u32);
-                      _old
-                  } as (isize)
-              );
+        ch = *buf.offset({
+            let _old = pos;
+            pos = pos.wrapping_add(1u32);
+            _old
+        } as (isize));
         if {
-               loopvar = loopvar.wrapping_add(1u32);
-               loopvar
-           } >= 1000u32 {
+            loopvar = loopvar.wrapping_add(1u32);
+            loopvar
+        } >= 1000u32
+        {
             _currentBlock = 21;
             break;
         }
         if state != 0 {
-            if namelen.wrapping_add(
-                   1u32
-               ) as (usize) > ::std::mem::size_of::<[u8; 255]>() {
+            if namelen.wrapping_add(1u32) as (usize) > ::std::mem::size_of::<[u8; 255]>() {
                 _currentBlock = 21;
                 break;
             }
-            name[
-                {
-                    let _old = namelen;
-                    namelen = namelen.wrapping_add(1u32);
-                    _old
-                } as (usize)
-            ] = ch;
+            name[{
+                     let _old = namelen;
+                     namelen = namelen.wrapping_add(1u32);
+                     _old
+                 } as (usize)] = ch;
             state = state.wrapping_sub(1u32);
         } else {
             'loop4: loop {
@@ -143,13 +136,11 @@ pub unsafe extern fn dns_packet_getname(
                     _currentBlock = 21;
                     break 'loop1;
                 }
-                ch = *buf.offset(
-                          {
-                              let _old = pos;
-                              pos = pos.wrapping_add(1u32);
-                              _old
-                          } as (isize)
-                      );
+                ch = *buf.offset({
+                    let _old = pos;
+                    pos = pos.wrapping_add(1u32);
+                    _old
+                } as (isize));
                 if firstcompress == 0 {
                     firstcompress = pos;
                 }
@@ -158,17 +149,16 @@ pub unsafe extern fn dns_packet_getname(
                     _currentBlock = 21;
                     break 'loop1;
                 }
-                ch = *buf.offset(
-                          {
-                              let _old = pos;
-                              pos = pos.wrapping_add(1u32);
-                              _old
-                          } as (isize)
-                      );
+                ch = *buf.offset({
+                    let _old = pos;
+                    pos = pos.wrapping_add(1u32);
+                    _old
+                } as (isize));
                 if {
-                       loopvar = loopvar.wrapping_add(1u32);
-                       loopvar
-                   } >= 1000u32 {
+                    loopvar = loopvar.wrapping_add(1u32);
+                    loopvar
+                } >= 1000u32
+                {
                     _currentBlock = 21;
                     break 'loop1;
                 }
@@ -177,19 +167,15 @@ pub unsafe extern fn dns_packet_getname(
                 _currentBlock = 21;
                 break;
             }
-            if namelen.wrapping_add(
-                   1u32
-               ) as (usize) > ::std::mem::size_of::<[u8; 255]>() {
+            if namelen.wrapping_add(1u32) as (usize) > ::std::mem::size_of::<[u8; 255]>() {
                 _currentBlock = 21;
                 break;
             }
-            name[
-                {
-                    let _old = namelen;
-                    namelen = namelen.wrapping_add(1u32);
-                    _old
-                } as (usize)
-            ] = ch;
+            name[{
+                     let _old = namelen;
+                     namelen = namelen.wrapping_add(1u32);
+                     _old
+                 } as (usize)] = ch;
             if ch == 0 {
                 _currentBlock = 9;
                 break;
@@ -198,7 +184,7 @@ pub unsafe extern fn dns_packet_getname(
         }
     }
     if _currentBlock == 9 {
-        (if dns_domain_copy(d,name.as_mut_ptr() as (*const u8)) == 0 {
+        (if dns_domain_copy(d, name.as_mut_ptr() as (*const u8)) == 0 {
              0u32
          } else if firstcompress != 0 {
              firstcompress

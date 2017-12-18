@@ -1,127 +1,113 @@
-extern {
-    fn byte_copy(to : *mut u8, n : u32, from : *mut u8);
-    fn byte_diff(s : *mut u8, n : u32, t : *mut u8) -> i32;
-    fn byte_zero(s : *mut u8, n : u32);
-    fn case_lowerb(arg1 : *mut u8, arg2 : u32);
-    fn cdb_find(arg1 : *mut cdb, arg2 : *const u8, arg3 : u32) -> i32;
-    fn cdb_findnext(
-        arg1 : *mut cdb, arg2 : *const u8, arg3 : u32
-    ) -> i32;
-    fn cdb_findstart(arg1 : *mut cdb);
-    fn cdb_free(arg1 : *mut cdb);
-    fn cdb_init(arg1 : *mut cdb, fd : i32);
-    fn cdb_read(
-        arg1 : *mut cdb, arg2 : *mut u8, arg3 : u32, arg4 : u32
-    ) -> i32;
-    fn close(arg1 : i32) -> i32;
-    fn dns_domain_equal(arg1 : *const u8, arg2 : *const u8) -> i32;
-    fn dns_domain_length(arg1 : *const u8) -> u32;
-    fn dns_packet_copy(
-        arg1 : *const u8,
-        arg2 : u32,
-        arg3 : u32,
-        arg4 : *mut u8,
-        arg5 : u32
-    ) -> u32;
-    fn dns_packet_getname(
-        arg1 : *const u8, arg2 : u32, arg3 : u32, arg4 : *mut *mut u8
-    ) -> u32;
-    fn dns_packet_skipname(
-        arg1 : *const u8, arg2 : u32, arg3 : u32
-    ) -> u32;
-    fn dns_random(arg1 : u32) -> u32;
-    fn open_read(arg1 : *const u8) -> i32;
-    static mut response : *mut u8;
-    fn response_addbytes(arg1 : *const u8, arg2 : u32) -> i32;
-    fn response_addname(arg1 : *const u8) -> i32;
-    static mut response_len : u32;
+extern "C" {
+    fn byte_copy(to: *mut u8, n: u32, from: *mut u8);
+    fn byte_diff(s: *mut u8, n: u32, t: *mut u8) -> i32;
+    fn byte_zero(s: *mut u8, n: u32);
+    fn case_lowerb(arg1: *mut u8, arg2: u32);
+    fn cdb_find(arg1: *mut cdb, arg2: *const u8, arg3: u32) -> i32;
+    fn cdb_findnext(arg1: *mut cdb, arg2: *const u8, arg3: u32) -> i32;
+    fn cdb_findstart(arg1: *mut cdb);
+    fn cdb_free(arg1: *mut cdb);
+    fn cdb_init(arg1: *mut cdb, fd: i32);
+    fn cdb_read(arg1: *mut cdb, arg2: *mut u8, arg3: u32, arg4: u32) -> i32;
+    fn close(arg1: i32) -> i32;
+    fn dns_domain_equal(arg1: *const u8, arg2: *const u8) -> i32;
+    fn dns_domain_length(arg1: *const u8) -> u32;
+    fn dns_packet_copy(arg1: *const u8, arg2: u32, arg3: u32, arg4: *mut u8, arg5: u32) -> u32;
+    fn dns_packet_getname(arg1: *const u8, arg2: u32, arg3: u32, arg4: *mut *mut u8) -> u32;
+    fn dns_packet_skipname(arg1: *const u8, arg2: u32, arg3: u32) -> u32;
+    fn dns_random(arg1: u32) -> u32;
+    fn open_read(arg1: *const u8) -> i32;
+    static mut response: *mut u8;
+    fn response_addbytes(arg1: *const u8, arg2: u32) -> i32;
+    fn response_addname(arg1: *const u8) -> i32;
+    static mut response_len: u32;
     fn response_nxdomain();
-    fn response_rfinish(arg1 : i32);
-    fn response_rstart(
-        arg1 : *const u8, arg2 : *const u8, arg3 : u32
-    ) -> i32;
-    fn tai_now(arg1 : *mut tai);
-    fn tai_sub(arg1 : *mut tai, arg2 : *const tai, arg3 : *const tai);
-    fn tai_unpack(arg1 : *const u8, arg2 : *mut tai);
-    fn uint16_unpack_big(arg1 : *const u8, arg2 : *mut u16);
-    fn uint32_unpack_big(arg1 : *const u8, arg2 : *mut u32);
+    fn response_rfinish(arg1: i32);
+    fn response_rstart(arg1: *const u8, arg2: *const u8, arg3: u32) -> i32;
+    fn tai_now(arg1: *mut tai);
+    fn tai_sub(arg1: *mut tai, arg2: *const tai, arg3: *const tai);
+    fn tai_unpack(arg1: *const u8, arg2: *mut tai);
+    fn uint16_unpack_big(arg1: *const u8, arg2: *mut u16);
+    fn uint32_unpack_big(arg1: *const u8, arg2: *mut u32);
 }
 
-static mut d1 : *mut u8 = 0 as (*mut u8);
+static mut d1: *mut u8 = 0 as (*mut u8);
 
-static mut clientloc : [u8; 2] = [0u8; 2];
+static mut clientloc: [u8; 2] = [0u8; 2];
 
 #[derive(Copy)]
 #[repr(C)]
 pub struct tai {
-    pub x : usize,
+    pub x: usize,
 }
 
 impl Clone for tai {
-    fn clone(&self) -> Self { *self }
+    fn clone(&self) -> Self {
+        *self
+    }
 }
 
-static mut now : tai = tai { x: 0usize };
+static mut now: tai = tai { x: 0usize };
 
 #[derive(Copy)]
 #[repr(C)]
 pub struct cdb {
-    pub map : *mut u8,
-    pub fd : i32,
-    pub size : u32,
-    pub loopvar : u32,
-    pub khash : u32,
-    pub kpos : u32,
-    pub hpos : u32,
-    pub hslots : u32,
-    pub dpos : u32,
-    pub dlen : u32,
+    pub map: *mut u8,
+    pub fd: i32,
+    pub size: u32,
+    pub loopvar: u32,
+    pub khash: u32,
+    pub kpos: u32,
+    pub hpos: u32,
+    pub hslots: u32,
+    pub dpos: u32,
+    pub dlen: u32,
 }
 
 impl Clone for cdb {
-    fn clone(&self) -> Self { *self }
+    fn clone(&self) -> Self {
+        *self
+    }
 }
 
-static mut c
-    : cdb
-    = cdb {
-          map: 0 as (*mut u8),
-          fd: 0i32,
-          size: 0u32,
-          loopvar: 0u32,
-          khash: 0u32,
-          kpos: 0u32,
-          hpos: 0u32,
-          hslots: 0u32,
-          dpos: 0u32,
-          dlen: 0u32
-      };
+static mut c: cdb = cdb {
+    map: 0 as (*mut u8),
+    fd: 0i32,
+    size: 0u32,
+    loopvar: 0u32,
+    khash: 0u32,
+    kpos: 0u32,
+    hpos: 0u32,
+    hslots: 0u32,
+    dpos: 0u32,
+    dlen: 0u32,
+};
 
-static mut data : [u8; 32767] = [0u8; 32767];
+static mut data: [u8; 32767] = [0u8; 32767];
 
-static mut dlen : u32 = 0u32;
+static mut dlen: u32 = 0u32;
 
-static mut dpos : u32 = 0u32;
+static mut dpos: u32 = 0u32;
 
-static mut type_ : [u8; 2] = [0u8; 2];
+static mut type_: [u8; 2] = [0u8; 2];
 
-static mut ttl : u32 = 0u32;
+static mut ttl: u32 = 0u32;
 
-unsafe extern fn find(mut d : *mut u8, mut flagwild : i32) -> i32 {
+unsafe extern "C" fn find(mut d: *mut u8, mut flagwild: i32) -> i32 {
     let mut _currentBlock;
-    let mut r : i32;
-    let mut ch : u8;
-    let mut cutoff : tai;
-    let mut ttd : [u8; 8];
-    let mut ttlstr : [u8; 4];
-    let mut recordloc : [u8; 2];
-    let mut newttl : f64;
+    let mut r: i32;
+    let mut ch: u8;
+    let mut cutoff: tai;
+    let mut ttd: [u8; 8];
+    let mut ttlstr: [u8; 4];
+    let mut recordloc: [u8; 2];
+    let mut newttl: f64;
     'loop1: loop {
         r = cdb_findnext(
-                &mut c as (*mut cdb),
-                d as (*const u8),
-                dns_domain_length(d as (*const u8))
-            );
+            &mut c as (*mut cdb),
+            d as (*const u8),
+            dns_domain_length(d as (*const u8)),
+        );
         if r <= 0i32 {
             _currentBlock = 29;
             break;
@@ -132,32 +118,33 @@ unsafe extern fn find(mut d : *mut u8, mut flagwild : i32) -> i32 {
             break;
         }
         if cdb_read(
-               &mut c as (*mut cdb),
-               data.as_mut_ptr(),
-               dlen,
-               (*(&mut c as (*mut cdb))).dpos
-           ) == -1i32 {
+            &mut c as (*mut cdb),
+            data.as_mut_ptr(),
+            dlen,
+            (*(&mut c as (*mut cdb))).dpos,
+        ) == -1i32
+        {
             _currentBlock = 27;
             break;
         }
         dpos = dns_packet_copy(
-                   data.as_mut_ptr() as (*const u8),
-                   dlen,
-                   0u32,
-                   type_.as_mut_ptr(),
-                   2u32
-               );
+            data.as_mut_ptr() as (*const u8),
+            dlen,
+            0u32,
+            type_.as_mut_ptr(),
+            2u32,
+        );
         if dpos == 0 {
             _currentBlock = 26;
             break;
         }
         dpos = dns_packet_copy(
-                   data.as_mut_ptr() as (*const u8),
-                   dlen,
-                   dpos,
-                   &mut ch as (*mut u8),
-                   1u32
-               );
+            data.as_mut_ptr() as (*const u8),
+            dlen,
+            dpos,
+            &mut ch as (*mut u8),
+            1u32,
+        );
         if dpos == 0 {
             _currentBlock = 25;
             break;
@@ -165,21 +152,17 @@ unsafe extern fn find(mut d : *mut u8, mut flagwild : i32) -> i32 {
         if ch as (i32) == b'=' as (i32) + 1i32 || ch as (i32) == b'*' as (i32) + 1i32 {
             ch = (ch as (i32) - 1) as (u8);
             dpos = dns_packet_copy(
-                       data.as_mut_ptr() as (*const u8),
-                       dlen,
-                       dpos,
-                       recordloc.as_mut_ptr(),
-                       2u32
-                   );
+                data.as_mut_ptr() as (*const u8),
+                dlen,
+                dpos,
+                recordloc.as_mut_ptr(),
+                2u32,
+            );
             if dpos == 0 {
                 _currentBlock = 24;
                 break;
             }
-            if byte_diff(
-                   recordloc.as_mut_ptr(),
-                   2u32,
-                   clientloc.as_mut_ptr()
-               ) != 0 {
+            if byte_diff(recordloc.as_mut_ptr(), 2u32, clientloc.as_mut_ptr()) != 0 {
                 continue;
             }
         }
@@ -187,43 +170,38 @@ unsafe extern fn find(mut d : *mut u8, mut flagwild : i32) -> i32 {
             continue;
         }
         dpos = dns_packet_copy(
-                   data.as_mut_ptr() as (*const u8),
-                   dlen,
-                   dpos,
-                   ttlstr.as_mut_ptr(),
-                   4u32
-               );
+            data.as_mut_ptr() as (*const u8),
+            dlen,
+            dpos,
+            ttlstr.as_mut_ptr(),
+            4u32,
+        );
         if dpos == 0 {
             _currentBlock = 23;
             break;
         }
-        uint32_unpack_big(
-            ttlstr.as_mut_ptr() as (*const u8),
-            &mut ttl as (*mut u32)
-        );
+        uint32_unpack_big(ttlstr.as_mut_ptr() as (*const u8), &mut ttl as (*mut u32));
         dpos = dns_packet_copy(
-                   data.as_mut_ptr() as (*const u8),
-                   dlen,
-                   dpos,
-                   ttd.as_mut_ptr(),
-                   8u32
-               );
+            data.as_mut_ptr() as (*const u8),
+            dlen,
+            dpos,
+            ttd.as_mut_ptr(),
+            8u32,
+        );
         if dpos == 0 {
             _currentBlock = 22;
             break;
         }
         if byte_diff(
-               ttd.as_mut_ptr(),
-               8u32,
-               (*b"\0\0\0\0\0\0\0\0\0").as_ptr() as (*mut u8)
-           ) == 0 {
+            ttd.as_mut_ptr(),
+            8u32,
+            (*b"\0\0\0\0\0\0\0\0\0").as_ptr() as (*mut u8),
+        ) == 0
+        {
             _currentBlock = 21;
             break;
         }
-        tai_unpack(
-            ttd.as_mut_ptr() as (*const u8),
-            &mut cutoff as (*mut tai)
-        );
+        tai_unpack(ttd.as_mut_ptr() as (*const u8), &mut cutoff as (*mut tai));
         if ttl == 0u32 {
             if !((*(&mut cutoff as (*mut tai))).x < (*(&mut now as (*mut tai))).x) {
                 _currentBlock = 16;
@@ -238,7 +216,7 @@ unsafe extern fn find(mut d : *mut u8, mut flagwild : i32) -> i32 {
         tai_sub(
             &mut cutoff as (*mut tai),
             &mut cutoff as (*mut tai) as (*const tai),
-            &mut now as (*mut tai) as (*const tai)
+            &mut now as (*mut tai) as (*const tai),
         );
         newttl = (*(&mut cutoff as (*mut tai))).x as (f64);
         if newttl <= 2.0f64 {
@@ -268,49 +246,47 @@ unsafe extern fn find(mut d : *mut u8, mut flagwild : i32) -> i32 {
     1i32
 }
 
-unsafe extern fn doname() -> i32 {
+unsafe extern "C" fn doname() -> i32 {
     dpos = dns_packet_getname(
-               data.as_mut_ptr() as (*const u8),
-               dlen,
-               dpos,
-               &mut d1 as (*mut *mut u8)
-           );
-    if dpos == 0 { 0i32 } else { response_addname(d1 as (*const u8)) }
+        data.as_mut_ptr() as (*const u8),
+        dlen,
+        dpos,
+        &mut d1 as (*mut *mut u8),
+    );
+    if dpos == 0 {
+        0i32
+    } else {
+        response_addname(d1 as (*const u8))
+    }
 }
 
-unsafe extern fn dobytes(mut len : u32) -> i32 {
-    let mut buf : [u8; 20];
+unsafe extern "C" fn dobytes(mut len: u32) -> i32 {
+    let mut buf: [u8; 20];
     if len > 20u32 {
         0i32
     } else {
         dpos = dns_packet_copy(
-                   data.as_mut_ptr() as (*const u8),
-                   dlen,
-                   dpos,
-                   buf.as_mut_ptr(),
-                   len
-               );
+            data.as_mut_ptr() as (*const u8),
+            dlen,
+            dpos,
+            buf.as_mut_ptr(),
+            len,
+        );
         (if dpos == 0 {
              0i32
          } else {
-             response_addbytes(buf.as_mut_ptr() as (*const u8),len)
+             response_addbytes(buf.as_mut_ptr() as (*const u8), len)
          })
     }
 }
 
-unsafe extern fn want(
-    mut owner : *const u8, mut type_ : *const u8
-) -> i32 {
+unsafe extern "C" fn want(mut owner: *const u8, mut type_: *const u8) -> i32 {
     let mut _currentBlock;
-    let mut pos : u32;
-    static mut d : *mut u8 = 0 as (*mut u8);
-    let mut x : [u8; 10];
-    let mut datalen : u16;
-    pos = dns_packet_skipname(
-              response as (*const u8),
-              response_len,
-              12u32
-          );
+    let mut pos: u32;
+    static mut d: *mut u8 = 0 as (*mut u8);
+    let mut x: [u8; 10];
+    let mut datalen: u16;
+    pos = dns_packet_skipname(response as (*const u8), response_len, 12u32);
     if pos == 0 {
         0i32
     } else {
@@ -321,35 +297,35 @@ unsafe extern fn want(
                 break;
             }
             pos = dns_packet_getname(
-                      response as (*const u8),
-                      response_len,
-                      pos,
-                      &mut d as (*mut *mut u8)
-                  );
+                response as (*const u8),
+                response_len,
+                pos,
+                &mut d as (*mut *mut u8),
+            );
             if pos == 0 {
                 _currentBlock = 11;
                 break;
             }
             pos = dns_packet_copy(
-                      response as (*const u8),
-                      response_len,
-                      pos,
-                      x.as_mut_ptr(),
-                      10u32
-                  );
+                response as (*const u8),
+                response_len,
+                pos,
+                x.as_mut_ptr(),
+                10u32,
+            );
             if pos == 0 {
                 _currentBlock = 10;
                 break;
             }
-            if dns_domain_equal(d as (*const u8),owner) != 0 {
-                if byte_diff(type_ as (*mut u8),2u32,x.as_mut_ptr()) == 0 {
+            if dns_domain_equal(d as (*const u8), owner) != 0 {
+                if byte_diff(type_ as (*mut u8), 2u32, x.as_mut_ptr()) == 0 {
                     _currentBlock = 9;
                     break;
                 }
             }
             uint16_unpack_big(
                 x.as_mut_ptr().offset(8isize) as (*const u8),
-                &mut datalen as (*mut u16)
+                &mut datalen as (*mut u16),
             );
             pos = pos.wrapping_add(datalen as (u32));
         }
@@ -365,27 +341,25 @@ unsafe extern fn want(
     }
 }
 
-unsafe extern fn doit(
-    mut q : *mut u8, mut qtype : *mut u8
-) -> i32 {
+unsafe extern "C" fn doit(mut q: *mut u8, mut qtype: *mut u8) -> i32 {
     let mut _currentBlock;
-    let mut bpos : u32;
-    let mut anpos : u32;
-    let mut aupos : u32;
-    let mut arpos : u32;
-    let mut control : *mut u8;
-    let mut wild : *mut u8;
-    let mut flaggavesoa : i32;
-    let mut flagfound : i32;
-    let mut r : i32;
-    let mut flagns : i32;
-    let mut flagauthoritative : i32;
-    let mut x : [u8; 20];
-    let mut u16 : u16;
-    let mut addr : [[u8; 4]; 8];
-    let mut addrnum : i32;
-    let mut addrttl : u32;
-    let mut i : i32;
+    let mut bpos: u32;
+    let mut anpos: u32;
+    let mut aupos: u32;
+    let mut arpos: u32;
+    let mut control: *mut u8;
+    let mut wild: *mut u8;
+    let mut flaggavesoa: i32;
+    let mut flagfound: i32;
+    let mut r: i32;
+    let mut flagns: i32;
+    let mut flagauthoritative: i32;
+    let mut x: [u8; 20];
+    let mut u16: u16;
+    let mut addr: [[u8; 4]; 8];
+    let mut addrnum: i32;
+    let mut addrttl: u32;
+    let mut i: i32;
     anpos = response_len;
     control = q;
     'loop1: loop {
@@ -394,9 +368,10 @@ unsafe extern fn doit(
         cdb_findstart(&mut c as (*mut cdb));
         'loop2: loop {
             if {
-                   r = find(control,0i32);
-                   r
-               } == 0 {
+                r = find(control, 0i32);
+                r
+            } == 0
+            {
                 break;
             }
             if r == -1i32 {
@@ -404,17 +379,19 @@ unsafe extern fn doit(
                 break 'loop1;
             }
             if byte_diff(
-                   type_.as_mut_ptr(),
-                   2u32,
-                   (*b"\0\x06\0").as_ptr() as (*mut u8)
-               ) == 0 {
+                type_.as_mut_ptr(),
+                2u32,
+                (*b"\0\x06\0").as_ptr() as (*mut u8),
+            ) == 0
+            {
                 flagauthoritative = 1i32;
             }
             if !(byte_diff(
-                     type_.as_mut_ptr(),
-                     2u32,
-                     (*b"\0\x02\0").as_ptr() as (*mut u8)
-                 ) == 0) {
+                type_.as_mut_ptr(),
+                2u32,
+                (*b"\0\x02\0").as_ptr() as (*mut u8),
+            ) == 0)
+            {
                 continue;
             }
             flagns = 1i32;
@@ -447,9 +424,10 @@ unsafe extern fn doit(
                 cdb_findstart(&mut c as (*mut cdb));
                 'loop10: loop {
                     if {
-                           r = find(wild,(wild != q) as (i32));
-                           r
-                       } == 0 {
+                        r = find(wild, (wild != q) as (i32));
+                        r
+                    } == 0
+                    {
                         break;
                     }
                     if r == -1i32 {
@@ -457,32 +435,31 @@ unsafe extern fn doit(
                         break 'loop9;
                     }
                     flagfound = 1i32;
-                    if flaggavesoa != 0 && (byte_diff(
-                                                type_.as_mut_ptr(),
-                                                2u32,
-                                                (*b"\0\x06\0").as_ptr() as (*mut u8)
-                                            ) == 0) {
+                    if flaggavesoa != 0 &&
+                        (byte_diff(
+                            type_.as_mut_ptr(),
+                            2u32,
+                            (*b"\0\x06\0").as_ptr() as (*mut u8),
+                        ) == 0)
+                    {
                         continue;
                     }
-                    if byte_diff(type_.as_mut_ptr(),2u32,qtype) != 0 && (byte_diff(
-                                                                             qtype,
-                                                                             2u32,
-                                                                             (*b"\0\xFF\0").as_ptr(
-                                                                             ) as (*mut u8)
-                                                                         ) != 0) && (byte_diff(
-                                                                                         type_.as_mut_ptr(
-                                                                                         ),
-                                                                                         2u32,
-                                                                                         (*b"\0\x05\0").as_ptr(
-                                                                                         ) as (*mut u8)
-                                                                                     ) != 0) {
+                    if byte_diff(type_.as_mut_ptr(), 2u32, qtype) != 0 &&
+                        (byte_diff(qtype, 2u32, (*b"\0\xFF\0").as_ptr() as (*mut u8)) != 0) &&
+                        (byte_diff(
+                            type_.as_mut_ptr(),
+                            2u32,
+                            (*b"\0\x05\0").as_ptr() as (*mut u8),
+                        ) != 0)
+                    {
                         continue;
                     }
                     if byte_diff(
-                           type_.as_mut_ptr(),
-                           2u32,
-                           (*b"\0\x01\0").as_ptr() as (*mut u8)
-                       ) == 0 && (dlen.wrapping_sub(dpos) == 4u32) {
+                        type_.as_mut_ptr(),
+                        2u32,
+                        (*b"\0\x01\0").as_ptr() as (*mut u8),
+                    ) == 0 && (dlen.wrapping_sub(dpos) == 4u32)
+                    {
                         addrttl = ttl;
                         i = dns_random((addrnum + 1i32) as (u32)) as (i32);
                         if i < 8i32 {
@@ -490,13 +467,13 @@ unsafe extern fn doit(
                                 byte_copy(
                                     addr[addrnum as (usize)].as_mut_ptr(),
                                     4u32,
-                                    addr[i as (usize)].as_mut_ptr()
+                                    addr[i as (usize)].as_mut_ptr(),
                                 );
                             }
                             byte_copy(
                                 addr[i as (usize)].as_mut_ptr(),
                                 4u32,
-                                data.as_mut_ptr().offset(dpos as (isize))
+                                data.as_mut_ptr().offset(dpos as (isize)),
                             );
                         }
                         if !(addrnum < 1000000i32) {
@@ -505,35 +482,40 @@ unsafe extern fn doit(
                         addrnum = addrnum + 1;
                     } else {
                         if response_rstart(
-                               q as (*const u8),
-                               type_.as_mut_ptr() as (*const u8),
-                               ttl
-                           ) == 0 {
+                            q as (*const u8),
+                            type_.as_mut_ptr() as (*const u8),
+                            ttl,
+                        ) == 0
+                        {
                             _currentBlock = 50;
                             break 'loop9;
                         }
                         if byte_diff(
-                               type_.as_mut_ptr(),
-                               2u32,
-                               (*b"\0\x02\0").as_ptr() as (*mut u8)
-                           ) == 0 || byte_diff(
-                                         type_.as_mut_ptr(),
-                                         2u32,
-                                         (*b"\0\x05\0").as_ptr() as (*mut u8)
-                                     ) == 0 || byte_diff(
-                                                   type_.as_mut_ptr(),
-                                                   2u32,
-                                                   (*b"\0\x0C\0").as_ptr() as (*mut u8)
-                                               ) == 0 {
+                            type_.as_mut_ptr(),
+                            2u32,
+                            (*b"\0\x02\0").as_ptr() as (*mut u8),
+                        ) == 0 ||
+                            byte_diff(
+                                type_.as_mut_ptr(),
+                                2u32,
+                                (*b"\0\x05\0").as_ptr() as (*mut u8),
+                            ) == 0 ||
+                            byte_diff(
+                                type_.as_mut_ptr(),
+                                2u32,
+                                (*b"\0\x0C\0").as_ptr() as (*mut u8),
+                            ) == 0
+                        {
                             if doname() == 0 {
                                 _currentBlock = 49;
                                 break 'loop9;
                             }
                         } else if byte_diff(
-                                      type_.as_mut_ptr(),
-                                      2u32,
-                                      (*b"\0\x0F\0").as_ptr() as (*mut u8)
-                                  ) == 0 {
+                            type_.as_mut_ptr(),
+                            2u32,
+                            (*b"\0\x0F\0").as_ptr() as (*mut u8),
+                        ) == 0
+                        {
                             if dobytes(2u32) == 0 {
                                 _currentBlock = 46;
                                 break 'loop9;
@@ -543,10 +525,11 @@ unsafe extern fn doit(
                                 break 'loop9;
                             }
                         } else if byte_diff(
-                                      type_.as_mut_ptr(),
-                                      2u32,
-                                      (*b"\0\x06\0").as_ptr() as (*mut u8)
-                                  ) == 0 {
+                            type_.as_mut_ptr(),
+                            2u32,
+                            (*b"\0\x06\0").as_ptr() as (*mut u8),
+                        ) == 0
+                        {
                             if doname() == 0 {
                                 _currentBlock = 42;
                                 break 'loop9;
@@ -561,9 +544,10 @@ unsafe extern fn doit(
                             }
                             flaggavesoa = 1i32;
                         } else if response_addbytes(
-                                      data.as_mut_ptr().offset(dpos as (isize)) as (*const u8),
-                                      dlen.wrapping_sub(dpos)
-                                  ) == 0 {
+                            data.as_mut_ptr().offset(dpos as (isize)) as (*const u8),
+                            dlen.wrapping_sub(dpos),
+                        ) == 0
+                        {
                             _currentBlock = 35;
                             break 'loop9;
                         }
@@ -576,18 +560,17 @@ unsafe extern fn doit(
                         break;
                     }
                     if i < 8i32 {
-                        if response_rstart(
-                               q as (*const u8),
-                               (*b"\0\x01\0").as_ptr(),
-                               addrttl
-                           ) == 0 {
+                        if response_rstart(q as (*const u8), (*b"\0\x01\0").as_ptr(), addrttl) ==
+                            0
+                        {
                             _currentBlock = 25;
                             break 'loop9;
                         }
                         if response_addbytes(
-                               addr[i as (usize)].as_mut_ptr() as (*const u8),
-                               4u32
-                           ) == 0 {
+                            addr[i as (usize)].as_mut_ptr() as (*const u8),
+                            4u32,
+                        ) == 0
+                        {
                             _currentBlock = 24;
                             break 'loop9;
                         }
@@ -643,9 +626,10 @@ unsafe extern fn doit(
             cdb_findstart(&mut c as (*mut cdb));
             'loop72: loop {
                 if {
-                       r = find(control,0i32);
-                       r
-                   } == 0 {
+                    r = find(control, 0i32);
+                    r
+                } == 0
+                {
                     _currentBlock = 80;
                     break;
                 }
@@ -654,21 +638,18 @@ unsafe extern fn doit(
                     break;
                 }
                 if byte_diff(
-                       type_.as_mut_ptr(),
-                       2u32,
-                       (*b"\0\x06\0").as_ptr() as (*mut u8)
-                   ) == 0 {
+                    type_.as_mut_ptr(),
+                    2u32,
+                    (*b"\0\x06\0").as_ptr() as (*mut u8),
+                ) == 0
+                {
                     _currentBlock = 75;
                     break;
                 }
             }
             if _currentBlock == 80 {
             } else if _currentBlock == 75 {
-                if response_rstart(
-                       control as (*const u8),
-                       (*b"\0\x06\0").as_ptr(),
-                       ttl
-                   ) == 0 {
+                if response_rstart(control as (*const u8), (*b"\0\x06\0").as_ptr(), ttl) == 0 {
                     return 0i32;
                 } else if doname() == 0 {
                     return 0i32;
@@ -682,16 +663,14 @@ unsafe extern fn doit(
             } else {
                 return 0i32;
             }
-        } else if want(
-                      control as (*const u8),
-                      (*b"\0\x02\0").as_ptr()
-                  ) != 0 {
+        } else if want(control as (*const u8), (*b"\0\x02\0").as_ptr()) != 0 {
             cdb_findstart(&mut c as (*mut cdb));
             'loop62: loop {
                 if {
-                       r = find(control,0i32);
-                       r
-                   } == 0 {
+                    r = find(control, 0i32);
+                    r
+                } == 0
+                {
                     _currentBlock = 80;
                     break;
                 }
@@ -700,17 +679,14 @@ unsafe extern fn doit(
                     break;
                 }
                 if !(byte_diff(
-                         type_.as_mut_ptr(),
-                         2u32,
-                         (*b"\0\x02\0").as_ptr() as (*mut u8)
-                     ) == 0) {
+                    type_.as_mut_ptr(),
+                    2u32,
+                    (*b"\0\x02\0").as_ptr() as (*mut u8),
+                ) == 0)
+                {
                     continue;
                 }
-                if response_rstart(
-                       control as (*const u8),
-                       (*b"\0\x02\0").as_ptr(),
-                       ttl
-                   ) == 0 {
+                if response_rstart(control as (*const u8), (*b"\0\x02\0").as_ptr(), ttl) == 0 {
                     _currentBlock = 69;
                     break;
                 }
@@ -736,62 +712,49 @@ unsafe extern fn doit(
                 _currentBlock = 82;
                 break;
             }
-            bpos = dns_packet_skipname(response as (*const u8),arpos,bpos);
+            bpos = dns_packet_skipname(response as (*const u8), arpos, bpos);
             if bpos == 0 {
                 _currentBlock = 107;
                 break;
             }
-            bpos = dns_packet_copy(
-                       response as (*const u8),
-                       arpos,
-                       bpos,
-                       x.as_mut_ptr(),
-                       10u32
-                   );
+            bpos = dns_packet_copy(response as (*const u8), arpos, bpos, x.as_mut_ptr(), 10u32);
             if bpos == 0 {
                 _currentBlock = 106;
                 break;
             }
-            if byte_diff(
-                   x.as_mut_ptr(),
-                   2u32,
-                   (*b"\0\x02\0").as_ptr() as (*mut u8)
-               ) == 0 || byte_diff(
-                             x.as_mut_ptr(),
-                             2u32,
-                             (*b"\0\x0F\0").as_ptr() as (*mut u8)
-                         ) == 0 {
-                if byte_diff(
-                       x.as_mut_ptr(),
-                       2u32,
-                       (*b"\0\x02\0").as_ptr() as (*mut u8)
-                   ) == 0 {
+            if byte_diff(x.as_mut_ptr(), 2u32, (*b"\0\x02\0").as_ptr() as (*mut u8)) == 0 ||
+                byte_diff(x.as_mut_ptr(), 2u32, (*b"\0\x0F\0").as_ptr() as (*mut u8)) == 0
+            {
+                if byte_diff(x.as_mut_ptr(), 2u32, (*b"\0\x02\0").as_ptr() as (*mut u8)) == 0 {
                     if dns_packet_getname(
-                           response as (*const u8),
-                           arpos,
-                           bpos,
-                           &mut d1 as (*mut *mut u8)
-                       ) == 0 {
+                        response as (*const u8),
+                        arpos,
+                        bpos,
+                        &mut d1 as (*mut *mut u8),
+                    ) == 0
+                    {
                         _currentBlock = 105;
                         break;
                     }
                 } else if dns_packet_getname(
-                              response as (*const u8),
-                              arpos,
-                              bpos.wrapping_add(2u32),
-                              &mut d1 as (*mut *mut u8)
-                          ) == 0 {
+                    response as (*const u8),
+                    arpos,
+                    bpos.wrapping_add(2u32),
+                    &mut d1 as (*mut *mut u8),
+                ) == 0
+                {
                     _currentBlock = 91;
                     break;
                 }
-                case_lowerb(d1,dns_domain_length(d1 as (*const u8)));
-                if want(d1 as (*const u8),(*b"\0\x01\0").as_ptr()) != 0 {
+                case_lowerb(d1, dns_domain_length(d1 as (*const u8)));
+                if want(d1 as (*const u8), (*b"\0\x01\0").as_ptr()) != 0 {
                     cdb_findstart(&mut c as (*mut cdb));
                     'loop95: loop {
                         if {
-                               r = find(d1,0i32);
-                               r
-                           } == 0 {
+                            r = find(d1, 0i32);
+                            r
+                        } == 0
+                        {
                             break;
                         }
                         if r == -1i32 {
@@ -799,17 +762,14 @@ unsafe extern fn doit(
                             break 'loop81;
                         }
                         if !(byte_diff(
-                                 type_.as_mut_ptr(),
-                                 2u32,
-                                 (*b"\0\x01\0").as_ptr() as (*mut u8)
-                             ) == 0) {
+                            type_.as_mut_ptr(),
+                            2u32,
+                            (*b"\0\x01\0").as_ptr() as (*mut u8),
+                        ) == 0)
+                        {
                             continue;
                         }
-                        if response_rstart(
-                               d1 as (*const u8),
-                               (*b"\0\x01\0").as_ptr(),
-                               ttl
-                           ) == 0 {
+                        if response_rstart(d1 as (*const u8), (*b"\0\x01\0").as_ptr(), ttl) == 0 {
                             _currentBlock = 103;
                             break 'loop81;
                         }
@@ -823,16 +783,16 @@ unsafe extern fn doit(
             }
             uint16_unpack_big(
                 x.as_mut_ptr().offset(8isize) as (*const u8),
-                &mut u16 as (*mut u16)
+                &mut u16 as (*mut u16),
             );
             bpos = bpos.wrapping_add(u16 as (u32));
         }
         (if _currentBlock == 82 {
              if flagauthoritative != 0 && (response_len > 512u32) {
-                 byte_zero(response.offset(10isize),2u32);
+                 byte_zero(response.offset(10isize), 2u32);
                  response_len = arpos;
                  if response_len > 512u32 {
-                     byte_zero(response.offset(8isize),2u32);
+                     byte_zero(response.offset(8isize), 2u32);
                      response_len = aupos;
                  }
              }
@@ -858,69 +818,48 @@ unsafe extern fn doit(
 }
 
 #[no_mangle]
-pub unsafe extern fn respond(
-    mut q : *mut u8, mut qtype : *mut u8, mut ip : *mut u8
-) -> i32 {
-    let mut fd : i32;
-    let mut r : i32;
-    let mut key : [u8; 6];
+pub unsafe extern "C" fn respond(mut q: *mut u8, mut qtype: *mut u8, mut ip: *mut u8) -> i32 {
+    let mut fd: i32;
+    let mut r: i32;
+    let mut key: [u8; 6];
     tai_now(&mut now as (*mut tai));
     fd = open_read((*b"data.cdb\0").as_ptr());
     if fd == -1i32 {
         0i32
     } else {
-        cdb_init(&mut c as (*mut cdb),fd);
-        byte_zero(clientloc.as_mut_ptr(),2u32);
+        cdb_init(&mut c as (*mut cdb), fd);
+        byte_zero(clientloc.as_mut_ptr(), 2u32);
         key[0usize] = 0u8;
         key[1usize] = b'%';
-        byte_copy(key.as_mut_ptr().offset(2isize),4u32,ip);
-        r = cdb_find(
-                &mut c as (*mut cdb),
-                key.as_mut_ptr() as (*const u8),
-                6u32
-            );
+        byte_copy(key.as_mut_ptr().offset(2isize), 4u32, ip);
+        r = cdb_find(&mut c as (*mut cdb), key.as_mut_ptr() as (*const u8), 6u32);
         if r == 0 {
-            r = cdb_find(
-                    &mut c as (*mut cdb),
-                    key.as_mut_ptr() as (*const u8),
-                    5u32
-                );
+            r = cdb_find(&mut c as (*mut cdb), key.as_mut_ptr() as (*const u8), 5u32);
         }
         if r == 0 {
-            r = cdb_find(
-                    &mut c as (*mut cdb),
-                    key.as_mut_ptr() as (*const u8),
-                    4u32
-                );
+            r = cdb_find(&mut c as (*mut cdb), key.as_mut_ptr() as (*const u8), 4u32);
         }
         if r == 0 {
-            r = cdb_find(
-                    &mut c as (*mut cdb),
-                    key.as_mut_ptr() as (*const u8),
-                    3u32
-                );
+            r = cdb_find(&mut c as (*mut cdb), key.as_mut_ptr() as (*const u8), 3u32);
         }
         if r == 0 {
-            r = cdb_find(
-                    &mut c as (*mut cdb),
-                    key.as_mut_ptr() as (*const u8),
-                    2u32
-                );
+            r = cdb_find(&mut c as (*mut cdb), key.as_mut_ptr() as (*const u8), 2u32);
         }
         (if r == -1i32 {
              0i32
          } else {
              if r != 0 && ((*(&mut c as (*mut cdb))).dlen == 2u32) {
                  if cdb_read(
-                        &mut c as (*mut cdb),
-                        clientloc.as_mut_ptr(),
-                        2u32,
-                        (*(&mut c as (*mut cdb))).dpos
-                    ) == -1i32 {
+                    &mut c as (*mut cdb),
+                    clientloc.as_mut_ptr(),
+                    2u32,
+                    (*(&mut c as (*mut cdb))).dpos,
+                ) == -1i32
+                {
                      return 0i32;
                  }
              }
-             r = doit(q,qtype);
+             r = doit(q, qtype);
              cdb_free(&mut c as (*mut cdb));
              close(fd);
              r

@@ -1,83 +1,59 @@
-extern {
-    static mut buffer_2 : *mut buffer;
-    fn buffer_putsflush(arg1 : *mut buffer, arg2 : *const u8) -> i32;
-    fn byte_diff(s : *mut u8, n : u32, t : *mut u8) -> i32;
-    fn case_lowerb(arg1 : *mut u8, arg2 : u32);
-    fn dns_domain_length(arg1 : *const u8) -> u32;
-    fn dns_packet_copy(
-        arg1 : *const u8,
-        arg2 : u32,
-        arg3 : u32,
-        arg4 : *mut u8,
-        arg5 : u32
-    ) -> u32;
-    fn dns_packet_getname(
-        arg1 : *const u8, arg2 : u32, arg3 : u32, arg4 : *mut *mut u8
-    ) -> u32;
-    fn droproot(arg1 : *const u8);
-    fn env_get(arg1 : *const u8) -> *mut u8;
-    static mut fatal : *mut u8;
+extern "C" {
+    static mut buffer_2: *mut buffer;
+    fn buffer_putsflush(arg1: *mut buffer, arg2: *const u8) -> i32;
+    fn byte_diff(s: *mut u8, n: u32, t: *mut u8) -> i32;
+    fn case_lowerb(arg1: *mut u8, arg2: u32);
+    fn dns_domain_length(arg1: *const u8) -> u32;
+    fn dns_packet_copy(arg1: *const u8, arg2: u32, arg3: u32, arg4: *mut u8, arg5: u32) -> u32;
+    fn dns_packet_getname(arg1: *const u8, arg2: u32, arg3: u32, arg4: *mut *mut u8) -> u32;
+    fn droproot(arg1: *const u8);
+    fn env_get(arg1: *const u8) -> *mut u8;
+    static mut fatal: *mut u8;
     fn initialize();
-    fn ip4_scan(arg1 : *const u8, arg2 : *mut u8) -> u32;
-    fn ndelay_off(arg1 : i32) -> i32;
+    fn ip4_scan(arg1: *const u8, arg2: *mut u8) -> u32;
+    fn ndelay_off(arg1: i32) -> i32;
     fn qlog(
-        arg1 : *const u8,
-        arg2 : u16,
-        arg3 : *const u8,
-        arg4 : *const u8,
-        arg5 : *const u8,
-        arg6 : *const u8
+        arg1: *const u8,
+        arg2: u16,
+        arg3: *const u8,
+        arg4: *const u8,
+        arg5: *const u8,
+        arg6: *const u8,
     );
-    fn respond(arg1 : *mut u8, arg2 : *mut u8, arg3 : *mut u8) -> i32;
-    static mut response : *mut u8;
-    fn response_id(arg1 : *const u8);
-    static mut response_len : u32;
-    fn response_query(
-        arg1 : *const u8, arg2 : *const u8, arg3 : *const u8
-    ) -> i32;
+    fn respond(arg1: *mut u8, arg2: *mut u8, arg3: *mut u8) -> i32;
+    static mut response: *mut u8;
+    fn response_id(arg1: *const u8);
+    static mut response_len: u32;
+    fn response_query(arg1: *const u8, arg2: *const u8, arg3: *const u8) -> i32;
     fn response_tc();
-    fn socket_bind4_reuse(
-        arg1 : i32, arg2 : *mut u8, arg3 : u16
-    ) -> i32;
-    fn socket_recv4(
-        arg1 : i32,
-        arg2 : *mut u8,
-        arg3 : i32,
-        arg4 : *mut u8,
-        arg5 : *mut u16
-    ) -> i32;
-    fn socket_send4(
-        arg1 : i32,
-        arg2 : *const u8,
-        arg3 : i32,
-        arg4 : *const u8,
-        arg5 : u16
-    ) -> i32;
-    fn socket_tryreservein(arg1 : i32, arg2 : i32);
+    fn socket_bind4_reuse(arg1: i32, arg2: *mut u8, arg3: u16) -> i32;
+    fn socket_recv4(arg1: i32, arg2: *mut u8, arg3: i32, arg4: *mut u8, arg5: *mut u16) -> i32;
+    fn socket_send4(arg1: i32, arg2: *const u8, arg3: i32, arg4: *const u8, arg5: u16) -> i32;
+    fn socket_tryreservein(arg1: i32, arg2: i32);
     fn socket_udp() -> i32;
-    static mut starting : *mut u8;
+    static mut starting: *mut u8;
     fn strerr_die(
-        arg1 : i32,
-        arg2 : *const u8,
-        arg3 : *const u8,
-        arg4 : *const u8,
-        arg5 : *const u8,
-        arg6 : *const u8,
-        arg7 : *const u8,
-        arg8 : *const strerr
+        arg1: i32,
+        arg2: *const u8,
+        arg3: *const u8,
+        arg4: *const u8,
+        arg5: *const u8,
+        arg6: *const u8,
+        arg7: *const u8,
+        arg8: *const strerr,
     );
-    static mut strerr_sys : strerr;
+    static mut strerr_sys: strerr;
 }
 
-static mut ip : [u8; 4] = [0u8; 4];
+static mut ip: [u8; 4] = [0u8; 4];
 
-static mut port : u16 = 0u16;
+static mut port: u16 = 0u16;
 
-static mut buf : [u8; 513] = [0u8; 513];
+static mut buf: [u8; 513] = [0u8; 513];
 
-static mut len : i32 = 0i32;
+static mut len: i32 = 0i32;
 
-static mut q : *mut u8 = 0 as (*mut u8);
+static mut q: *mut u8 = 0 as (*mut u8);
 
 fn main() {
     let ret = unsafe { _c_main() };
@@ -87,89 +63,96 @@ fn main() {
 #[derive(Copy)]
 #[repr(C)]
 pub struct strerr {
-    pub who : *mut strerr,
-    pub x : *const u8,
-    pub y : *const u8,
-    pub z : *const u8,
+    pub who: *mut strerr,
+    pub x: *const u8,
+    pub y: *const u8,
+    pub z: *const u8,
 }
 
 impl Clone for strerr {
-    fn clone(&self) -> Self { *self }
+    fn clone(&self) -> Self {
+        *self
+    }
 }
 
 #[derive(Copy)]
 #[repr(C)]
 pub struct buffer {
-    pub x : *mut u8,
-    pub p : u32,
-    pub n : u32,
-    pub fd : i32,
-    pub op : unsafe extern fn() -> i32,
+    pub x: *mut u8,
+    pub p: u32,
+    pub n: u32,
+    pub fd: i32,
+    pub op: unsafe extern "C" fn() -> i32,
 }
 
 impl Clone for buffer {
-    fn clone(&self) -> Self { *self }
+    fn clone(&self) -> Self {
+        *self
+    }
 }
 
-unsafe extern fn doit() -> i32 {
-    let mut pos : u32;
-    let mut header : [u8; 12];
-    let mut qtype : [u8; 2];
-    let mut qclass : [u8; 2];
+unsafe extern "C" fn doit() -> i32 {
+    let mut pos: u32;
+    let mut header: [u8; 12];
+    let mut qtype: [u8; 2];
+    let mut qclass: [u8; 2];
     if !(len as (usize) >= ::std::mem::size_of::<[u8; 513]>()) {
         pos = dns_packet_copy(
-                  buf.as_mut_ptr() as (*const u8),
-                  len as (u32),
-                  0u32,
-                  header.as_mut_ptr(),
-                  12u32
-              );
+            buf.as_mut_ptr() as (*const u8),
+            len as (u32),
+            0u32,
+            header.as_mut_ptr(),
+            12u32,
+        );
         if !(pos == 0) {
             if header[2usize] as (i32) & 128i32 == 0 {
                 if header[4usize] == 0 {
                     if !(header[5usize] as (i32) != 1i32) {
                         pos = dns_packet_getname(
-                                  buf.as_mut_ptr() as (*const u8),
-                                  len as (u32),
-                                  pos,
-                                  &mut q as (*mut *mut u8)
-                              );
+                            buf.as_mut_ptr() as (*const u8),
+                            len as (u32),
+                            pos,
+                            &mut q as (*mut *mut u8),
+                        );
                         if !(pos == 0) {
                             pos = dns_packet_copy(
-                                      buf.as_mut_ptr() as (*const u8),
-                                      len as (u32),
-                                      pos,
-                                      qtype.as_mut_ptr(),
-                                      2u32
-                                  );
+                                buf.as_mut_ptr() as (*const u8),
+                                len as (u32),
+                                pos,
+                                qtype.as_mut_ptr(),
+                                2u32,
+                            );
                             if !(pos == 0) {
                                 pos = dns_packet_copy(
-                                          buf.as_mut_ptr() as (*const u8),
-                                          len as (u32),
-                                          pos,
-                                          qclass.as_mut_ptr(),
-                                          2u32
-                                      );
+                                    buf.as_mut_ptr() as (*const u8),
+                                    len as (u32),
+                                    pos,
+                                    qclass.as_mut_ptr(),
+                                    2u32,
+                                );
                                 if !(pos == 0) {
                                     if !(response_query(
-                                             q as (*const u8),
-                                             qtype.as_mut_ptr() as (*const u8),
-                                             qclass.as_mut_ptr() as (*const u8)
-                                         ) == 0) {
+                                        q as (*const u8),
+                                        qtype.as_mut_ptr() as (*const u8),
+                                        qclass.as_mut_ptr() as (*const u8),
+                                    ) == 0)
+                                    {
                                         response_id(header.as_mut_ptr() as (*const u8));
                                         if byte_diff(
-                                               qclass.as_mut_ptr(),
-                                               2u32,
-                                               (*b"\0\x01\0").as_ptr() as (*mut u8)
-                                           ) == 0 {
+                                            qclass.as_mut_ptr(),
+                                            2u32,
+                                            (*b"\0\x01\0").as_ptr() as (*mut u8),
+                                        ) == 0
+                                        {
                                             let _rhs = 4i32;
                                             let _lhs = &mut *response.offset(2isize);
                                             *_lhs = (*_lhs as (i32) | _rhs) as (u8);
                                         } else if byte_diff(
-                                                      qclass.as_mut_ptr(),
-                                                      2u32,
-                                                      (*b"\0\xFF\0").as_ptr() as (*mut u8)
-                                                  ) != 0 {
+                                            qclass.as_mut_ptr(),
+                                            2u32,
+                                            (*b"\0\xFF\0").as_ptr() as (*mut u8),
+                                        ) != 0
+                                        {
                                             let _rhs = !15i32;
                                             let _lhs = &mut *response.offset(3isize);
                                             *_lhs = (*_lhs as (i32) & _rhs) as (u8);
@@ -182,7 +165,7 @@ unsafe extern fn doit() -> i32 {
                                                 header.as_mut_ptr() as (*const u8),
                                                 q as (*const u8),
                                                 qtype.as_mut_ptr() as (*const u8),
-                                                (*b" C \0").as_ptr()
+                                                (*b" C \0").as_ptr(),
                                             );
                                             return 1i32;
                                         }
@@ -196,23 +179,27 @@ unsafe extern fn doit() -> i32 {
                                         }
                                         if header[2usize] as (i32) & 126i32 == 0 {
                                             if !(byte_diff(
-                                                     qtype.as_mut_ptr(),
-                                                     2u32,
-                                                     (*b"\0\xFC\0").as_ptr() as (*mut u8)
-                                                 ) == 0) {
-                                                case_lowerb(q,dns_domain_length(q as (*const u8)));
+                                                qtype.as_mut_ptr(),
+                                                2u32,
+                                                (*b"\0\xFC\0").as_ptr() as (*mut u8),
+                                            ) ==
+                                                     0)
+                                            {
+                                                case_lowerb(q, dns_domain_length(q as (*const u8)));
                                                 if respond(
-                                                       q,
-                                                       qtype.as_mut_ptr(),
-                                                       ip.as_mut_ptr()
-                                                   ) == 0 {
+                                                    q,
+                                                    qtype.as_mut_ptr(),
+                                                    ip.as_mut_ptr(),
+                                                ) ==
+                                                    0
+                                                {
                                                     qlog(
                                                         ip.as_mut_ptr() as (*const u8),
                                                         port,
                                                         header.as_mut_ptr() as (*const u8),
                                                         q as (*const u8),
                                                         qtype.as_mut_ptr() as (*const u8),
-                                                        (*b" - \0").as_ptr()
+                                                        (*b" - \0").as_ptr(),
                                                     );
                                                     return 0i32;
                                                 } else {
@@ -222,7 +209,7 @@ unsafe extern fn doit() -> i32 {
                                                         header.as_mut_ptr() as (*const u8),
                                                         q as (*const u8),
                                                         qtype.as_mut_ptr() as (*const u8),
-                                                        (*b" + \0").as_ptr()
+                                                        (*b" + \0").as_ptr(),
                                                     );
                                                     return 1i32;
                                                 }
@@ -240,7 +227,7 @@ unsafe extern fn doit() -> i32 {
                                             header.as_mut_ptr() as (*const u8),
                                             q as (*const u8),
                                             qtype.as_mut_ptr() as (*const u8),
-                                            (*b" I \0").as_ptr()
+                                            (*b" I \0").as_ptr(),
                                         );
                                         return 1i32;
                                     }
@@ -258,15 +245,15 @@ unsafe extern fn doit() -> i32 {
         (*b"\0\0\0").as_ptr(),
         (*b"\0").as_ptr(),
         (*b"\0\0\0").as_ptr(),
-        (*b" / \0").as_ptr()
+        (*b" / \0").as_ptr(),
     );
     0i32
 }
 
 #[no_mangle]
-pub unsafe extern fn _c_main() -> i32 {
-    let mut x : *mut u8;
-    let mut udp53 : i32;
+pub unsafe extern "C" fn _c_main() -> i32 {
+    let mut x: *mut u8;
+    let mut udp53: i32;
     x = env_get((*b"IP\0").as_ptr());
     if x.is_null() {
         strerr_die(
@@ -277,10 +264,10 @@ pub unsafe extern fn _c_main() -> i32 {
             0i32 as (*const u8),
             0i32 as (*const u8),
             0i32 as (*const u8),
-            0i32 as (*const strerr)
+            0i32 as (*const strerr),
         );
     }
-    if ip4_scan(x as (*const u8),ip.as_mut_ptr()) == 0 {
+    if ip4_scan(x as (*const u8), ip.as_mut_ptr()) == 0 {
         strerr_die(
             111i32,
             fatal as (*const u8),
@@ -289,7 +276,7 @@ pub unsafe extern fn _c_main() -> i32 {
             0i32 as (*const u8),
             0i32 as (*const u8),
             0i32 as (*const u8),
-            0i32 as (*const strerr)
+            0i32 as (*const strerr),
         );
     }
     udp53 = socket_udp();
@@ -302,10 +289,10 @@ pub unsafe extern fn _c_main() -> i32 {
             0i32 as (*const u8),
             0i32 as (*const u8),
             0i32 as (*const u8),
-            &mut strerr_sys as (*mut strerr) as (*const strerr)
+            &mut strerr_sys as (*mut strerr) as (*const strerr),
         );
     }
-    if socket_bind4_reuse(udp53,ip.as_mut_ptr(),53u16) == -1i32 {
+    if socket_bind4_reuse(udp53, ip.as_mut_ptr(), 53u16) == -1i32 {
         strerr_die(
             111i32,
             fatal as (*const u8),
@@ -314,22 +301,22 @@ pub unsafe extern fn _c_main() -> i32 {
             0i32 as (*const u8),
             0i32 as (*const u8),
             0i32 as (*const u8),
-            &mut strerr_sys as (*mut strerr) as (*const strerr)
+            &mut strerr_sys as (*mut strerr) as (*const strerr),
         );
     }
     droproot(fatal as (*const u8));
     initialize();
     ndelay_off(udp53);
-    socket_tryreservein(udp53,65536i32);
-    buffer_putsflush(buffer_2,starting as (*const u8));
+    socket_tryreservein(udp53, 65536i32);
+    buffer_putsflush(buffer_2, starting as (*const u8));
     'loop9: loop {
         len = socket_recv4(
-                  udp53,
-                  buf.as_mut_ptr(),
-                  ::std::mem::size_of::<[u8; 513]>() as (i32),
-                  ip.as_mut_ptr(),
-                  &mut port as (*mut u16)
-              );
+            udp53,
+            buf.as_mut_ptr(),
+            ::std::mem::size_of::<[u8; 513]>() as (i32),
+            ip.as_mut_ptr(),
+            &mut port as (*mut u16),
+        );
         if len < 0i32 {
             continue;
         }
@@ -344,7 +331,7 @@ pub unsafe extern fn _c_main() -> i32 {
             response as (*const u8),
             response_len as (i32),
             ip.as_mut_ptr() as (*const u8),
-            port
+            port,
         );
     }
 }
