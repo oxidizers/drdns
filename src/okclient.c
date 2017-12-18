@@ -4,7 +4,7 @@
 #include "ip4.h"
 #include "okclient.h"
 
-static char fn[3 + IP4_FMT];
+static char fn[23];
 
 int okclient(char ip[4])
 {
