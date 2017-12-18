@@ -88,7 +88,7 @@ pub unsafe extern fn cache_get(
     let mut prevpos : u32;
     let mut nextpos : u32;
     let mut u : u32;
-    let mut loop : u32;
+    let mut loopvar : u32;
     let mut d : f64;
     if x.is_null() {
         0i32 as (*mut u8)
@@ -97,7 +97,7 @@ pub unsafe extern fn cache_get(
     } else {
         prevpos = hash(key,keylen);
         pos = get4(prevpos);
-        loop = 0u32;
+        loopvar = 0u32;
         'loop3: loop {
             if pos == 0 {
                 _currentBlock = 4;
@@ -120,8 +120,8 @@ pub unsafe extern fn cache_get(
             prevpos = pos;
             pos = nextpos;
             if {
-                   loop = loop.wrapping_add(1u32);
-                   loop
+                   loopvar = loopvar.wrapping_add(1u32);
+                   loopvar
                } > 100u32 {
                 _currentBlock = 10;
                 break;

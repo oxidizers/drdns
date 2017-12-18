@@ -78,7 +78,7 @@ unsafe extern fn surf() {
     let mut sum : u32 = 0u32;
     let mut r : i32;
     let mut i : i32;
-    let mut loop : i32;
+    let mut loopvar : i32;
     i = 0i32;
     'loop1: loop {
         if !(i < 12i32) {
@@ -96,9 +96,9 @@ unsafe extern fn surf() {
         i = i + 1;
     }
     x = t[11usize];
-    loop = 0i32;
+    loopvar = 0i32;
     'loop5: loop {
-        if !(loop < 2i32) {
+        if !(loopvar < 2i32) {
             break;
         }
         r = 0i32;
@@ -227,7 +227,7 @@ unsafe extern fn surf() {
             *_lhs = *_lhs ^ _rhs;
             i = i + 1;
         }
-        loop = loop + 1;
+        loopvar = loopvar + 1;
     }
 }
 

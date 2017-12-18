@@ -28,7 +28,7 @@ pub struct cdb {
     pub map : *mut u8,
     pub fd : i32,
     pub size : u32,
-    pub loop : u32,
+    pub loopvar : u32,
     pub khash : u32,
     pub kpos : u32,
     pub hpos : u32,
@@ -54,7 +54,7 @@ pub unsafe extern fn cdb_free(mut c : *mut cdb) {
 
 #[no_mangle]
 pub unsafe extern fn cdb_findstart(mut c : *mut cdb) {
-    (*c).loop = 0u32;
+    (*c).loopvar = 0u32;
 }
 
 #[derive(Copy)]
@@ -220,7 +220,7 @@ pub unsafe extern fn cdb_findnext(
     let mut buf : [u8; 8];
     let mut pos : u32;
     let mut u : u32;
-    if (*c).loop == 0 {
+    if (*c).loopvar == 0 {
         u = cdb_hash(key,len);
         if cdb_read(c,buf.as_mut_ptr(),8u32,u << 3i32 & 2047u32) == -1i32 {
             return -1i32;
@@ -245,7 +245,7 @@ pub unsafe extern fn cdb_findnext(
         }
     }
     'loop4: loop {
-        if !((*c).loop < (*c).hslots) {
+        if !((*c).loopvar < (*c).hslots) {
             _currentBlock = 5;
             break;
         }
@@ -261,7 +261,7 @@ pub unsafe extern fn cdb_findnext(
             _currentBlock = 19;
             break;
         }
-        (*c).loop = (*c).loop.wrapping_add(1u32);
+        (*c).loopvar = (*c).loopvar.wrapping_add(1u32);
         (*c).kpos = (*c).kpos.wrapping_add(8u32);
         if (*c).kpos == (*c).hpos.wrapping_add((*c).hslots << 3i32) {
             (*c).kpos = (*c).hpos;

@@ -90,7 +90,7 @@ pub unsafe extern fn dns_packet_getname(
     mut d : *mut *mut u8
 ) -> u32 {
     let mut _currentBlock;
-    let mut loop : u32 = 0u32;
+    let mut loopvar : u32 = 0u32;
     let mut state : u32 = 0u32;
     let mut firstcompress : u32 = 0u32;
     let mut where_ : u32;
@@ -110,8 +110,8 @@ pub unsafe extern fn dns_packet_getname(
                   } as (isize)
               );
         if {
-               loop = loop.wrapping_add(1u32);
-               loop
+               loopvar = loopvar.wrapping_add(1u32);
+               loopvar
            } >= 1000u32 {
             _currentBlock = 21;
             break;
@@ -166,8 +166,8 @@ pub unsafe extern fn dns_packet_getname(
                           } as (isize)
                       );
                 if {
-                       loop = loop.wrapping_add(1u32);
-                       loop
+                       loopvar = loopvar.wrapping_add(1u32);
+                       loopvar
                    } >= 1000u32 {
                     _currentBlock = 21;
                     break 'loop1;

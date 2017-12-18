@@ -199,7 +199,7 @@ impl Clone for dns_transmit {
 #[derive(Copy)]
 #[repr(C)]
 pub struct query {
-    pub loop : u32,
+    pub loopvar : u32,
     pub level : u32,
     pub name : [*mut u8; 5],
     pub control : [*mut u8; 5],
@@ -515,8 +515,8 @@ unsafe extern fn doit(mut z : *mut query, mut state : i32) -> i32 {
     errno = error_io;
     if state == 1i32 {
         if {
-               (*z).loop = (*z).loop.wrapping_add(1u32);
-               (*z).loop
+               (*z).loopvar = (*z).loopvar.wrapping_add(1u32);
+               (*z).loopvar
            } == 100u32 {
             _currentBlock = 348;
         } else {
@@ -2030,8 +2030,8 @@ unsafe extern fn doit(mut z : *mut query, mut state : i32) -> i32 {
             }
         } else if _currentBlock == 203 {
             if {
-                   (*z).loop = (*z).loop.wrapping_add(1u32);
-                   (*z).loop
+                   (*z).loopvar = (*z).loopvar.wrapping_add(1u32);
+                   (*z).loopvar
                } == 100u32 {
                 _currentBlock = 348;
                 continue;
@@ -2771,7 +2771,7 @@ pub unsafe extern fn query_start(
     } else {
         cleanup(z);
         (*z).level = 0u32;
-        (*z).loop = 0u32;
+        (*z).loopvar = 0u32;
         (if dns_domain_copy(
                 &mut (*z).name[0usize] as (*mut *mut u8),
                 dn as (*const u8)

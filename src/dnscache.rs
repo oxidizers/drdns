@@ -171,7 +171,7 @@ impl Clone for dns_transmit {
 #[derive(Copy)]
 #[repr(C)]
 pub struct query {
-    pub loop : u32,
+    pub loopvar : u32,
     pub level : u32,
     pub name : [*mut u8; 5],
     pub control : [*mut u8; 5],
@@ -221,7 +221,7 @@ static mut u
     : [udpclient; 200]
     = [udpclient {
            q: query {
-                  loop: 0u32,
+                  loopvar: 0u32,
                   level: 0u32,
                   name: [0 as (*mut u8); 5],
                   control: [0 as (*mut u8); 5],
@@ -486,7 +486,7 @@ pub static mut t
     : [tcpclient; 20]
     = [tcpclient {
            q: query {
-                  loop: 0u32,
+                  loopvar: 0u32,
                   level: 0u32,
                   name: [0 as (*mut u8); 5],
                   control: [0 as (*mut u8); 5],
