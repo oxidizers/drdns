@@ -1,5 +1,6 @@
+use byte;
+
 extern "C" {
-    fn byte_diff(s: *mut u8, n: u32, t: *mut u8) -> i32;
     fn dd(arg1: *const u8, arg2: *const u8, arg3: *mut u8) -> i32;
     static mut response: *mut u8;
     fn response_addbytes(arg1: *const u8, arg2: u32) -> i32;
@@ -23,9 +24,9 @@ pub unsafe extern "C" fn respond(mut q: *mut u8, mut qtype: *mut u8) -> i32 {
     let mut flagptr: i32;
     let mut ip: [u8; 4];
     let mut j: i32;
-    flaga = (byte_diff(qtype, 2u32, (*b"\0\x01\0").as_ptr() as (*mut u8)) == 0) as (i32);
-    flagptr = (byte_diff(qtype, 2u32, (*b"\0\x0C\0").as_ptr() as (*mut u8)) == 0) as (i32);
-    if byte_diff(qtype, 2u32, (*b"\0\xFF\0").as_ptr() as (*mut u8)) == 0 {
+    flaga = (byte::diff(qtype, 2u32, (*b"\0\x01\0").as_ptr() as (*mut u8)) == 0) as (i32);
+    flagptr = (byte::diff(qtype, 2u32, (*b"\0\x0C\0").as_ptr() as (*mut u8)) == 0) as (i32);
+    if byte::diff(qtype, 2u32, (*b"\0\xFF\0").as_ptr() as (*mut u8)) == 0 {
         flaga = {
             flagptr = 1i32;
             flagptr

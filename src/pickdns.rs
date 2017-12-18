@@ -1,7 +1,6 @@
+use byte;
+
 extern "C" {
-    fn byte_copy(to: *mut u8, n: u32, from: *mut u8);
-    fn byte_diff(s: *mut u8, n: u32, t: *mut u8) -> i32;
-    fn byte_zero(s: *mut u8, n: u32);
     fn case_lowerb(arg1: *mut u8, arg2: u32);
     fn cdb_find(arg1: *mut cdb, arg2: *const u8, arg3: u32) -> i32;
     fn cdb_free(arg1: *mut cdb);
@@ -80,9 +79,9 @@ unsafe extern "C" fn doit(mut q: *mut u8, mut qtype: *mut u8, mut ip: *mut u8) -
     if qlen > 255u32 {
         0i32
     } else {
-        flaga = (byte_diff(qtype, 2u32, (*b"\0\x01\0").as_ptr() as (*mut u8)) == 0) as (i32);
-        flagmx = (byte_diff(qtype, 2u32, (*b"\0\x0F\0").as_ptr() as (*mut u8)) == 0) as (i32);
-        if byte_diff(qtype, 2u32, (*b"\0\xFF\0").as_ptr() as (*mut u8)) == 0 {
+        flaga = (byte::diff(qtype, 2u32, (*b"\0\x01\0").as_ptr() as (*mut u8)) == 0) as (i32);
+        flagmx = (byte::diff(qtype, 2u32, (*b"\0\x0F\0").as_ptr() as (*mut u8)) == 0) as (i32);
+        if byte::diff(qtype, 2u32, (*b"\0\xFF\0").as_ptr() as (*mut u8)) == 0 {
             flaga = {
                 flagmx = 1i32;
                 flagmx
@@ -90,7 +89,7 @@ unsafe extern "C" fn doit(mut q: *mut u8, mut qtype: *mut u8, mut ip: *mut u8) -
         }
         if !(flaga == 0 && (flagmx == 0)) {
             key[0usize] = b'%';
-            byte_copy(key.as_mut_ptr().offset(1isize), 4u32, ip);
+            byte::copy(key.as_mut_ptr().offset(1isize), 4u32, ip);
             r = cdb_find(&mut c as (*mut cdb), key.as_mut_ptr() as (*const u8), 5u32);
             if r == 0 {
                 r = cdb_find(&mut c as (*mut cdb), key.as_mut_ptr() as (*const u8), 4u32);
@@ -105,7 +104,7 @@ unsafe extern "C" fn doit(mut q: *mut u8, mut qtype: *mut u8, mut ip: *mut u8) -
                 return 0i32;
             } else {
                 key[0usize] = b'+';
-                byte_zero(key.as_mut_ptr().offset(1isize), 2u32);
+                byte::zero(key.as_mut_ptr().offset(1isize), 2u32);
                 if r != 0 && ((*(&mut c as (*mut cdb))).dlen == 2u32) {
                     if cdb_read(
                         &mut c as (*mut cdb),
@@ -117,7 +116,7 @@ unsafe extern "C" fn doit(mut q: *mut u8, mut qtype: *mut u8, mut ip: *mut u8) -
                         return 0i32;
                     }
                 }
-                byte_copy(key.as_mut_ptr().offset(3isize), qlen, q);
+                byte::copy(key.as_mut_ptr().offset(3isize), qlen, q);
                 case_lowerb(key.as_mut_ptr().offset(3isize), qlen.wrapping_add(3u32));
                 r = cdb_find(
                     &mut c as (*mut cdb),
@@ -125,7 +124,7 @@ unsafe extern "C" fn doit(mut q: *mut u8, mut qtype: *mut u8, mut ip: *mut u8) -
                     qlen.wrapping_add(3u32),
                 );
                 if r == 0 {
-                    byte_zero(key.as_mut_ptr().offset(1isize), 2u32);
+                    byte::zero(key.as_mut_ptr().offset(1isize), 2u32);
                     r = cdb_find(
                         &mut c as (*mut cdb),
                         key.as_mut_ptr() as (*const u8),

@@ -1,7 +1,6 @@
+use byte;
+
 extern "C" {
-    fn byte_copy(to: *mut u8, n: u32, from: *mut u8);
-    fn byte_diff(s: *mut u8, n: u32, t: *mut u8) -> i32;
-    fn byte_zero(s: *mut u8, n: u32);
     fn env_get(arg1: *const u8) -> *mut u8;
     fn ip4_scan(arg1: *const u8, arg2: *mut u8) -> u32;
     fn openreadclose(arg1: *const u8, arg2: *mut stralloc, arg3: u32) -> i32;
@@ -128,12 +127,12 @@ unsafe extern "C" fn init(mut ip: *mut u8) -> i32 {
                         break;
                     }
                     if *data.s.offset(j as (isize)) as (i32) == b'\n' as (i32) {
-                        if byte_diff(
+                        if byte::diff(
                             (*b"nameserver \0").as_ptr() as (*mut u8),
                             11u32,
                             data.s.offset(i as (isize)),
                         ) == 0 ||
-                            byte_diff(
+                            byte::diff(
                                 (*b"nameserver\t\0").as_ptr() as (*mut u8),
                                 11u32,
                                 data.s.offset(i as (isize)),
@@ -154,13 +153,13 @@ unsafe extern "C" fn init(mut ip: *mut u8) -> i32 {
                                     ip.offset(iplen as (isize)),
                                 ) != 0
                                 {
-                                    if byte_diff(
+                                    if byte::diff(
                                         ip.offset(iplen as (isize)),
                                         4u32,
                                         (*b"\0\0\0\0\0").as_ptr() as (*mut u8),
                                     ) == 0
                                     {
-                                        byte_copy(
+                                        byte::copy(
                                             ip.offset(iplen as (isize)),
                                             4u32,
                                             (*b"\x7F\0\0\x01\0").as_ptr() as (*mut u8),
@@ -178,10 +177,10 @@ unsafe extern "C" fn init(mut ip: *mut u8) -> i32 {
         }
     }
     if iplen == 0 {
-        byte_copy(ip, 4u32, (*b"\x7F\0\0\x01\0").as_ptr() as (*mut u8));
+        byte::copy(ip, 4u32, (*b"\x7F\0\0\x01\0").as_ptr() as (*mut u8));
         iplen = 4i32;
     }
-    byte_zero(ip.offset(iplen as (isize)), (64i32 - iplen) as (u32));
+    byte::zero(ip.offset(iplen as (isize)), (64i32 - iplen) as (u32));
     0i32
 }
 
@@ -214,6 +213,6 @@ pub unsafe extern "C" fn dns_resolvconfip(mut s: *mut u8) -> i32 {
         }
     }
     uses = uses.wrapping_sub(1u32);
-    byte_copy(s, 64u32, ip.as_mut_ptr());
+    byte::copy(s, 64u32, ip.as_mut_ptr());
     0i32
 }

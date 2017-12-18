@@ -1,6 +1,6 @@
+use byte;
+
 extern "C" {
-    fn byte_copy(to: *mut u8, n: u32, from: *mut u8);
-    fn byte_diff(s: *mut u8, n: u32, t: *mut u8) -> i32;
     fn cdb_hash(arg1: *const u8, arg2: u32) -> u32;
     static mut errno: i32;
     static mut error_intr: i32;
@@ -136,7 +136,7 @@ pub unsafe extern "C" fn cdb_read(
         if pos > (*c).size || (*c).size.wrapping_sub(pos) < len {
             _currentBlock = 14;
         } else {
-            byte_copy(buf, len, (*c).map.offset(pos as (isize)));
+            byte::copy(buf, len, (*c).map.offset(pos as (isize)));
             _currentBlock = 13;
         }
     } else if seek_set((*c).fd, pos as (usize)) == -1i32 {
@@ -205,7 +205,7 @@ unsafe extern "C" fn match_(
             _currentBlock = 9;
             break;
         }
-        if byte_diff(buf.as_mut_ptr(), n as (u32), key as (*mut u8)) != 0 {
+        if byte::diff(buf.as_mut_ptr(), n as (u32), key as (*mut u8)) != 0 {
             _currentBlock = 8;
             break;
         }

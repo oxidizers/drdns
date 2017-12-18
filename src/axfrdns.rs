@@ -1,3 +1,5 @@
+use byte;
+
 extern "C" {
     fn _exit(arg1: i32);
     fn buffer_flush(arg1: *mut buffer) -> i32;
@@ -11,9 +13,6 @@ extern "C" {
     );
     fn buffer_put(arg1: *mut buffer, arg2: *const u8, arg3: u32) -> i32;
     fn buffer_unixread(arg1: i32, arg2: *mut u8, arg3: u32) -> i32;
-    fn byte_copy(to: *mut u8, n: u32, from: *mut u8);
-    fn byte_diff(s: *mut u8, n: u32, t: *mut u8) -> i32;
-    fn byte_zero(s: *mut u8, n: u32);
     fn case_lowerb(arg1: *mut u8, arg2: u32);
     fn cdb_find(arg1: *mut cdb, arg2: *const u8, arg3: u32) -> i32;
     fn cdb_findnext(arg1: *mut cdb, arg2: *const u8, arg3: u32) -> i32;
@@ -423,7 +422,7 @@ pub unsafe extern "C" fn build(
     dpos = 0u32;
     copy(type_.as_mut_ptr(), 2u32);
     if flagsoa != 0 {
-        if byte_diff(
+        if byte::diff(
             type_.as_mut_ptr(),
             2u32,
             (*b"\0\x06\0").as_ptr() as (*mut u8),
@@ -433,7 +432,7 @@ pub unsafe extern "C" fn build(
         }
     }
     if flagsoa == 0 {
-        if byte_diff(
+        if byte::diff(
             type_.as_mut_ptr(),
             2u32,
             (*b"\0\x06\0").as_ptr() as (*mut u8),
@@ -456,7 +455,7 @@ pub unsafe extern "C" fn build(
         let _lhs = &mut misc[0usize];
         *_lhs = (*_lhs as (i32) - _rhs) as (u8);
         copy(recordloc.as_mut_ptr(), 2u32);
-        if byte_diff(recordloc.as_mut_ptr(), 2u32, clientloc.as_mut_ptr()) != 0 {
+        if byte::diff(recordloc.as_mut_ptr(), 2u32, clientloc.as_mut_ptr()) != 0 {
             return 0i32;
         }
     }
@@ -475,14 +474,14 @@ pub unsafe extern "C" fn build(
     }
     copy(ttl.as_mut_ptr(), 4u32);
     copy(ttd.as_mut_ptr(), 8u32);
-    if byte_diff(
+    if byte::diff(
         ttd.as_mut_ptr(),
         8u32,
         (*b"\0\0\0\0\0\0\0\0\0").as_ptr() as (*mut u8),
     ) != 0
     {
         tai_unpack(ttd.as_mut_ptr() as (*const u8), &mut cutoff as (*mut tai));
-        if byte_diff(
+        if byte::diff(
             ttl.as_mut_ptr(),
             4u32,
             (*b"\0\0\0\0\0").as_ptr() as (*mut u8),
@@ -507,7 +506,7 @@ pub unsafe extern "C" fn build(
         nomem();
     }
     rdatapos = (*sa).len;
-    if byte_diff(
+    if byte::diff(
         type_.as_mut_ptr(),
         2u32,
         (*b"\0\x06\0").as_ptr() as (*mut u8),
@@ -519,24 +518,24 @@ pub unsafe extern "C" fn build(
         if stralloc_catb(sa, misc.as_mut_ptr() as (*const u8), 20u32) == 0 {
             nomem();
         }
-    } else if byte_diff(
+    } else if byte::diff(
         type_.as_mut_ptr(),
         2u32,
         (*b"\0\x02\0").as_ptr() as (*mut u8),
     ) == 0 ||
-               byte_diff(
+               byte::diff(
             type_.as_mut_ptr(),
             2u32,
             (*b"\0\x0C\0").as_ptr() as (*mut u8),
         ) == 0 ||
-               byte_diff(
+               byte::diff(
             type_.as_mut_ptr(),
             2u32,
             (*b"\0\x05\0").as_ptr() as (*mut u8),
         ) == 0
     {
         doname(sa);
-    } else if byte_diff(
+    } else if byte::diff(
         type_.as_mut_ptr(),
         2u32,
         (*b"\0\x0F\0").as_ptr() as (*mut u8),
@@ -624,10 +623,10 @@ pub unsafe extern "C" fn doaxfr(mut id: *mut u8) {
     axfrcheck(zone);
     tai_now(&mut now as (*mut tai));
     cdb_init(&mut c as (*mut cdb), fdcdb);
-    byte_zero(clientloc.as_mut_ptr(), 2u32);
+    byte::zero(clientloc.as_mut_ptr(), 2u32);
     key[0usize] = 0u8;
     key[1usize] = b'%';
-    byte_copy(key.as_mut_ptr().offset(2isize), 4u32, ip.as_mut_ptr());
+    byte::copy(key.as_mut_ptr().offset(2isize), 4u32, ip.as_mut_ptr());
     r = cdb_find(&mut c as (*mut cdb), key.as_mut_ptr() as (*const u8), 6u32);
     if r == 0 {
         r = cdb_find(&mut c as (*mut cdb), key.as_mut_ptr() as (*const u8), 5u32);
@@ -804,7 +803,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
     axfr = env_get((*b"AXFR\0").as_ptr());
     x = env_get((*b"TCPREMOTEIP\0").as_ptr()) as (*const u8);
     if !(!x.is_null() && (ip4_scan(x, ip.as_mut_ptr()) != 0)) {
-        byte_zero(ip.as_mut_ptr(), 4u32);
+        byte::zero(ip.as_mut_ptr(), 4u32);
     }
     x = env_get((*b"TCPREMOTEPORT\0").as_ptr()) as (*const u8);
     if x.is_null() {
@@ -894,12 +893,12 @@ pub unsafe extern "C" fn _c_main() -> i32 {
         if pos == 0 {
             die_truncated();
         }
-        if byte_diff(
+        if byte::diff(
             qclass.as_mut_ptr(),
             2u32,
             (*b"\0\x01\0").as_ptr() as (*mut u8),
         ) != 0 &&
-            (byte_diff(
+            (byte::diff(
                 qclass.as_mut_ptr(),
                 2u32,
                 (*b"\0\xFF\0").as_ptr() as (*mut u8),
@@ -924,7 +923,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             qtype.as_mut_ptr() as (*const u8),
             (*b" \0").as_ptr(),
         );
-        if byte_diff(
+        if byte::diff(
             qtype.as_mut_ptr(),
             2u32,
             (*b"\0\xFC\0").as_ptr() as (*mut u8),

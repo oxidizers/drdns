@@ -1,9 +1,9 @@
+use byte;
+
 extern "C" {
     fn _exit(arg1: i32);
     static mut buffer_1: *mut buffer;
     fn buffer_putflush(arg1: *mut buffer, arg2: *const u8, arg3: u32) -> i32;
-    fn byte_copy(to: *mut u8, n: u32, from: *mut u8);
-    fn byte_zero(s: *mut u8, n: u32);
     fn dns_domain_fromdot(arg1: *mut *mut u8, arg2: *const u8, arg3: u32) -> i32;
     fn dns_domain_todot_cat(arg1: *mut stralloc, arg2: *const u8) -> i32;
     fn dns_ip4_qualify(arg1: *mut stralloc, arg2: *mut stralloc, arg3: *const stralloc) -> i32;
@@ -355,8 +355,8 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     if ip.len >= 64u32 {
         ip.len = 64u32;
     }
-    byte_zero(servers.as_mut_ptr(), 64u32);
-    byte_copy(servers.as_mut_ptr(), ip.len, ip.s);
+    byte::zero(servers.as_mut_ptr(), 64u32);
+    byte::copy(servers.as_mut_ptr(), ip.len, ip.s);
     if stralloc_copys(&mut out as (*mut stralloc), (*b"\0").as_ptr()) == 0 {
         oops();
     }

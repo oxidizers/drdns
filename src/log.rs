@@ -1,9 +1,10 @@
+use byte;
+
 extern "C" {
     static mut buffer_2: *mut buffer;
     fn buffer_flush(arg1: *mut buffer) -> i32;
     fn buffer_put(arg1: *mut buffer, arg2: *const u8, arg3: u32) -> i32;
     fn buffer_puts(arg1: *mut buffer, arg2: *const u8) -> i32;
-    fn byte_diff(s: *mut u8, n: u32, t: *mut u8) -> i32;
     static mut cache_motion: usize;
     static mut errno: i32;
     fn error_str(arg1: i32) -> *const u8;
@@ -248,7 +249,7 @@ pub unsafe extern "C" fn log_tx(
         if !(i < 64i32) {
             break;
         }
-        if byte_diff(
+        if byte::diff(
             servers.offset(i as (isize)) as (*mut u8),
             4u32,
             (*b"\0\0\0\0\0").as_ptr() as (*mut u8),

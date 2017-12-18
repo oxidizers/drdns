@@ -1,8 +1,8 @@
+use byte;
+
 extern "C" {
     fn alloc(n: u32) -> *mut u8;
     fn alloc_free(x: *mut u8);
-    fn byte_copy(to: *mut u8, n: u32, from: *mut u8);
-    fn byte_diff(s: *mut u8, n: u32, t: *mut u8) -> i32;
     fn close(arg1: i32) -> i32;
     fn dns_domain_equal(arg1: *const u8, arg2: *const u8) -> i32;
     fn dns_domain_length(arg1: *const u8) -> u32;
@@ -160,7 +160,7 @@ unsafe extern "C" fn thistcp(mut d: *mut dns_transmit) -> i32 {
         ip = (*d).servers.offset(
             4u32.wrapping_mul((*d).curserver) as (isize),
         );
-        if byte_diff(
+        if byte::diff(
             ip as (*mut u8),
             4u32,
             (*b"\0\0\0\0\0").as_ptr() as (*mut u8),
@@ -235,7 +235,7 @@ unsafe extern "C" fn thisudp(mut d: *mut dns_transmit) -> i32 {
             ip = (*d).servers.offset(
                 4u32.wrapping_mul((*d).curserver) as (isize),
             );
-            if byte_diff(
+            if byte::diff(
                 ip as (*mut u8),
                 4u32,
                 (*b"\0\0\0\0\0").as_ptr() as (*mut u8),
@@ -322,7 +322,7 @@ pub unsafe extern "C" fn dns_transmit_start(
         -1i32
     } else {
         uint16_pack_big((*d).query, len.wrapping_add(16u32) as (u16));
-        byte_copy(
+        byte::copy(
             (*d).query.offset(2isize),
             12u32,
             if flagrecursive != 0 {
@@ -331,20 +331,20 @@ pub unsafe extern "C" fn dns_transmit_start(
                 (*b"\0\0\0\0\0\x01\0\0\0\0\0\0gcc-bug-workaround\0").as_ptr()
             } as (*mut u8),
         );
-        byte_copy((*d).query.offset(14isize), len, q as (*mut u8));
-        byte_copy(
+        byte::copy((*d).query.offset(14isize), len, q as (*mut u8));
+        byte::copy(
             (*d).query.offset(14isize).offset(len as (isize)),
             2u32,
             qtype as (*mut u8),
         );
-        byte_copy(
+        byte::copy(
             (*d).query.offset(16isize).offset(len as (isize)),
             2u32,
             (*b"\0\x01\0").as_ptr() as (*mut u8),
         );
-        byte_copy((*d).qtype.as_mut_ptr(), 2u32, qtype as (*mut u8));
+        byte::copy((*d).qtype.as_mut_ptr(), 2u32, qtype as (*mut u8));
         (*d).servers = servers;
-        byte_copy((*d).localip.as_mut_ptr(), 4u32, localip as (*mut u8));
+        byte::copy((*d).localip.as_mut_ptr(), 4u32, localip as (*mut u8));
         (*d).udploop = if flagrecursive != 0 { 1i32 } else { 0i32 } as (u32);
         (if len.wrapping_add(16u32) > 512u32 {
              firsttcp(d)
@@ -411,7 +411,7 @@ unsafe extern "C" fn irrelevant(
     pos = dns_packet_copy(buf, len, 0u32, out.as_mut_ptr(), 12u32);
     if pos == 0 {
         1i32
-    } else if byte_diff(out.as_mut_ptr(), 2u32, (*d).query.offset(2isize)) != 0 {
+    } else if byte::diff(out.as_mut_ptr(), 2u32, (*d).query.offset(2isize)) != 0 {
         1i32
     } else if out[4usize] as (i32) != 0i32 {
         1i32
@@ -434,9 +434,9 @@ unsafe extern "C" fn irrelevant(
              pos = dns_packet_copy(buf, len, pos, out.as_mut_ptr(), 4u32);
              (if pos == 0 {
                   1i32
-              } else if byte_diff(out.as_mut_ptr(), 2u32, (*d).qtype.as_mut_ptr()) != 0 {
+              } else if byte::diff(out.as_mut_ptr(), 2u32, (*d).qtype.as_mut_ptr()) != 0 {
                   1i32
-              } else if byte_diff(
+              } else if byte::diff(
                 out.as_mut_ptr().offset(2isize),
                 2u32,
                 (*b"\0\x01\0").as_ptr() as (*mut u8),
@@ -540,7 +540,7 @@ pub unsafe extern "C" fn dns_transmit_get(
                   dns_transmit_free(d);
                   -1i32
               } else {
-                  byte_copy((*d).packet, (*d).packetlen, udpbuf.as_mut_ptr());
+                  byte::copy((*d).packet, (*d).packetlen, udpbuf.as_mut_ptr());
                   queryfree(d);
                   1i32
               })

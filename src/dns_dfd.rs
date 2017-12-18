@@ -1,7 +1,8 @@
+use byte;
+
 extern "C" {
     fn alloc(n: u32) -> *mut u8;
     fn alloc_free(x: *mut u8);
-    fn byte_copy(to: *mut u8, n: u32, from: *mut u8);
     static mut errno: i32;
     static mut error_proto: i32;
 }
@@ -46,7 +47,7 @@ pub unsafe extern "C" fn dns_domain_fromdot(
                      namelen = namelen.wrapping_add(1u32);
                      _old
                  } as (usize)] = labellen as (u8);
-            byte_copy(
+            byte::copy(
                 name.as_mut_ptr().offset(namelen as (isize)),
                 labellen,
                 label.as_mut_ptr(),
@@ -112,7 +113,7 @@ pub unsafe extern "C" fn dns_domain_fromdot(
                          namelen = namelen.wrapping_add(1u32);
                          _old
                      } as (usize)] = labellen as (u8);
-                byte_copy(
+                byte::copy(
                     name.as_mut_ptr().offset(namelen as (isize)),
                     labellen,
                     label.as_mut_ptr(),
@@ -133,7 +134,7 @@ pub unsafe extern "C" fn dns_domain_fromdot(
              (if x.is_null() {
                   0i32
               } else {
-                  byte_copy(x, namelen, name.as_mut_ptr());
+                  byte::copy(x, namelen, name.as_mut_ptr());
                   if !(*out).is_null() {
                       alloc_free(*out);
                   }

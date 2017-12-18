@@ -1,7 +1,8 @@
+use byte;
+
 extern "C" {
     fn alloc(n: u32) -> *mut u8;
     fn alloc_free(x: *mut u8);
-    fn byte_copy(to: *mut u8, n: u32, from: *mut u8);
     fn case_diffb(arg1: *const u8, arg2: u32, arg3: *const u8) -> i32;
 }
 
@@ -44,7 +45,7 @@ pub unsafe extern "C" fn dns_domain_copy(mut out: *mut *mut u8, mut in_: *const 
     if x.is_null() {
         0i32
     } else {
-        byte_copy(x, len, in_ as (*mut u8));
+        byte::copy(x, len, in_ as (*mut u8));
         if !(*out).is_null() {
             alloc_free(*out);
         }

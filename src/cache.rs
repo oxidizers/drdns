@@ -1,10 +1,9 @@
+use byte;
+
 extern "C" {
     fn _exit(arg1: i32);
     fn alloc(n: u32) -> *mut u8;
     fn alloc_free(x: *mut u8);
-    fn byte_copy(to: *mut u8, n: u32, from: *mut u8);
-    fn byte_diff(s: *mut u8, n: u32, t: *mut u8) -> i32;
-    fn byte_zero(s: *mut u8, n: u32);
     fn tai_add(arg1: *mut tai, arg2: *const tai, arg3: *const tai);
     fn tai_now(arg1: *mut tai);
     fn tai_pack(arg1: *mut u8, arg2: *const tai);
@@ -107,7 +106,7 @@ pub unsafe extern "C" fn cache_get(
                 if pos.wrapping_add(20u32).wrapping_add(keylen) > size {
                     cache_impossible();
                 }
-                if byte_diff(
+                if byte::diff(
                     key as (*mut u8),
                     keylen,
                     x.offset(pos as (isize)).offset(20isize),
@@ -249,12 +248,12 @@ pub unsafe extern "C" fn cache_set(
                 x.offset(writer as (isize)).offset(12isize),
                 &mut expire as (*mut tai) as (*const tai),
             );
-             byte_copy(
+             byte::copy(
                 x.offset(writer as (isize)).offset(20isize),
                 keylen,
                 key as (*mut u8),
             );
-             byte_copy(
+             byte::copy(
                 x.offset(writer as (isize)).offset(20isize).offset(
                     keylen as (isize),
                 ),
@@ -292,7 +291,7 @@ pub unsafe extern "C" fn cache_init(mut cachesize: u32) -> i32 {
     if x.is_null() {
         0i32
     } else {
-        byte_zero(x, size);
+        byte::zero(x, size);
         writer = hsize;
         oldest = size;
         unused = size;

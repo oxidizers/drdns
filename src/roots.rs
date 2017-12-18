@@ -1,6 +1,6 @@
+use byte;
+
 extern "C" {
-    fn byte_copy(to: *mut u8, n: u32, from: *mut u8);
-    fn byte_zero(s: *mut u8, n: u32);
     fn chdir(arg1: *const u8) -> i32;
     fn close(arg1: i32) -> i32;
     fn closedir(arg1: *mut Struct1) -> i32;
@@ -72,7 +72,7 @@ pub unsafe extern "C" fn roots(mut servers: *mut u8, mut q: *mut u8) -> i32 {
     if r == -1i32 {
         0i32
     } else {
-        byte_copy(servers, 64u32, data.s.offset(r as (isize)));
+        byte::copy(servers, 64u32, data.s.offset(r as (isize)));
         1i32
     }
 }
@@ -218,7 +218,7 @@ unsafe extern "C" fn init2(mut dir: *mut Struct1) -> i32 {
             }
             i = i + 1;
         }
-        byte_zero(
+        byte::zero(
             servers.as_mut_ptr().offset(serverslen as (isize)),
             (64i32 - serverslen) as (u32),
         );

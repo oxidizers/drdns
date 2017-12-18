@@ -1,6 +1,6 @@
+use byte;
+
 extern "C" {
-    fn byte_chr(s: *mut u8, n: u32, c: i32) -> u32;
-    fn byte_copy(to: *mut u8, n: u32, from: *mut u8);
     fn case_diffb(arg1: *const u8, arg2: u32, arg3: *const u8) -> i32;
     fn dns_ip4(arg1: *mut stralloc, arg2: *const stralloc) -> i32;
     fn dns_resolvconfrewrite(arg1: *mut stralloc) -> i32;
@@ -55,11 +55,11 @@ unsafe extern "C" fn doit(mut work: *mut stralloc, mut rule: *const u8) -> i32 {
                   1i32
               } else {
                   if ch as (i32) == b'?' as (i32) {
-                      if byte_chr((*work).s, prefixlen, b'.' as (i32)) < prefixlen {
+                      if byte::chr((*work).s, prefixlen, b'.' as (i32)) < prefixlen {
                           return 1i32;
-                      } else if byte_chr((*work).s, prefixlen, b'[' as (i32)) < prefixlen {
+                      } else if byte::chr((*work).s, prefixlen, b'[' as (i32)) < prefixlen {
                           return 1i32;
-                      } else if byte_chr((*work).s, prefixlen, b']' as (i32)) < prefixlen {
+                      } else if byte::chr((*work).s, prefixlen, b']' as (i32)) < prefixlen {
                           return 1i32;
                       }
                   }
@@ -108,18 +108,18 @@ pub unsafe extern "C" fn dns_ip4_qualify_rules(
         }
         (if _currentBlock == 3 {
              fqdnlen = (*fqdn).len;
-             plus = byte_chr((*fqdn).s, fqdnlen, b'+' as (i32));
+             plus = byte::chr((*fqdn).s, fqdnlen, b'+' as (i32));
              (if plus >= fqdnlen {
                   dns_ip4(out, fqdn as (*const stralloc))
               } else {
                   i = plus.wrapping_add(1u32);
                   'loop5: loop {
-                      j = byte_chr(
+                      j = byte::chr(
                         (*fqdn).s.offset(i as (isize)),
                         fqdnlen.wrapping_sub(i),
                         b'+' as (i32),
                     );
-                      byte_copy(
+                      byte::copy(
                         (*fqdn).s.offset(plus as (isize)),
                         j,
                         (*fqdn).s.offset(i as (isize)),

@@ -1,5 +1,6 @@
+use byte;
+
 extern "C" {
-    fn byte_copy(to: *mut u8, n: u32, from: *mut u8);
     fn dns_domain_equal(arg1: *const u8, arg2: *const u8) -> i32;
     fn dns_domain_length(arg1: *const u8) -> u32;
     fn uint16_pack_big(arg1: *mut u8, arg2: u16);
@@ -25,7 +26,7 @@ pub unsafe extern "C" fn response_addbytes(mut buf: *const u8, mut len: u32) -> 
     if len > 65535u32.wrapping_sub(response_len) {
         0i32
     } else {
-        byte_copy(
+        byte::copy(
             response.as_mut_ptr().offset(response_len as (isize)),
             len,
             buf as (*mut u8),
@@ -60,7 +61,7 @@ pub unsafe extern "C" fn response_addname(mut d: *const u8) -> i32 {
         }
         if dlen <= 128u32 {
             if name_num < 100u32 {
-                byte_copy(name[name_num as (usize)].as_mut_ptr(), dlen, d as (*mut u8));
+                byte::copy(name[name_num as (usize)].as_mut_ptr(), dlen, d as (*mut u8));
                 name_ptr[name_num as (usize)] = response_len;
                 name_num = name_num.wrapping_add(1u32);
             }
@@ -199,7 +200,7 @@ pub unsafe extern "C" fn response_servfail() {
 
 #[no_mangle]
 pub unsafe extern "C" fn response_id(mut id: *const u8) {
-    byte_copy(response.as_mut_ptr(), 2u32, id as (*mut u8));
+    byte::copy(response.as_mut_ptr(), 2u32, id as (*mut u8));
 }
 
 #[no_mangle]

@@ -1,9 +1,8 @@
+use byte;
+
 extern "C" {
     fn alloc(n: u32) -> *mut u8;
     fn alloc_free(x: *mut u8);
-    fn byte_copy(to: *mut u8, n: u32, from: *mut u8);
-    fn byte_diff(s: *mut u8, n: u32, t: *mut u8) -> i32;
-    fn byte_zero(s: *mut u8, n: u32);
     fn cache_get(arg1: *const u8, arg2: u32, arg3: *mut u32, arg4: *mut u32) -> *mut u8;
     fn cache_set(arg1: *const u8, arg2: u32, arg3: *const u8, arg4: u32, arg5: u32);
     fn case_diffb(arg1: *const u8, arg2: u32, arg3: *const u8) -> i32;
@@ -207,7 +206,7 @@ unsafe extern "C" fn cleanup(mut z: *mut query) {
 
 unsafe extern "C" fn globalip(mut d: *mut u8, mut ip: *mut u8) -> i32 {
     if dns_domain_equal(d as (*const u8), (*b"\tlocalhost\0\0").as_ptr()) != 0 {
-        byte_copy(ip, 4u32, (*b"\x7F\0\0\x01\0").as_ptr() as (*mut u8));
+        byte::copy(ip, 4u32, (*b"\x7F\0\0\x01\0").as_ptr() as (*mut u8));
         1i32
     } else if dd(d as (*const u8), (*b"\0").as_ptr(), ip) == 4i32 {
         1i32
@@ -284,8 +283,8 @@ unsafe extern "C" fn rqa(mut z: *mut query) -> i32 {
 }
 
 unsafe extern "C" fn typematch(mut rtype: *const u8, mut qtype: *const u8) -> i32 {
-    (byte_diff(qtype as (*mut u8), 2u32, rtype as (*mut u8)) == 0 ||
-         byte_diff(
+    (byte::diff(qtype as (*mut u8), 2u32, rtype as (*mut u8)) == 0 ||
+         byte::diff(
             qtype as (*mut u8),
             2u32,
             (*b"\0\xFF\0").as_ptr() as (*mut u8),
@@ -314,7 +313,7 @@ unsafe extern "C" fn smaller(mut buf: *mut u8, mut len: u32, mut pos1: u32, mut 
     dns_packet_copy(buf as (*const u8), len, pos1, header1.as_mut_ptr(), 10u32);
     pos2 = dns_packet_getname(buf as (*const u8), len, pos2, &mut t2 as (*mut *mut u8));
     dns_packet_copy(buf as (*const u8), len, pos2, header2.as_mut_ptr(), 10u32);
-    r = byte_diff(header1.as_mut_ptr(), 4u32, header2.as_mut_ptr());
+    r = byte::diff(header1.as_mut_ptr(), 4u32, header2.as_mut_ptr());
     if r < 0i32 {
         1i32
     } else if r > 0i32 {
@@ -353,7 +352,7 @@ unsafe extern "C" fn save_data(mut buf: *const u8, mut len: u32) {
     {
         save_ok = 0u32;
     } else {
-        byte_copy(
+        byte::copy(
             save_buf.as_mut_ptr().offset(save_len as (isize)),
             len,
             buf as (*mut u8),
@@ -374,8 +373,8 @@ unsafe extern "C" fn cachegeneric(
     len = dns_domain_length(d);
     if len > 255u32 {
     } else {
-        byte_copy(key.as_mut_ptr(), 2u32, type_ as (*mut u8));
-        byte_copy(key.as_mut_ptr().offset(2isize), len, d as (*mut u8));
+        byte::copy(key.as_mut_ptr(), 2u32, type_ as (*mut u8));
+        byte::copy(key.as_mut_ptr().offset(2isize), len, d as (*mut u8));
         case_lowerb(key.as_mut_ptr().offset(2isize), len);
         cache_set(
             key.as_mut_ptr() as (*const u8),
@@ -518,7 +517,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                 break;
                             }
                             if dns_domain_equal(t1 as (*const u8), d as (*const u8)) != 0 {
-                                if byte_diff(
+                                if byte::diff(
                                     header.as_mut_ptr().offset(2isize),
                                     2u32,
                                     (*b"\0\x01\0").as_ptr() as (*mut u8),
@@ -636,7 +635,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                             control as (*const u8),
                                             referral as (*const u8),
                                         );
-                                        byte_zero(whichserver as (*mut u8), 4u32);
+                                        byte::zero(whichserver as (*mut u8), 4u32);
                                         _currentBlock = 183;
                                     } else {
                                         _currentBlock = 13;
@@ -797,12 +796,12 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                     break;
                                                 }
                                                 ttl = ttlget(header.as_mut_ptr().offset(4isize));
-                                                byte_copy(
+                                                byte::copy(
                                                     type_.as_mut_ptr(),
                                                     2u32,
                                                     header.as_mut_ptr(),
                                                 );
-                                                if byte_diff(
+                                                if byte::diff(
                                                     header.as_mut_ptr().offset(2isize),
                                                     2u32,
                                                     (*b"\0\x01\0").as_ptr() as (*mut u8),
@@ -845,7 +844,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                         {
                                                             break;
                                                         }
-                                                        if byte_diff(
+                                                        if byte::diff(
                                                             header.as_mut_ptr(),
                                                             2u32,
                                                             type_.as_mut_ptr(),
@@ -854,7 +853,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                         {
                                                             break;
                                                         }
-                                                        if byte_diff(
+                                                        if byte::diff(
                                                             header.as_mut_ptr().offset(2isize),
                                                             2u32,
                                                             (*b"\0\x01\0").as_ptr() as (*mut u8),
@@ -875,14 +874,14 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                     } else if roots_same(t1, control) == 0 {
                                                         i = j;
                                                     } else {
-                                                        if !(byte_diff(
+                                                        if !(byte::diff(
                                                             type_.as_mut_ptr(),
                                                             2u32,
                                                             (*b"\0\xFF\0").as_ptr() as (*mut u8),
                                                         ) ==
                                                                  0)
                                                         {
-                                                            if !(byte_diff(
+                                                            if !(byte::diff(
                                                                 type_.as_mut_ptr(),
                                                                 2u32,
                                                                 (*b"\0\xFC\0").as_ptr() as
@@ -890,7 +889,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                             ) ==
                                                                      0)
                                                             {
-                                                                if byte_diff(
+                                                                if byte::diff(
                                                                     type_.as_mut_ptr(),
                                                                     2u32,
                                                                     (*b"\0\x06\0").as_ptr() as
@@ -965,7 +964,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                                         }
                                                                         i = i + 1;
                                                                     }
-                                                                } else if byte_diff(
+                                                                } else if byte::diff(
                                                                     type_.as_mut_ptr(),
                                                                     2u32,
                                                                     (*b"\0\x05\0").as_ptr() as
@@ -1010,7 +1009,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                                         ),
                                                                         ttl,
                                                                     );
-                                                                } else if byte_diff(
+                                                                } else if byte::diff(
                                                                     type_.as_mut_ptr(),
                                                                     2u32,
                                                                     (*b"\0\x0C\0").as_ptr() as
@@ -1066,7 +1065,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                                         t1 as (*const u8),
                                                                         ttl,
                                                                     );
-                                                                } else if byte_diff(
+                                                                } else if byte::diff(
                                                                     type_.as_mut_ptr(),
                                                                     2u32,
                                                                     (*b"\0\x02\0").as_ptr() as
@@ -1122,7 +1121,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                                         t1 as (*const u8),
                                                                         ttl,
                                                                     );
-                                                                } else if byte_diff(
+                                                                } else if byte::diff(
                                                                     type_.as_mut_ptr(),
                                                                     2u32,
                                                                     (*b"\0\x0F\0").as_ptr() as
@@ -1196,7 +1195,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                                         t1 as (*const u8),
                                                                         ttl,
                                                                     );
-                                                                } else if byte_diff(
+                                                                } else if byte::diff(
                                                                     type_.as_mut_ptr(),
                                                                     2u32,
                                                                     (*b"\0\x01\0").as_ptr() as
@@ -1231,7 +1230,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                                             _currentBlock = 348;
                                                                             break 'loop21;
                                                                         }
-                                                                        if byte_diff(
+                                                                        if byte::diff(
                                                                             header
                                                                                 .as_mut_ptr()
                                                                                 .offset(8isize),
@@ -1385,14 +1384,14 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                     _currentBlock = 301;
                                                 } else {
                                                     if flagout == 0 && (flagsoa != 0) {
-                                                        if byte_diff(
+                                                        if byte::diff(
                                                             (*b"\0\xFF\0").as_ptr() as (*mut u8),
                                                             2u32,
                                                             dtype as (*mut u8),
                                                         ) !=
                                                             0
                                                         {
-                                                            if byte_diff(
+                                                            if byte::diff(
                                                                 (*b"\0\xFC\0").as_ptr() as
                                                                     (*mut u8),
                                                                 2u32,
@@ -1400,7 +1399,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                             ) !=
                                                                 0
                                                             {
-                                                                if byte_diff(
+                                                                if byte::diff(
                                                                     (*b"\0\x05\0").as_ptr() as
                                                                         (*mut u8),
                                                                     2u32,
@@ -1477,7 +1476,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                                     ) !=
                                                                         0
                                                                     {
-                                                                        if byte_diff(
+                                                                        if byte::diff(
                                                                             header
                                                                                 .as_mut_ptr()
                                                                                 .offset(2isize),
@@ -1499,7 +1498,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                                                         _currentBlock = 90;
                                                                                         break;
                                                                                     }
-                                                                                    if byte_diff(
+                                                                                    if byte::diff(
                                                                                            (*z).servers[
                                                                                                (*z).level.wrapping_sub(
                                                                                                    1u32
@@ -1593,7 +1592,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                                 ) !=
                                                                     0
                                                                 {
-                                                                    if byte_diff(
+                                                                    if byte::diff(
                                                                         header
                                                                             .as_mut_ptr()
                                                                             .offset(2isize),
@@ -1799,7 +1798,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                             (isize));
                                                         (*z).control[(*z).level as (usize)] =
                                                             control;
-                                                        byte_zero(
+                                                        byte::zero(
                                                             (*z).servers[(*z).level as (usize)]
                                                                 .as_mut_ptr(),
                                                             64u32,
@@ -1866,7 +1865,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                                 ) !=
                                                                     0
                                                                 {
-                                                                    if byte_diff(
+                                                                    if byte::diff(
                                                                         header
                                                                             .as_mut_ptr()
                                                                             .offset(2isize),
@@ -1945,7 +1944,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                     if !(j < 64i32) {
                         break;
                     }
-                    if byte_diff(
+                    if byte::diff(
                         (*z).servers[(*z).level as (usize)].as_mut_ptr().offset(
                             j as (isize),
                         ),
@@ -2057,7 +2056,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                             _currentBlock = 323;
                             continue 'loop183;
                         }
-                        if byte_diff(
+                        if byte::diff(
                             (*z).servers[(*z).level.wrapping_sub(1u32) as (usize)]
                                 .as_mut_ptr()
                                 .offset(k as (isize)),
@@ -2069,7 +2068,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                         }
                         k = k + 4i32;
                     }
-                    byte_copy(
+                    byte::copy(
                         (*z).servers[(*z).level.wrapping_sub(1u32) as (usize)]
                             .as_mut_ptr()
                             .offset(k as (isize)),
@@ -2126,8 +2125,8 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                 }
             } else {
                 if dlen <= 255u32 {
-                    byte_copy(key.as_mut_ptr(), 2u32, (*b"\0\xFF\0").as_ptr() as (*mut u8));
-                    byte_copy(key.as_mut_ptr().offset(2isize), dlen, d);
+                    byte::copy(key.as_mut_ptr(), 2u32, (*b"\0\xFF\0").as_ptr() as (*mut u8));
+                    byte::copy(key.as_mut_ptr().offset(2isize), dlen, d);
                     case_lowerb(key.as_mut_ptr().offset(2isize), dlen);
                     cached = cache_get(
                         key.as_mut_ptr() as (*const u8),
@@ -2140,7 +2139,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                         _currentBlock = 301;
                         continue;
                     } else {
-                        byte_copy(key.as_mut_ptr(), 2u32, (*b"\0\x05\0").as_ptr() as (*mut u8));
+                        byte::copy(key.as_mut_ptr(), 2u32, (*b"\0\x05\0").as_ptr() as (*mut u8));
                         cached = cache_get(
                             key.as_mut_ptr() as (*const u8),
                             dlen.wrapping_add(2u32),
@@ -2182,7 +2181,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                             }
                         } else {
                             if typematch((*b"\0\x02\0").as_ptr(), dtype) != 0 {
-                                byte_copy(
+                                byte::copy(
                                     key.as_mut_ptr(),
                                     2u32,
                                     (*b"\0\x02\0").as_ptr() as (*mut u8),
@@ -2195,7 +2194,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                 );
                                 if !cached.is_null() &&
                                     (cachedlen != 0 ||
-                                         byte_diff(
+                                         byte::diff(
                                             dtype as (*mut u8),
                                             2u32,
                                             (*b"\0\xFF\0").as_ptr() as (*mut u8),
@@ -2239,7 +2238,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                 }
                             }
                             if typematch((*b"\0\x0C\0").as_ptr(), dtype) != 0 {
-                                byte_copy(
+                                byte::copy(
                                     key.as_mut_ptr(),
                                     2u32,
                                     (*b"\0\x0C\0").as_ptr() as (*mut u8),
@@ -2252,7 +2251,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                 );
                                 if !cached.is_null() &&
                                     (cachedlen != 0 ||
-                                         byte_diff(
+                                         byte::diff(
                                             dtype as (*mut u8),
                                             2u32,
                                             (*b"\0\xFF\0").as_ptr() as (*mut u8),
@@ -2296,7 +2295,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                 }
                             }
                             if typematch((*b"\0\x0F\0").as_ptr(), dtype) != 0 {
-                                byte_copy(
+                                byte::copy(
                                     key.as_mut_ptr(),
                                     2u32,
                                     (*b"\0\x0F\0").as_ptr() as (*mut u8),
@@ -2309,7 +2308,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                 );
                                 if !cached.is_null() &&
                                     (cachedlen != 0 ||
-                                         byte_diff(
+                                         byte::diff(
                                             dtype as (*mut u8),
                                             2u32,
                                             (*b"\0\xFF\0").as_ptr() as (*mut u8),
@@ -2372,7 +2371,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                 }
                             }
                             if typematch((*b"\0\x01\0").as_ptr(), dtype) != 0 {
-                                byte_copy(
+                                byte::copy(
                                     key.as_mut_ptr(),
                                     2u32,
                                     (*b"\0\x01\0").as_ptr() as (*mut u8),
@@ -2385,7 +2384,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                 );
                                 if !cached.is_null() &&
                                     (cachedlen != 0 ||
-                                         byte_diff(
+                                         byte::diff(
                                             dtype as (*mut u8),
                                             2u32,
                                             (*b"\0\xFF\0").as_ptr() as (*mut u8),
@@ -2404,7 +2403,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                     _currentBlock = 259;
                                                     break;
                                                 }
-                                                if byte_diff(
+                                                if byte::diff(
                                                     (*z).servers[(*z).level.wrapping_sub(1u32) as
                                                                      (usize)]
                                                         .as_mut_ptr()
@@ -2420,7 +2419,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                 k = k + 4i32;
                                             }
                                             if _currentBlock == 258 {
-                                                byte_copy(
+                                                byte::copy(
                                                     (*z).servers[(*z).level.wrapping_sub(1u32) as
                                                                      (usize)]
                                                         .as_mut_ptr()
@@ -2471,7 +2470,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                 (typematch((*b"\0\x01\0").as_ptr(), dtype) == 0) &&
                                 (typematch((*b"\0\x0F\0").as_ptr(), dtype) == 0)
                             {
-                                byte_copy(key.as_mut_ptr(), 2u32, dtype as (*mut u8));
+                                byte::copy(key.as_mut_ptr(), 2u32, dtype as (*mut u8));
                                 cached = cache_get(
                                     key.as_mut_ptr() as (*const u8),
                                     dlen.wrapping_add(2u32),
@@ -2480,7 +2479,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                 );
                                 if !cached.is_null() &&
                                     (cachedlen != 0 ||
-                                         byte_diff(
+                                         byte::diff(
                                             dtype as (*mut u8),
                                             2u32,
                                             (*b"\0\xFF\0").as_ptr() as (*mut u8),
@@ -2534,8 +2533,8 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                     }
                     if flagforwardonly == 0 && ((*z).level < 2u32) {
                         if dlen < 255u32 {
-                            byte_copy(key.as_mut_ptr(), 2u32, (*b"\0\x02\0").as_ptr() as (*mut u8));
-                            byte_copy(key.as_mut_ptr().offset(2isize), dlen, d);
+                            byte::copy(key.as_mut_ptr(), 2u32, (*b"\0\x02\0").as_ptr() as (*mut u8));
+                            byte::copy(key.as_mut_ptr().offset(2isize), dlen, d);
                             case_lowerb(key.as_mut_ptr().offset(2isize), dlen);
                             cached = cache_get(
                                 key.as_mut_ptr() as (*const u8),
@@ -2559,7 +2558,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                 }
                 if _currentBlock == 225 {
                     (*z).control[(*z).level as (usize)] = d;
-                    byte_zero((*z).servers[(*z).level as (usize)].as_mut_ptr(), 64u32);
+                    byte::zero((*z).servers[(*z).level as (usize)].as_mut_ptr(), 64u32);
                     j = 0i32;
                     'loop226: loop {
                         if !(j < 16i32) {
@@ -2750,7 +2749,7 @@ pub unsafe extern "C" fn query_start(
     mut class: *mut u8,
     mut localip: *mut u8,
 ) -> i32 {
-    if byte_diff(type_, 2u32, (*b"\0\xFC\0").as_ptr() as (*mut u8)) == 0 {
+    if byte::diff(type_, 2u32, (*b"\0\xFC\0").as_ptr() as (*mut u8)) == 0 {
         errno = error_perm;
         -1i32
     } else {
@@ -2760,9 +2759,9 @@ pub unsafe extern "C" fn query_start(
         (if dns_domain_copy(&mut (*z).name[0usize] as (*mut *mut u8), dn as (*const u8)) == 0 {
              -1i32
          } else {
-             byte_copy((*z).type_.as_mut_ptr(), 2u32, type_);
-             byte_copy((*z).class.as_mut_ptr(), 2u32, class);
-             byte_copy((*z).localip.as_mut_ptr(), 4u32, localip);
+             byte::copy((*z).type_.as_mut_ptr(), 2u32, type_);
+             byte::copy((*z).class.as_mut_ptr(), 2u32, class);
+             byte::copy((*z).localip.as_mut_ptr(), 4u32, localip);
              doit(z, 0i32)
          })
     }

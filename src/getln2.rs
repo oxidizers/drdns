@@ -1,7 +1,8 @@
+use byte;
+
 extern "C" {
     fn buffer_feed(arg1: *mut buffer) -> i32;
     fn buffer_get(arg1: *mut buffer, arg2: *mut u8, arg3: u32) -> i32;
-    fn byte_chr(s: *mut u8, n: u32, c: i32) -> u32;
     fn stralloc_ready(arg1: *mut stralloc, arg2: u32) -> i32;
     fn stralloc_readyplus(arg1: *mut stralloc, arg2: u32) -> i32;
 }
@@ -63,7 +64,7 @@ pub unsafe extern "C" fn getln2(
                 break;
             }
             x = (*ss).x.offset((*ss).n as (isize));
-            i = byte_chr(x, n as (u32), sep);
+            i = byte::chr(x, n as (u32), sep);
             if i < n as (u32) {
                 _currentBlock = 8;
                 break;

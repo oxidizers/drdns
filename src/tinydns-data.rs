@@ -1,3 +1,5 @@
+use byte;
+
 extern "C" {
     fn __swbuf(arg1: i32, arg2: *mut __sFILE) -> i32;
     fn _exit(arg1: i32);
@@ -9,10 +11,6 @@ extern "C" {
         arg5: u32,
     );
     fn buffer_unixread(arg1: i32, arg2: *mut u8, arg3: u32) -> i32;
-    fn byte_chr(s: *mut u8, n: u32, c: i32) -> u32;
-    fn byte_copy(to: *mut u8, n: u32, from: *mut u8);
-    fn byte_diff(s: *mut u8, n: u32, t: *mut u8) -> i32;
-    fn byte_zero(s: *mut u8, n: u32);
     fn case_lowerb(arg1: *mut u8, arg2: u32);
     fn cdb_make_add(
         arg1: *mut cdb_make,
@@ -188,7 +186,7 @@ impl Clone for stralloc {
 pub unsafe extern "C" fn ttdparse(mut sa: *mut stralloc, mut ttd: *mut u8) {
     let mut i: u32;
     let mut ch: u8;
-    byte_zero(ttd, 8u32);
+    byte::zero(ttd, 8u32);
     i = 0u32;
     'loop1: loop {
         if !(i < 16u32 && (i < (*sa).len)) {
@@ -371,7 +369,7 @@ pub unsafe extern "C" fn defaultsoa_init(mut fd: i32) {
         );
     }
     uint32_pack_big(defaultsoa.as_mut_ptr(), st.st_mtimespec.tv_sec as (u32));
-    if byte_diff(
+    if byte::diff(
         defaultsoa.as_mut_ptr(),
         4u32,
         (*b"\0\0\0\0\0").as_ptr() as (*mut u8),
@@ -379,7 +377,7 @@ pub unsafe extern "C" fn defaultsoa_init(mut fd: i32) {
     {
         defaultsoa[3usize] = 1u8;
     }
-    byte_copy(
+    byte::copy(
         defaultsoa.as_mut_ptr().offset(4isize),
         16u32,
         (*b"\0\0@\0\0\0\x08\0\0\x10\0\0\0\0\n\0\0").as_ptr() as (*mut u8),
@@ -510,7 +508,7 @@ pub unsafe extern "C" fn rr_start(
     if stralloc_copyb(&mut result as (*mut stralloc), type_, 2u32) == 0 {
         nomem();
     }
-    if byte_diff(loc as (*mut u8), 2u32, (*b"\0\0\0").as_ptr() as (*mut u8)) == 0 {
+    if byte::diff(loc as (*mut u8), 2u32, (*b"\0\0\0").as_ptr() as (*mut u8)) == 0 {
         rr_add((*b"=\0").as_ptr(), 1u32);
     } else {
         rr_add((*b">\0").as_ptr(), 1u32);
@@ -523,7 +521,7 @@ pub unsafe extern "C" fn rr_start(
 
 #[no_mangle]
 pub unsafe extern "C" fn rr_finish(mut owner: *const u8) {
-    if byte_diff(
+    if byte::diff(
         owner as (*mut u8),
         2u32,
         (*b"\x01*\0").as_ptr() as (*mut u8),
@@ -709,7 +707,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
                     nomem();
                 }
             } else {
-                k = byte_chr(
+                k = byte::chr(
                     line.s.offset(j as (isize)),
                     line.len.wrapping_sub(j as (u32)),
                     b':' as (i32),
@@ -749,7 +747,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             }
             scan_ulong(f[1usize].s as (*const u8), &mut u as (*mut usize));
             uint16_pack_big(type_.as_mut_ptr(), u as (u16));
-            if byte_diff(
+            if byte::diff(
                 type_.as_mut_ptr(),
                 2u32,
                 (*b"\0\xFC\0").as_ptr() as (*mut u8),
@@ -757,10 +755,10 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             {
                 syntaxerror((*b": type AXFR prohibited\0").as_ptr());
             }
-            if byte_diff(type_.as_mut_ptr(), 2u32, (*b"\0\0\0").as_ptr() as (*mut u8)) == 0 {
+            if byte::diff(type_.as_mut_ptr(), 2u32, (*b"\0\0\0").as_ptr() as (*mut u8)) == 0 {
                 syntaxerror((*b": type 0 prohibited\0").as_ptr());
             }
-            if byte_diff(
+            if byte::diff(
                 type_.as_mut_ptr(),
                 2u32,
                 (*b"\0\x06\0").as_ptr() as (*mut u8),
@@ -768,7 +766,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             {
                 syntaxerror((*b": type SOA prohibited\0").as_ptr());
             }
-            if byte_diff(
+            if byte::diff(
                 type_.as_mut_ptr(),
                 2u32,
                 (*b"\0\x02\0").as_ptr() as (*mut u8),
@@ -776,7 +774,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             {
                 syntaxerror((*b": type NS prohibited\0").as_ptr());
             }
-            if byte_diff(
+            if byte::diff(
                 type_.as_mut_ptr(),
                 2u32,
                 (*b"\0\x05\0").as_ptr() as (*mut u8),
@@ -784,7 +782,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             {
                 syntaxerror((*b": type CNAME prohibited\0").as_ptr());
             }
-            if byte_diff(
+            if byte::diff(
                 type_.as_mut_ptr(),
                 2u32,
                 (*b"\0\x0C\0").as_ptr() as (*mut u8),
@@ -792,7 +790,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             {
                 syntaxerror((*b": type PTR prohibited\0").as_ptr());
             }
-            if byte_diff(
+            if byte::diff(
                 type_.as_mut_ptr(),
                 2u32,
                 (*b"\0\x0F\0").as_ptr() as (*mut u8),
@@ -910,7 +908,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             if stralloc_append(&mut f[1usize] as (*mut stralloc), (*b"\0").as_ptr()) == 0 {
                 nomem();
             }
-            if byte_chr(f[2usize].s, f[2usize].len, b'.' as (i32)) >= f[2usize].len {
+            if byte::chr(f[2usize].s, f[2usize].len, b'.' as (i32)) >= f[2usize].len {
                 if stralloc_cats(&mut f[2usize] as (*mut stralloc), (*b".mx.\0").as_ptr()) == 0 {
                     nomem();
                 }
@@ -1021,7 +1019,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             if stralloc_append(&mut f[1usize] as (*mut stralloc), (*b"\0").as_ptr()) == 0 {
                 nomem();
             }
-            if byte_chr(f[2usize].s, f[2usize].len, b'.' as (i32)) >= f[2usize].len {
+            if byte::chr(f[2usize].s, f[2usize].len, b'.' as (i32)) >= f[2usize].len {
                 if stralloc_cats(&mut f[2usize] as (*mut stralloc), (*b".ns.\0").as_ptr()) == 0 {
                     nomem();
                 }

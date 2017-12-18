@@ -1,3 +1,5 @@
+use byte;
+
 extern "C" {
     fn __swbuf(arg1: i32, arg2: *mut __sFILE) -> i32;
     fn _exit(arg1: i32);
@@ -12,8 +14,6 @@ extern "C" {
     fn buffer_putalign(arg1: *mut buffer, arg2: *const u8, arg3: u32) -> i32;
     fn buffer_unixread(arg1: i32, arg2: *mut u8, arg3: u32) -> i32;
     fn buffer_unixwrite(arg1: i32, arg2: *const u8, arg3: u32) -> i32;
-    fn byte_chr(s: *mut u8, n: u32, c: i32) -> u32;
-    fn byte_diff(s: *mut u8, n: u32, t: *mut u8) -> i32;
     fn close(arg1: i32) -> i32;
     fn dns_domain_equal(arg1: *const u8, arg2: *const u8) -> i32;
     fn dns_domain_fromdot(arg1: *mut *mut u8, arg2: *const u8, arg3: u32) -> i32;
@@ -588,7 +588,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
                     nomem();
                 }
             } else {
-                k = byte_chr(
+                k = byte::chr(
                     line.s.offset(j as (isize)),
                     line.len.wrapping_sub(j as (u32)),
                     b':' as (i32),
@@ -620,7 +620,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
             if dns_domain_equal(d1 as (*const u8), target as (*const u8)) == 0 {
                 continue;
             }
-            if byte_chr(f[2usize].s, f[2usize].len, b'.' as (i32)) >= f[2usize].len {
+            if byte::chr(f[2usize].s, f[2usize].len, b'.' as (i32)) >= f[2usize].len {
                 if stralloc_cats(&mut f[2usize] as (*mut stralloc), (*b".mx.\0").as_ptr()) == 0 {
                     nomem();
                 }
@@ -688,7 +688,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
             if ip4_scan(f[1usize].s as (*const u8), ip.as_mut_ptr()) == 0 {
                 continue;
             }
-            if !(byte_diff(ip.as_mut_ptr(), 4u32, targetip.as_mut_ptr()) == 0) {
+            if !(byte::diff(ip.as_mut_ptr(), 4u32, targetip.as_mut_ptr()) == 0) {
                 continue;
             }
             strerr_die(
@@ -719,7 +719,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
             if dns_domain_equal(d1 as (*const u8), target as (*const u8)) == 0 {
                 continue;
             }
-            if byte_chr(f[2usize].s, f[2usize].len, b'.' as (i32)) >= f[2usize].len {
+            if byte::chr(f[2usize].s, f[2usize].len, b'.' as (i32)) >= f[2usize].len {
                 if stralloc_cats(&mut f[2usize] as (*mut stralloc), (*b".ns.\0").as_ptr()) == 0 {
                     nomem();
                 }

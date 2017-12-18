@@ -1,3 +1,5 @@
+use byte;
+
 extern "C" {
     fn _exit(arg1: i32);
     fn alloc(n: u32) -> *mut u8;
@@ -6,9 +8,6 @@ extern "C" {
     fn buffer_flush(arg1: *mut buffer) -> i32;
     fn buffer_put(arg1: *mut buffer, arg2: *const u8, arg3: u32) -> i32;
     fn buffer_puts(arg1: *mut buffer, arg2: *const u8) -> i32;
-    fn byte_copy(to: *mut u8, n: u32, from: *mut u8);
-    fn byte_diff(s: *mut u8, n: u32, t: *mut u8) -> i32;
-    fn byte_zero(s: *mut u8, n: u32);
     fn dd(arg1: *const u8, arg2: *const u8, arg3: *mut u8) -> i32;
     fn dns_domain_copy(arg1: *mut *mut u8, arg2: *const u8) -> i32;
     fn dns_domain_equal(arg1: *const u8, arg2: *const u8) -> i32;
@@ -260,8 +259,8 @@ pub unsafe extern "C" fn resolve(mut q: *mut u8, mut qtype: *mut u8, mut ip: *mu
     let mut x: [pollfd; 1];
     let mut r: i32;
     taia_now(&mut start as (*mut taia));
-    byte_zero(servers.as_mut_ptr(), 64u32);
-    byte_copy(servers.as_mut_ptr(), 4u32, ip);
+    byte::zero(servers.as_mut_ptr(), 64u32);
+    byte::copy(servers.as_mut_ptr(), 4u32, ip);
     if dns_transmit_start(
         &mut tx as (*mut dns_transmit),
         servers.as_mut_ptr() as (*const u8),
@@ -690,13 +689,13 @@ pub unsafe extern "C" fn qt_add(
                     control,
                 ) != 0
                 {
-                    if byte_diff(
+                    if byte::diff(
                         (*qt.s.offset(i as (isize))).type_.as_mut_ptr(),
                         2u32,
                         type_ as (*mut u8),
                     ) == 0
                     {
-                        if byte_diff(
+                        if byte::diff(
                             (*qt.s.offset(i as (isize))).ip.as_mut_ptr(),
                             4u32,
                             ip as (*mut u8),
@@ -711,7 +710,7 @@ pub unsafe extern "C" fn qt_add(
             i = i + 1;
         }
         (if _currentBlock == 3 {
-             byte_zero(
+             byte::zero(
                 &mut x as (*mut qt) as (*mut u8),
                 ::std::mem::size_of::<qt>() as (u32),
             );
@@ -721,8 +720,8 @@ pub unsafe extern "C" fn qt_add(
              if dns_domain_copy(&mut x.control as (*mut *mut u8), control) == 0 {
                  nomem();
              }
-             byte_copy(x.type_.as_mut_ptr(), 2u32, type_ as (*mut u8));
-             byte_copy(x.ip.as_mut_ptr(), 4u32, ip as (*mut u8));
+             byte::copy(x.type_.as_mut_ptr(), 2u32, type_ as (*mut u8));
+             byte::copy(x.ip.as_mut_ptr(), 4u32, ip as (*mut u8));
              if qt_alloc_append(
                 &mut qt as (*mut qt_alloc),
                 &mut x as (*mut qt) as (*const qt),
@@ -747,7 +746,7 @@ pub unsafe extern "C" fn query_add(mut owner: *const u8, mut type_: *const u8) {
             break;
         }
         if dns_domain_equal((*query.s.offset(i as (isize))).owner as (*const u8), owner) != 0 {
-            if byte_diff(
+            if byte::diff(
                 (*query.s.offset(i as (isize))).type_.as_mut_ptr(),
                 2u32,
                 type_ as (*mut u8),
@@ -760,14 +759,14 @@ pub unsafe extern "C" fn query_add(mut owner: *const u8, mut type_: *const u8) {
         i = i + 1;
     }
     if _currentBlock == 2 {
-        byte_zero(
+        byte::zero(
             &mut x as (*mut query) as (*mut u8),
             ::std::mem::size_of::<query>() as (u32),
         );
         if dns_domain_copy(&mut x.owner as (*mut *mut u8), owner) == 0 {
             nomem();
         }
-        byte_copy(x.type_.as_mut_ptr(), 2u32, type_ as (*mut u8));
+        byte::copy(x.type_.as_mut_ptr(), 2u32, type_ as (*mut u8));
         if query_alloc_append(
             &mut query as (*mut query_alloc),
             &mut x as (*mut query) as (*const query),
@@ -834,7 +833,7 @@ pub unsafe extern "C" fn ns_add(mut owner: *const u8, mut server: *const u8) {
     }
     if _currentBlock == 2 {
         query_add(server, (*b"\0\x01\0").as_ptr());
-        byte_zero(
+        byte::zero(
             &mut x as (*mut ns) as (*mut u8),
             ::std::mem::size_of::<ns>() as (u32),
         );
@@ -909,7 +908,7 @@ pub unsafe extern "C" fn address_add(mut owner: *const u8, mut ip: *const u8) {
             owner,
         ) != 0
         {
-            if byte_diff(
+            if byte::diff(
                 (*address.s.offset(i as (isize))).ip.as_mut_ptr(),
                 4u32,
                 ip as (*mut u8),
@@ -922,14 +921,14 @@ pub unsafe extern "C" fn address_add(mut owner: *const u8, mut ip: *const u8) {
         i = i + 1;
     }
     if _currentBlock == 2 {
-        byte_zero(
+        byte::zero(
             &mut x as (*mut address) as (*mut u8),
             ::std::mem::size_of::<address>() as (u32),
         );
         if dns_domain_copy(&mut x.owner as (*mut *mut u8), owner) == 0 {
             nomem();
         }
-        byte_copy(x.ip.as_mut_ptr(), 4u32, ip as (*mut u8));
+        byte::copy(x.ip.as_mut_ptr(), 4u32, ip as (*mut u8));
         if address_alloc_append(
             &mut address as (*mut address_alloc),
             &mut x as (*mut address) as (*const address),
@@ -980,8 +979,8 @@ static mut referral: *mut u8 = 0 as (*mut u8);
 static mut cname: *mut u8 = 0 as (*mut u8);
 
 unsafe extern "C" fn typematch(mut rtype: *const u8, mut qtype: *const u8) -> i32 {
-    (byte_diff(qtype as (*mut u8), 2u32, rtype as (*mut u8)) == 0 ||
-         byte_diff(
+    (byte::diff(qtype as (*mut u8), 2u32, rtype as (*mut u8)) == 0 ||
+         byte::diff(
             qtype as (*mut u8),
             2u32,
             (*b"\0\xFF\0").as_ptr() as (*mut u8),
@@ -1057,7 +1056,7 @@ pub unsafe extern "C" fn parsepacket(
                         break;
                     }
                     if dns_domain_equal(t1 as (*const u8), d) != 0 {
-                        if byte_diff(
+                        if byte::diff(
                             header.as_mut_ptr().offset(2isize),
                             2u32,
                             (*b"\0\x01\0").as_ptr() as (*mut u8),
@@ -1182,7 +1181,7 @@ pub unsafe extern "C" fn parsepacket(
                                 &mut datalen as (*mut u16),
                             );
                             if dns_domain_suffix(t1 as (*const u8), control) != 0 {
-                                if byte_diff(
+                                if byte::diff(
                                     header.as_mut_ptr().offset(2isize),
                                     2u32,
                                     (*b"\0\x01\0").as_ptr() as (*mut u8),
@@ -1442,12 +1441,12 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
         }
         control = (*qt.s.offset(i as (isize))).control;
         if !(dns_domain_suffix(q as (*const u8), control as (*const u8)) == 0) {
-            byte_copy(
+            byte::copy(
                 type_.as_mut_ptr(),
                 2u32,
                 (*qt.s.offset(i as (isize))).type_.as_mut_ptr(),
             );
-            byte_copy(
+            byte::copy(
                 ip.as_mut_ptr(),
                 4u32,
                 (*qt.s.offset(i as (isize))).ip.as_mut_ptr(),

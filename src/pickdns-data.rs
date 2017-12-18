@@ -1,3 +1,5 @@
+use byte;
+
 extern "C" {
     fn __swbuf(arg1: i32, arg2: *mut __sFILE) -> i32;
     fn _exit(arg1: i32);
@@ -11,10 +13,6 @@ extern "C" {
         arg5: u32,
     );
     fn buffer_unixread(arg1: i32, arg2: *mut u8, arg3: u32) -> i32;
-    fn byte_chr(s: *mut u8, n: u32, c: i32) -> u32;
-    fn byte_copy(to: *mut u8, n: u32, from: *mut u8);
-    fn byte_diff(s: *mut u8, n: u32, t: *mut u8) -> i32;
-    fn byte_zero(s: *mut u8, n: u32);
     fn case_diffb(arg1: *const u8, arg2: u32, arg3: *const u8) -> i32;
     fn case_lowerb(arg1: *mut u8, arg2: u32);
     fn cdb_make_add(
@@ -208,7 +206,7 @@ impl Clone for address {
 #[no_mangle]
 pub unsafe extern "C" fn address_diff(mut p: *mut address, mut q: *mut address) -> i32 {
     let mut r: i32;
-    r = byte_diff((*p).location.as_mut_ptr(), 2u32, (*q).location.as_mut_ptr());
+    r = byte::diff((*p).location.as_mut_ptr(), 2u32, (*q).location.as_mut_ptr());
     if r < 0i32 {
         -1i32
     } else if r > 0i32 {
@@ -623,7 +621,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
                     nomem();
                 }
             } else {
-                k = byte_chr(
+                k = byte::chr(
                     line.s.offset(j as (isize)),
                     line.len.wrapping_sub(j as (u32)),
                     b':' as (i32),
@@ -678,7 +676,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             }
             die_datatmp();
         } else if switch1 as (i32) == b'+' as (i32) {
-            byte_zero(
+            byte::zero(
                 &mut t as (*mut address) as (*mut u8),
                 ::std::mem::size_of::<address>() as (u32),
             );
@@ -704,7 +702,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             if stralloc_append(&mut f[2usize] as (*mut stralloc), (*b"\0").as_ptr()) == 0 {
                 nomem();
             }
-            byte_copy(t.location.as_mut_ptr(), 2u32, f[2usize].s);
+            byte::copy(t.location.as_mut_ptr(), 2u32, f[2usize].s);
             if !(address_alloc_append(
                 &mut x as (*mut address_alloc),
                 &mut t as (*mut address) as (*const address),
