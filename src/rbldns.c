@@ -14,7 +14,7 @@ static char *base;
 
 static struct cdb c;
 static char key[5];
-static char data[100 + IP4_FMT];
+static char data[120];
 
 static int doit(char *q,char qtype[2])
 {
