@@ -2,7 +2,7 @@
 #include "byte.h"
 #include "error.h"
 
-static int oneread(int (*op)(),int fd,char *buf,unsigned int len)
+static int oneread(int (*op)(int, char *, unsigned int),int fd,char *buf,unsigned int len)
 {
   int r;
 
@@ -38,7 +38,7 @@ int buffer_feed(buffer *s)
 int buffer_bget(buffer *s,char *buf,unsigned int len)
 {
   int r;
- 
+
   if (s->p > 0) return getthis(s,buf,len);
   if (s->n <= len) return oneread(s->op,s->fd,buf,s->n);
   r = buffer_feed(s); if (r <= 0) return r;
@@ -48,7 +48,7 @@ int buffer_bget(buffer *s,char *buf,unsigned int len)
 int buffer_get(buffer *s,char *buf,unsigned int len)
 {
   int r;
- 
+
   if (s->p > 0) return getthis(s,buf,len);
   if (s->n <= len) return oneread(s->op,s->fd,buf,len);
   r = buffer_feed(s); if (r <= 0) return r;
