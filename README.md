@@ -13,6 +13,48 @@ from C to Rust using [Corrode].
 [djbdns]: https://cr.yp.to/djbdns/blurb/overview.html
 [Corrode]: https://github.com/jameysharp/corrode
 
+## Status
+
+tl;dr: not ready to use
+
+The original C source code has been translated into Rust using [Corrode] and
+removed from the tree.
+
+The resulting Rust is as correct as Corrode's semantics, but uses the C FFI to
+make calls to all functions internal to the project.
+
+The next steps will be converting the existing code into proper Rust modules
+and ensuring they compile. This will involve:
+
+- Consolidating common functionality into the same Rust module
+- Removing `#[no_mangle]` and `extern "C"` from function definitions
+- Replacing C function pointers with `Fn`
+- Removing redundant `modulenamespace_*` from the names of functions and
+  leaning on the Rust module system instead
+- Capitalizing the names of structs
+- Replacing `extern` definitions for C standard library functionality with
+  calls to the `libc` crate
+
+Any changes which rename or otherwise change APIs should be made across the
+entire codebase at once, to ensure it (hopefully) continues to compile. This
+will have to be done on a "best effort" basis until all of the code is
+compiling.
+
+Beyond these changes, which are hopefully all cosmetic, the goal is to leave
+all existing function definitions, including function arguments and return
+values, exactly as they are presently until all code is compiling with the
+Rust compiler. This will ensure that any future changes at least compile!
+
+After all code is compiling, the goal is to get the original djbdns test
+suite running and confirm that the translated code actually works.
+Ideally we can run that test suite (or equivalent one) as part of the
+CI pipeline to prevent regressions.
+
+Once all of that is done, the real fun can begin: replacing pointers with
+references, `i32` return values with `Result`, deleting code that duplicates
+Rust standard library functionality and using `std` alternatives to replace
+it, and rewriting the unsafe translated code in safe Rust.
+
 ## Contributing
 
 Bug reports and pull requests are welcome on GitHub at https://github.com/oxidizers/drdns
