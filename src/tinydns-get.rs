@@ -1,8 +1,9 @@
+use byte;
+
 extern "C" {
     fn _exit(arg1: i32);
     static mut buffer_1: *mut buffer;
     fn buffer_putflush(arg1: *mut buffer, arg2: *const u8, arg3: u32) -> i32;
-    fn byte_diff(s: *mut u8, n: u32, t: *mut u8) -> i32;
     fn case_lowerb(arg1: *mut u8, arg2: u32);
     fn dns_domain_fromdot(arg1: *mut *mut u8, arg2: *const u8, arg3: u32) -> i32;
     fn dns_domain_length(arg1: *const u8) -> u32;
@@ -210,7 +211,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     let _lhs = &mut *response.offset(2isize);
     *_lhs = (*_lhs as (i32) | _rhs) as (u8);
     case_lowerb(q, dns_domain_length(q as (*const u8)));
-    if byte_diff(
+    if byte::diff(
         type_.as_mut_ptr(),
         2u32,
         (*b"\0\xFC\0").as_ptr() as (*mut u8),

@@ -1,5 +1,6 @@
+use byte;
+
 extern "C" {
-    fn byte_copy(to: *mut u8, n: u32, from: *mut u8);
     static mut errno: i32;
     static mut error_intr: i32;
     fn str_len(arg1: *const u8) -> u32;
@@ -84,7 +85,7 @@ pub unsafe extern "C" fn buffer_putalign(
             _currentBlock = 2;
             break;
         }
-        byte_copy((*s).x.offset((*s).p as (isize)), n, buf as (*mut u8));
+        byte::copy((*s).x.offset((*s).p as (isize)), n, buf as (*mut u8));
         (*s).p = (*s).p.wrapping_add(n);
         buf = buf.offset(n as (isize));
         len = len.wrapping_sub(n);
@@ -94,7 +95,7 @@ pub unsafe extern "C" fn buffer_putalign(
         }
     }
     if _currentBlock == 2 {
-        byte_copy((*s).x.offset((*s).p as (isize)), len, buf as (*mut u8));
+        byte::copy((*s).x.offset((*s).p as (isize)), len, buf as (*mut u8));
         (*s).p = (*s).p.wrapping_add(len);
         0i32
     } else {
@@ -141,7 +142,7 @@ pub unsafe extern "C" fn buffer_put(mut s: *mut buffer, mut buf: *const u8, mut 
             }
         }
     }
-    byte_copy((*s).x.offset((*s).p as (isize)), len, buf as (*mut u8));
+    byte::copy((*s).x.offset((*s).p as (isize)), len, buf as (*mut u8));
     (*s).p = (*s).p.wrapping_add(len);
     0i32
 }

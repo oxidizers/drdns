@@ -1,6 +1,6 @@
+use byte;
+
 extern "C" {
-    fn byte_copy(to: *mut u8, n: u32, from: *mut u8);
-    fn byte_zero(s: *mut u8, n: u32);
     fn connect(arg1: i32, arg2: *const sockaddr, arg3: u32) -> i32;
     fn getpeername(arg1: i32, arg2: *mut sockaddr, arg3: *mut u32) -> i32;
     fn read(arg1: i32, arg2: *mut ::std::os::raw::c_void, arg3: usize) -> isize;
@@ -52,13 +52,13 @@ impl Clone for sockaddr {
 #[no_mangle]
 pub unsafe extern "C" fn socket_connect4(mut s: i32, mut ip: *const u8, mut port: u16) -> i32 {
     let mut sa: sockaddr_in;
-    byte_zero(
+    byte::zero(
         &mut sa as (*mut sockaddr_in) as (*mut u8),
         ::std::mem::size_of::<sockaddr_in>() as (u32),
     );
     sa.sin_family = 2u8;
     uint16_pack_big(&mut sa.sin_port as (*mut u16) as (*mut u8), port);
-    byte_copy(
+    byte::copy(
         &mut sa.sin_addr as (*mut in_addr) as (*mut u8),
         4u32,
         ip as (*mut u8),

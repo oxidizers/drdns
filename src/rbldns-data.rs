@@ -1,3 +1,5 @@
+use byte;
+
 extern "C" {
     fn __swbuf(arg1: i32, arg2: *mut __sFILE) -> i32;
     fn _exit(arg1: i32);
@@ -9,7 +11,6 @@ extern "C" {
         arg5: u32,
     );
     fn buffer_unixread(arg1: i32, arg2: *mut u8, arg3: u32) -> i32;
-    fn byte_chr(s: *mut u8, n: u32, c: i32) -> u32;
     fn cdb_make_add(
         arg1: *mut cdb_make,
         arg2: *const u8,
@@ -469,7 +470,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             }
             die_datatmp();
         } else if switch1 as (i32) == b':' as (i32) {
-            j = byte_chr(
+            j = byte::chr(
                 line.s.offset(1isize),
                 line.len.wrapping_sub(1u32),
                 b':' as (i32),

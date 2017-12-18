@@ -1,5 +1,6 @@
+use byte;
+
 extern "C" {
-    fn byte_diff(s: *mut u8, n: u32, t: *mut u8) -> i32;
     fn dns_domain_todot_cat(arg1: *mut stralloc, arg2: *const u8) -> i32;
     fn dns_packet_copy(arg1: *const u8, arg2: u32, arg3: u32, arg4: *mut u8, arg5: u32) -> u32;
     fn dns_packet_getname(arg1: *const u8, arg2: u32, arg3: u32, arg4: *mut *mut u8) -> u32;
@@ -172,7 +173,7 @@ pub unsafe extern "C" fn printpacket_cat(
                           _currentBlock = 69;
                           break;
                       }
-                      if byte_diff(
+                      if byte::diff(
                         data.as_mut_ptr().offset(2isize),
                         2u32,
                         (*b"\0\x01\0").as_ptr() as (*mut u8),

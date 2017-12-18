@@ -1,7 +1,8 @@
+use byte;
+
 extern "C" {
     static mut buffer_2: *mut buffer;
     fn buffer_putsflush(arg1: *mut buffer, arg2: *const u8) -> i32;
-    fn byte_diff(s: *mut u8, n: u32, t: *mut u8) -> i32;
     fn case_lowerb(arg1: *mut u8, arg2: u32);
     fn dns_domain_length(arg1: *const u8) -> u32;
     fn dns_packet_copy(arg1: *const u8, arg2: u32, arg3: u32, arg4: *mut u8, arg5: u32) -> u32;
@@ -138,7 +139,7 @@ unsafe extern "C" fn doit() -> i32 {
                                     ) == 0)
                                     {
                                         response_id(header.as_mut_ptr() as (*const u8));
-                                        if byte_diff(
+                                        if byte::diff(
                                             qclass.as_mut_ptr(),
                                             2u32,
                                             (*b"\0\x01\0").as_ptr() as (*mut u8),
@@ -147,7 +148,7 @@ unsafe extern "C" fn doit() -> i32 {
                                             let _rhs = 4i32;
                                             let _lhs = &mut *response.offset(2isize);
                                             *_lhs = (*_lhs as (i32) | _rhs) as (u8);
-                                        } else if byte_diff(
+                                        } else if byte::diff(
                                             qclass.as_mut_ptr(),
                                             2u32,
                                             (*b"\0\xFF\0").as_ptr() as (*mut u8),
@@ -178,7 +179,7 @@ unsafe extern "C" fn doit() -> i32 {
                                             *_lhs = (*_lhs as (i32) & _rhs) as (u8);
                                         }
                                         if header[2usize] as (i32) & 126i32 == 0 {
-                                            if !(byte_diff(
+                                            if !(byte::diff(
                                                 qtype.as_mut_ptr(),
                                                 2u32,
                                                 (*b"\0\xFC\0").as_ptr() as (*mut u8),

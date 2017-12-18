@@ -1,6 +1,6 @@
+use byte;
+
 extern "C" {
-    fn byte_copy(to: *mut u8, n: u32, from: *mut u8);
-    fn byte_copyr(to: *mut u8, n: u32, from: *mut u8);
     static mut errno: i32;
     static mut error_intr: i32;
 }
@@ -58,7 +58,7 @@ pub unsafe extern "C" fn buffer_feed(mut s: *mut buffer) -> i32 {
              (*s).p = r as (u32);
              (*s).n = (*s).n.wrapping_sub(r as (u32));
              if (*s).n > 0u32 {
-                 byte_copyr((*s).x.offset((*s).n as (isize)), r as (u32), (*s).x);
+                 byte::copyr((*s).x.offset((*s).n as (isize)), r as (u32), (*s).x);
              }
              r
          })
@@ -70,7 +70,7 @@ unsafe extern "C" fn getthis(mut s: *mut buffer, mut buf: *mut u8, mut len: u32)
         len = (*s).p;
     }
     (*s).p = (*s).p.wrapping_sub(len);
-    byte_copy(buf, len, (*s).x.offset((*s).n as (isize)));
+    byte::copy(buf, len, (*s).x.offset((*s).n as (isize)));
     (*s).n = (*s).n.wrapping_add(len);
     len as (i32)
 }

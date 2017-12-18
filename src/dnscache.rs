@@ -1,9 +1,8 @@
+use byte;
+
 extern "C" {
     fn alloc(n: u32) -> *mut u8;
     fn alloc_free(x: *mut u8);
-    fn byte_copy(to: *mut u8, n: u32, from: *mut u8);
-    fn byte_diff(s: *mut u8, n: u32, t: *mut u8) -> i32;
-    fn byte_zero(s: *mut u8, n: u32);
     fn cache_init(arg1: u32) -> i32;
     fn close(arg1: i32) -> i32;
     fn dns_packet_copy(arg1: *const u8, arg2: u32, arg3: u32, arg4: *mut u8, arg5: u32) -> u32;
@@ -294,7 +293,7 @@ unsafe extern "C" fn packetquery(
         0i32
     } else if header[2usize] as (i32) & 2i32 != 0 {
         0i32
-    } else if byte_diff(
+    } else if byte::diff(
         header.as_mut_ptr().offset(4isize),
         2u32,
         (*b"\0\x01\0").as_ptr() as (*mut u8),
@@ -313,12 +312,12 @@ unsafe extern "C" fn packetquery(
                   pos = dns_packet_copy(buf as (*const u8), len, pos, qclass, 2u32);
                   (if pos == 0 {
                        0i32
-                   } else if byte_diff(qclass, 2u32, (*b"\0\x01\0").as_ptr() as (*mut u8)) != 0 &&
-                              (byte_diff(qclass, 2u32, (*b"\0\xFF\0").as_ptr() as (*mut u8)) != 0)
+                   } else if byte::diff(qclass, 2u32, (*b"\0\x01\0").as_ptr() as (*mut u8)) != 0 &&
+                              (byte::diff(qclass, 2u32, (*b"\0\xFF\0").as_ptr() as (*mut u8)) != 0)
                 {
                        0i32
                    } else {
-                       byte_copy(id, 2u32, header.as_mut_ptr());
+                       byte::copy(id, 2u32, header.as_mut_ptr());
                        1i32
                    })
               })
@@ -566,7 +565,7 @@ pub unsafe extern "C" fn t_respond(mut j: i32) {
              t_close(j);
          } else {
              uint16_pack_big(t[j as (usize)].buf, response_len as (u16));
-             byte_copy(t[j as (usize)].buf.offset(2isize), response_len, response);
+             byte::copy(t[j as (usize)].buf.offset(2isize), response_len, response);
              t[j as (usize)].pos = 0u32;
              t[j as (usize)].state = -1i32;
          })
@@ -1013,7 +1012,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
     }
     droproot((*b"dnscache: fatal: \0").as_ptr());
     socket_tryreservein(udp53, 131072i32);
-    byte_zero(
+    byte::zero(
         seed.as_mut_ptr(),
         ::std::mem::size_of::<[u8; 128]>() as (u32),
     );

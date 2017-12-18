@@ -1,5 +1,6 @@
+use byte;
+
 extern "C" {
-    fn byte_diff(s: *mut u8, n: u32, t: *mut u8) -> i32;
     fn dns_domain_equal(arg1: *const u8, arg2: *const u8) -> i32;
     fn dns_domain_todot_cat(arg1: *mut stralloc, arg2: *const u8) -> i32;
     fn dns_packet_copy(arg1: *const u8, arg2: u32, arg3: u32, arg4: *mut u8, arg5: u32) -> u32;
@@ -64,8 +65,8 @@ pub unsafe extern "C" fn printrecord_cat(
              if !q.is_null() {
                  if dns_domain_equal(d as (*const u8), q) == 0 {
                      return newpos;
-                 } else if byte_diff(qtype as (*mut u8), 2u32, misc.as_mut_ptr()) != 0 &&
-                            (byte_diff(
+                 } else if byte::diff(qtype as (*mut u8), 2u32, misc.as_mut_ptr()) != 0 &&
+                            (byte::diff(
                         qtype as (*mut u8),
                         2u32,
                         (*b"\0\xFF\0").as_ptr() as (*mut u8),
@@ -85,7 +86,7 @@ pub unsafe extern "C" fn printrecord_cat(
                 );
                   (if stralloc_catulong0(out, u32 as (usize), 0u32) == 0 {
                        0u32
-                   } else if byte_diff(
+                   } else if byte::diff(
                     misc.as_mut_ptr().offset(2isize),
                     2u32,
                     (*b"\0\x01\0").as_ptr() as (*mut u8),
@@ -98,7 +99,7 @@ pub unsafe extern "C" fn printrecord_cat(
                         })
                    } else {
                        x = 0i32 as (*const u8);
-                       if byte_diff(
+                       if byte::diff(
                         misc.as_mut_ptr(),
                         2u32,
                         (*b"\0\x02\0").as_ptr() as (*mut u8),
@@ -106,7 +107,7 @@ pub unsafe extern "C" fn printrecord_cat(
                     {
                            x = (*b" NS \0").as_ptr();
                        }
-                       if byte_diff(
+                       if byte::diff(
                         misc.as_mut_ptr(),
                         2u32,
                         (*b"\0\x0C\0").as_ptr() as (*mut u8),
@@ -114,7 +115,7 @@ pub unsafe extern "C" fn printrecord_cat(
                     {
                            x = (*b" PTR \0").as_ptr();
                        }
-                       if byte_diff(
+                       if byte::diff(
                         misc.as_mut_ptr(),
                         2u32,
                         (*b"\0\x05\0").as_ptr() as (*mut u8),
@@ -131,7 +132,7 @@ pub unsafe extern "C" fn printrecord_cat(
                            } else if dns_domain_todot_cat(out, d as (*const u8)) == 0 {
                                return 0u32;
                            }
-                       } else if byte_diff(
+                       } else if byte::diff(
                         misc.as_mut_ptr(),
                         2u32,
                         (*b"\0\x0F\0").as_ptr() as (*mut u8),
@@ -163,7 +164,7 @@ pub unsafe extern "C" fn printrecord_cat(
                                    }
                                }
                            }
-                       } else if byte_diff(
+                       } else if byte::diff(
                         misc.as_mut_ptr(),
                         2u32,
                         (*b"\0\x06\0").as_ptr() as (*mut u8),
@@ -225,7 +226,7 @@ pub unsafe extern "C" fn printrecord_cat(
                                    }
                                }
                            }
-                       } else if byte_diff(
+                       } else if byte::diff(
                         misc.as_mut_ptr(),
                         2u32,
                         (*b"\0\x01\0").as_ptr() as (*mut u8),

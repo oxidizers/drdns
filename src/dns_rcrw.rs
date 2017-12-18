@@ -1,6 +1,6 @@
+use byte;
+
 extern "C" {
-    fn byte_chr(s: *mut u8, n: u32, c: i32) -> u32;
-    fn byte_diff(s: *mut u8, n: u32, t: *mut u8) -> i32;
     fn env_get(arg1: *const u8) -> *mut u8;
     fn gethostname(arg1: *mut u8, arg2: usize) -> i32;
     fn openreadclose(arg1: *const u8, arg2: *mut stralloc, arg3: u32) -> i32;
@@ -234,22 +234,22 @@ unsafe extern "C" fn init(mut rules: *mut stralloc) -> i32 {
                                        break;
                                    }
                                    if *data.s.offset(j as (isize)) as (i32) == b'\n' as (i32) {
-                                       if byte_diff(
+                                       if byte::diff(
                                         (*b"search \0").as_ptr() as (*mut u8),
                                         7u32,
                                         data.s.offset(i as (isize)),
                                     ) == 0 ||
-                                           byte_diff(
+                                           byte::diff(
                                             (*b"search\t\0").as_ptr() as (*mut u8),
                                             7u32,
                                             data.s.offset(i as (isize)),
                                         ) == 0 ||
-                                           byte_diff(
+                                           byte::diff(
                                             (*b"domain \0").as_ptr() as (*mut u8),
                                             7u32,
                                             data.s.offset(i as (isize)),
                                         ) == 0 ||
-                                           byte_diff(
+                                           byte::diff(
                                             (*b"domain\t\0").as_ptr() as (*mut u8),
                                             7u32,
                                             data.s.offset(i as (isize)),
@@ -272,12 +272,12 @@ unsafe extern "C" fn init(mut rules: *mut stralloc) -> i32 {
                                            _currentBlock = 32;
                                            break;
                                        }
-                                       k = byte_chr(
+                                       k = byte::chr(
                                         data.s.offset(i as (isize)),
                                         (j - i) as (u32),
                                         b' ' as (i32),
                                     ) as (i32);
-                                       k = byte_chr(
+                                       k = byte::chr(
                                         data.s.offset(i as (isize)),
                                         k as (u32),
                                         b'\t' as (i32),

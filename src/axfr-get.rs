@@ -1,3 +1,5 @@
+use byte;
+
 extern "C" {
     fn __swbuf(arg1: i32, arg2: *mut __sFILE) -> i32;
     fn _exit(arg1: i32);
@@ -13,7 +15,6 @@ extern "C" {
     fn buffer_put(arg1: *mut buffer, arg2: *const u8, arg3: u32) -> i32;
     fn buffer_unixread(arg1: i32, arg2: *mut u8, arg3: u32) -> i32;
     fn buffer_unixwrite(arg1: i32, arg2: *const u8, arg3: u32) -> i32;
-    fn byte_diff(s: *mut u8, n: u32, t: *mut u8) -> i32;
     fn close(arg1: i32) -> i32;
     fn dns_domain_equal(arg1: *const u8, arg2: *const u8) -> i32;
     fn dns_domain_fromdot(arg1: *mut *mut u8, arg2: *const u8, arg3: u32) -> i32;
@@ -466,7 +467,7 @@ pub unsafe extern "C" fn doit(mut buf: *mut u8, mut len: u32, mut pos: u32) -> u
         len = pos.wrapping_add(dlen as (u32));
         (if dns_domain_suffix(d1 as (*const u8), zone as (*const u8)) == 0 {
              len
-         } else if byte_diff(
+         } else if byte::diff(
             data.as_mut_ptr().offset(2isize),
             2u32,
             (*b"\0\x01\0").as_ptr() as (*mut u8),
@@ -474,7 +475,7 @@ pub unsafe extern "C" fn doit(mut buf: *mut u8, mut len: u32, mut pos: u32) -> u
         {
              len
          } else {
-             if byte_diff(
+             if byte::diff(
                 data.as_mut_ptr(),
                 2u32,
                 (*b"\0\x06\0").as_ptr() as (*mut u8),
@@ -580,7 +581,7 @@ pub unsafe extern "C" fn doit(mut buf: *mut u8, mut len: u32, mut pos: u32) -> u
                          }
                      }
                  }
-             } else if byte_diff(
+             } else if byte::diff(
                 data.as_mut_ptr(),
                 2u32,
                 (*b"\0\x02\0").as_ptr() as (*mut u8),
@@ -588,7 +589,7 @@ pub unsafe extern "C" fn doit(mut buf: *mut u8, mut len: u32, mut pos: u32) -> u
             {
                  if stralloc_copys(&mut line as (*mut stralloc), (*b"&\0").as_ptr()) == 0 {
                      return 0u32;
-                 } else if byte_diff(d1, 2u32, (*b"\x01*\0").as_ptr() as (*mut u8)) == 0 {
+                 } else if byte::diff(d1, 2u32, (*b"\x01*\0").as_ptr() as (*mut u8)) == 0 {
                      errno = error_proto;
                      return 0u32;
                  } else if dns_domain_todot_cat(
@@ -609,7 +610,7 @@ pub unsafe extern "C" fn doit(mut buf: *mut u8, mut len: u32, mut pos: u32) -> u
                          return 0u32;
                      }
                  }
-             } else if byte_diff(
+             } else if byte::diff(
                 data.as_mut_ptr(),
                 2u32,
                 (*b"\0\x05\0").as_ptr() as (*mut u8),
@@ -635,7 +636,7 @@ pub unsafe extern "C" fn doit(mut buf: *mut u8, mut len: u32, mut pos: u32) -> u
                          return 0u32;
                      }
                  }
-             } else if byte_diff(
+             } else if byte::diff(
                 data.as_mut_ptr(),
                 2u32,
                 (*b"\0\x0C\0").as_ptr() as (*mut u8),
@@ -661,7 +662,7 @@ pub unsafe extern "C" fn doit(mut buf: *mut u8, mut len: u32, mut pos: u32) -> u
                          return 0u32;
                      }
                  }
-             } else if byte_diff(
+             } else if byte::diff(
                 data.as_mut_ptr(),
                 2u32,
                 (*b"\0\x0F\0").as_ptr() as (*mut u8),
@@ -699,7 +700,7 @@ pub unsafe extern "C" fn doit(mut buf: *mut u8, mut len: u32, mut pos: u32) -> u
                          return 0u32;
                      }
                  }
-             } else if byte_diff(
+             } else if byte::diff(
                 data.as_mut_ptr(),
                 2u32,
                 (*b"\0\x01\0").as_ptr() as (*mut u8),
@@ -1006,7 +1007,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
         die_parse();
     }
     pos = x_copy(packet.s, packet.len, pos, out.as_mut_ptr(), 10u32);
-    if byte_diff(
+    if byte::diff(
         out.as_mut_ptr(),
         4u32,
         (*b"\0\x06\0\x01\0").as_ptr() as (*mut u8),

@@ -1,5 +1,7 @@
-#[no_mangle]
-pub unsafe extern "C" fn byte_chr(mut s: *mut u8, mut n: u32, mut c: i32) -> u32 {
+//! `byte.rs`: Byte-related functionality which should probably be replaced by
+//! calls to the standard library
+
+pub unsafe fn chr(mut s: *mut u8, mut n: u32, mut c: i32) -> u32 {
     let mut ch: u8;
     let mut t: *mut u8;
     ch = c as (u8);
@@ -41,8 +43,7 @@ pub unsafe extern "C" fn byte_chr(mut s: *mut u8, mut n: u32, mut c: i32) -> u32
     ((t as (isize)).wrapping_sub(s as (isize)) / ::std::mem::size_of::<u8>() as (isize)) as (u32)
 }
 
-#[no_mangle]
-pub unsafe extern "C" fn byte_copy(mut to: *mut u8, mut n: u32, mut from: *mut u8) {
+pub unsafe fn copy(mut to: *mut u8, mut n: u32, mut from: *mut u8) {
     let mut _currentBlock;
     'loop0: loop {
         if n == 0 {
@@ -108,8 +109,7 @@ pub unsafe extern "C" fn byte_copy(mut to: *mut u8, mut n: u32, mut from: *mut u
     }
 }
 
-#[no_mangle]
-pub unsafe extern "C" fn byte_copyr(mut to: *mut u8, mut n: u32, mut from: *mut u8) {
+pub unsafe fn copyr(mut to: *mut u8, mut n: u32, mut from: *mut u8) {
     let mut _currentBlock;
     to = to.offset(n as (isize));
     from = from.offset(n as (isize));
@@ -169,8 +169,7 @@ pub unsafe extern "C" fn byte_copyr(mut to: *mut u8, mut n: u32, mut from: *mut 
     }
 }
 
-#[no_mangle]
-pub unsafe extern "C" fn byte_diff(mut s: *mut u8, mut n: u32, mut t: *mut u8) -> i32 {
+pub unsafe fn diff(mut s: *mut u8, mut n: u32, mut t: *mut u8) -> i32 {
     let mut _currentBlock;
     'loop0: loop {
         if n == 0 {
@@ -231,8 +230,7 @@ pub unsafe extern "C" fn byte_diff(mut s: *mut u8, mut n: u32, mut t: *mut u8) -
     }
 }
 
-#[no_mangle]
-pub unsafe extern "C" fn byte_zero(mut s: *mut u8, mut n: u32) {
+pub unsafe fn zero(mut s: *mut u8, mut n: u32) {
     'loop0: loop {
         if n == 0 {
             break;

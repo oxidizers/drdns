@@ -1,5 +1,6 @@
+use byte;
+
 extern "C" {
-    fn byte_copy(to: *mut u8, n: u32, from: *mut u8);
     fn stralloc_ready(arg1: *mut stralloc, arg2: u32) -> i32;
 }
 
@@ -26,7 +27,7 @@ pub unsafe extern "C" fn stralloc_copyb(
     if stralloc_ready(sa, n.wrapping_add(1u32)) == 0 {
         0i32
     } else {
-        byte_copy((*sa).s, n, s as (*mut u8));
+        byte::copy((*sa).s, n, s as (*mut u8));
         (*sa).len = n;
         *(*sa).s.offset(n as (isize)) = b'Z';
         1i32

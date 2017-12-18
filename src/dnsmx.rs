@@ -1,10 +1,11 @@
+use byte;
+
 extern "C" {
     fn _exit(arg1: i32);
     static mut buffer_1: *mut buffer;
     fn buffer_flush(arg1: *mut buffer) -> i32;
     fn buffer_put(arg1: *mut buffer, arg2: *const u8, arg3: u32) -> i32;
     fn buffer_puts(arg1: *mut buffer, arg2: *const u8) -> i32;
-    fn byte_chr(s: *mut u8, n: u32, c: i32) -> u32;
     fn dns_domain_fromdot(arg1: *mut *mut u8, arg2: *const u8, arg3: u32) -> i32;
     fn dns_domain_todot_cat(arg1: *mut stralloc, arg2: *const u8) -> i32;
     fn dns_mx(arg1: *mut stralloc, arg2: *const stralloc) -> i32;
@@ -180,7 +181,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
                 if !((i + 2i32) as (u32) < out.len) {
                     break;
                 }
-                j = byte_chr(
+                j = byte::chr(
                     out.s.offset(i as (isize)).offset(2isize),
                     out.len.wrapping_sub(i as (u32)).wrapping_sub(2u32),
                     0i32,

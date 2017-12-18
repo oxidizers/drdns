@@ -1,6 +1,6 @@
+use byte;
+
 extern "C" {
-    fn byte_copy(to: *mut u8, n: u32, from: *mut u8);
-    fn byte_diff(s: *mut u8, n: u32, t: *mut u8) -> i32;
     fn cdb_find(arg1: *mut cdb, arg2: *const u8, arg3: u32) -> i32;
     fn cdb_free(arg1: *mut cdb);
     fn cdb_init(arg1: *mut cdb, fd: i32);
@@ -82,9 +82,9 @@ unsafe extern "C" fn doit(mut q: *mut u8, mut qtype: *mut u8) -> i32 {
     let mut r: i32;
     let mut dlen: u32;
     let mut i: i32;
-    flaga = (byte_diff(qtype, 2u32, (*b"\0\x01\0").as_ptr() as (*mut u8)) == 0) as (i32);
-    flagtxt = (byte_diff(qtype, 2u32, (*b"\0\x10\0").as_ptr() as (*mut u8)) == 0) as (i32);
-    if byte_diff(qtype, 2u32, (*b"\0\xFF\0").as_ptr() as (*mut u8)) == 0 {
+    flaga = (byte::diff(qtype, 2u32, (*b"\0\x01\0").as_ptr() as (*mut u8)) == 0) as (i32);
+    flagtxt = (byte::diff(qtype, 2u32, (*b"\0\x10\0").as_ptr() as (*mut u8)) == 0) as (i32);
+    if byte::diff(qtype, 2u32, (*b"\0\xFF\0").as_ptr() as (*mut u8)) == 0 {
         flaga = {
             flagtxt = 1i32;
             flagtxt
@@ -152,7 +152,7 @@ unsafe extern "C" fn doit(mut q: *mut u8, mut qtype: *mut u8) -> i32 {
                             }
                         } else {
                             dlen = 12u32;
-                            byte_copy(
+                            byte::copy(
                                 data.as_mut_ptr(),
                                 dlen,
                                 (*b"\x7F\0\0\x02Listed $\0").as_ptr() as (*mut u8),

@@ -1,11 +1,11 @@
+use byte;
+
 extern "C" {
     fn _exit(arg1: i32);
     fn alloc(n: u32) -> *mut u8;
     static mut buffer_1: *mut buffer;
     fn buffer_flush(arg1: *mut buffer) -> i32;
     fn buffer_put(arg1: *mut buffer, arg2: *const u8, arg3: u32) -> i32;
-    fn byte_chr(s: *mut u8, n: u32, c: i32) -> u32;
-    fn byte_zero(s: *mut u8, n: u32);
     fn dns_name4_domain(arg1: *mut u8, arg2: *const u8);
     fn dns_name_packet(arg1: *mut stralloc, arg2: *const u8, arg3: u32) -> i32;
     fn dns_resolvconfip(arg1: *mut u8) -> i32;
@@ -378,7 +378,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     if x.is_null() {
         nomem();
     }
-    byte_zero(
+    byte::zero(
         x as (*mut u8),
         (xmax as (usize)).wrapping_mul(::std::mem::size_of::<line>()) as (u32),
     );
@@ -528,7 +528,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
                 if !(xnum < xmax && (numactive < maxactive)) {
                     break;
                 }
-                i = byte_chr(inbuf.as_mut_ptr(), inbuflen as (u32), b'\n' as (i32)) as (i32);
+                i = byte::chr(inbuf.as_mut_ptr(), inbuflen as (u32), b'\n' as (i32)) as (i32);
                 if inbuflen != 0 && (i == inbuflen) {
                     if stralloc_catb(
                         &mut partial as (*mut stralloc),
@@ -564,9 +564,9 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
                         j = j + 1;
                     }
                     if partial.len != 0 {
-                        i = byte_chr(partial.s, partial.len, b'\n' as (i32)) as (i32);
-                        i = byte_chr(partial.s, i as (u32), b'\t' as (i32)) as (i32);
-                        i = byte_chr(partial.s, i as (u32), b' ' as (i32)) as (i32);
+                        i = byte::chr(partial.s, partial.len, b'\n' as (i32)) as (i32);
+                        i = byte::chr(partial.s, i as (u32), b'\t' as (i32)) as (i32);
+                        i = byte::chr(partial.s, i as (u32), b' ' as (i32)) as (i32);
                         if stralloc_copyb(
                             &mut (*x.offset(xnum as (isize))).left as (*mut stralloc),
                             partial.s as (*const u8),

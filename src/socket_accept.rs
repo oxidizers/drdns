@@ -1,6 +1,7 @@
+use byte;
+
 extern "C" {
     fn accept(arg1: i32, arg2: *mut sockaddr, arg3: *mut u32) -> i32;
-    fn byte_copy(to: *mut u8, n: u32, from: *mut u8);
     fn uint16_unpack_big(arg1: *const u8, arg2: *mut u16);
 }
 
@@ -59,7 +60,7 @@ pub unsafe extern "C" fn socket_accept4(mut s: i32, mut ip: *mut u8, mut port: *
     if fd == -1i32 {
         -1i32
     } else {
-        byte_copy(ip, 4u32, &mut sa.sin_addr as (*mut in_addr) as (*mut u8));
+        byte::copy(ip, 4u32, &mut sa.sin_addr as (*mut in_addr) as (*mut u8));
         uint16_unpack_big(
             &mut sa.sin_port as (*mut u16) as (*mut u8) as (*const u8),
             port,
