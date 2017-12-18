@@ -3,7 +3,7 @@
 
 #include "uint32.h"
 
-extern char response[];
+extern char *response;
 extern unsigned int response_len;
 
 extern int response_query(const char *,const char *,const char *);
