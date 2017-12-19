@@ -38,7 +38,6 @@ extern "C" {
         arg4: *mut u8,
         arg5: *mut u8,
     ) -> i32;
-    fn read(arg1: i32, arg2: *mut ::std::os::raw::c_void, arg3: usize) -> isize;
     static mut response: *mut u8;
     fn response_hidettl();
     fn response_id(arg1: *const u8);
@@ -70,7 +69,6 @@ extern "C" {
     fn taia_now(arg1: *mut taia);
     fn taia_uint(arg1: *mut taia, arg2: u32);
     fn uint16_pack_big(arg1: *mut u8, arg2: u16);
-    fn write(__fd: i32, __buf: *const ::std::os::raw::c_void, __nbyte: usize) -> isize;
 }
 
 static mut myipoutgoing: [u8; 4] = [0u8; 4];
@@ -579,9 +577,9 @@ pub unsafe extern "C" fn t_rw(mut j: i32) {
     let mut r: i32;
     x = t.as_mut_ptr().offset(j as (isize));
     if (*x).state == -1i32 {
-        r = write(
+        r = libc::write(
             (*x).tcp,
-            (*x).buf.offset((*x).pos as (isize)) as (*const ::std::os::raw::c_void),
+            (*x).buf.offset((*x).pos as (isize)) as (*const libc::c_void),
             (*x).len.wrapping_sub((*x).pos) as (usize),
         ) as (i32);
         (if r <= 0i32 {
@@ -594,9 +592,9 @@ pub unsafe extern "C" fn t_rw(mut j: i32) {
              }
          })
     } else {
-        r = read(
+        r = libc::read(
             (*x).tcp,
-            &mut ch as (*mut u8) as (*mut ::std::os::raw::c_void),
+            &mut ch as (*mut u8) as (*mut libc::c_void),
             1usize,
         ) as (i32);
         (if r == 0i32 {
@@ -1013,9 +1011,9 @@ pub unsafe extern "C" fn _c_main() -> i32 {
         seed.as_mut_ptr(),
         ::std::mem::size_of::<[u8; 128]>() as (u32),
     );
-    read(
+    libc::read(
         0i32,
-        seed.as_mut_ptr() as (*mut ::std::os::raw::c_void),
+        seed.as_mut_ptr() as (*mut libc::c_void),
         ::std::mem::size_of::<[u8; 128]>(),
     );
     dns_random_init(seed.as_mut_ptr() as (*const u8));

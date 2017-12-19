@@ -3,7 +3,6 @@ use libc;
 
 extern "C" {
     fn close(arg1: i32) -> i32;
-    fn read(arg1: i32, arg2: *mut ::std::os::raw::c_void, arg3: usize) -> isize;
     fn stralloc_copys(arg1: *mut stralloc, arg2: *const u8) -> i32;
     fn stralloc_readyplus(arg1: *mut stralloc, arg2: u32) -> i32;
 }
@@ -35,9 +34,9 @@ pub unsafe extern "C" fn readclose_append(
             _currentBlock = 7;
             break;
         }
-        r = read(
+        r = libc::read(
             fd,
-            (*sa).s.offset((*sa).len as (isize)) as (*mut ::std::os::raw::c_void),
+            (*sa).s.offset((*sa).len as (isize)) as (*mut libc::c_void),
             bufsize as (usize),
         ) as (i32);
         if r == -1i32 {

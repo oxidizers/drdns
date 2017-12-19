@@ -14,7 +14,6 @@ extern "C" {
         arg6: isize,
     ) -> *mut ::std::os::raw::c_void;
     fn munmap(arg1: *mut ::std::os::raw::c_void, arg2: usize) -> i32;
-    fn read(arg1: i32, arg2: *mut ::std::os::raw::c_void, arg3: usize) -> isize;
     fn seek_set(arg1: i32, arg2: usize) -> i32;
     fn uint32_unpack(arg1: *const u8, arg2: *mut u32);
 }
@@ -148,9 +147,9 @@ pub unsafe extern "C" fn cdb_read(
             }
             let mut r: i32;
             'loop4: loop {
-                r = read(
+                r = libc::read(
                     (*c).fd,
-                    buf as (*mut ::std::os::raw::c_void),
+                    buf as libc::c_void,
                     len as (usize),
                 ) as (i32);
                 if !(r == -1i32 && (errno::errno() == Errno(libc::EINTR))) {

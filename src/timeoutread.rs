@@ -1,8 +1,8 @@
 use errno::{self, Errno};
+use libc;
 
 extern "C" {
     fn iopause(arg1: *mut pollfd, arg2: u32, arg3: *mut taia, arg4: *mut taia);
-    fn read(arg1: i32, arg2: *mut ::std::os::raw::c_void, arg3: usize) -> isize;
     fn taia_add(arg1: *mut taia, arg2: *const taia, arg3: *const taia);
     fn taia_less(arg1: *const taia, arg2: *const taia) -> i32;
     fn taia_now(arg1: *mut taia);
@@ -94,6 +94,6 @@ pub unsafe extern "C" fn timeoutread(
         errno::set_errno(Errno(libc::ETIMEDOUT));
         -1i32
     } else {
-        read(fd, buf as (*mut ::std::os::raw::c_void), len as (usize)) as (i32)
+        libc::read(fd, buf as (*mut libc::c_void), len as (usize)) as (i32)
     }
 }

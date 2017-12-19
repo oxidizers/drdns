@@ -8,11 +8,6 @@ use libc;
 
 type Op = unsafe fn(i32, *const u8, u32) -> i32;
 
-extern "C" {
-    fn read(arg1: i32, arg2: *mut ::std::os::raw::c_void, arg3: usize) -> isize;
-    fn write(__fd: i32, __buf: *const ::std::os::raw::c_void, __nbyte: usize) -> isize;
-}
-
 #[derive(Copy)]
 #[repr(C)]
 pub struct Buffer {
@@ -260,11 +255,11 @@ impl Buffer {
 }
 
 pub unsafe fn unixread(fd: i32, buf: *mut u8, len: u32) -> i32 {
-    read(fd, buf as (*mut ::std::os::raw::c_void), len as (usize)) as (i32)
+    libc::read(fd, buf as (*mut libc::c_void), len as (usize)) as (i32)
 }
 
 pub unsafe fn unixwrite(fd: i32, buf: *const u8, len: u32) -> i32 {
-    write(fd, buf as (*const ::std::os::raw::c_void), len as (usize)) as (i32)
+    libc::write(fd, buf as (*const libc::c_void), len as (usize)) as (i32)
 }
 
 unsafe fn allwrite(
