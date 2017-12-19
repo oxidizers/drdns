@@ -1,4 +1,5 @@
 use alloc;
+use libc;
 
 extern "C" {
     fn buffer_flush(arg1: *mut buffer) -> i32;
@@ -14,7 +15,6 @@ extern "C" {
     fn buffer_unixwrite(arg1: i32, arg2: *const u8, arg3: u32) -> i32;
     fn cdb_hash(arg1: *const u8, arg2: u32) -> u32;
     static mut errno: i32;
-    static mut error_nomem: i32;
     fn seek_set(arg1: i32, arg2: usize) -> i32;
     fn uint32_pack(arg1: *mut u8, arg2: u32);
 }
@@ -105,7 +105,7 @@ pub unsafe extern "C" fn cdb_make_start(mut c: *mut cdb_make, mut fd: i32) -> i3
 unsafe extern "C" fn posplus(mut c: *mut cdb_make, mut len: u32) -> i32 {
     let mut newpos: u32 = (*c).pos.wrapping_add(len);
     if newpos < len {
-        errno = error_nomem;
+        errno = libc::ENOMEM;
         -1i32
     } else {
         (*c).pos = newpos;
@@ -155,10 +155,10 @@ pub unsafe extern "C" fn cdb_make_addbegin(
 ) -> i32 {
     let mut buf: [u8; 8];
     if keylen > 0xffffffffu32 {
-        errno = error_nomem;
+        errno = libc::ENOMEM;
         -1i32
     } else if datalen > 0xffffffffu32 {
-        errno = error_nomem;
+        errno = libc::ENOMEM;
         -1i32
     } else {
         uint32_pack(buf.as_mut_ptr(), keylen);
@@ -252,7 +252,7 @@ pub unsafe extern "C" fn cdb_make_finish(mut c: *mut cdb_make) -> i32 {
     u = 0u32.wrapping_sub(1u32);
     u = (u as (usize)).wrapping_div(::std::mem::size_of::<cdb_hp>()) as (u32);
     if memsize > u {
-        errno = error_nomem;
+        errno = libc::ENOMEM;
         -1i32
     } else {
         (*c).split = alloc::alloc((memsize as (usize)).wrapping_mul(

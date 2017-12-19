@@ -30,7 +30,6 @@ extern "C" {
         arg6: *const u8,
     ) -> i32;
     static mut errno: i32;
-    static mut error_proto: i32;
     fn iopause(arg1: *mut pollfd, arg2: u32, arg3: *mut taia, arg4: *mut taia);
     fn ip4_fmt(arg1: *mut u8, arg2: *const u8) -> u32;
     fn parsetype(arg1: *mut u8, arg2: *mut u8) -> i32;
@@ -1031,7 +1030,7 @@ pub unsafe extern "C" fn parsepacket(
             );
             rcode = (header[3usize] as (i32) & 15i32) as (u32);
             if rcode != 0 && (rcode != 3u32) {
-                errno = error_proto;
+                errno = libc::EPROTO;
             } else {
                 flagout = 0i32;
                 flagcname = 0i32;

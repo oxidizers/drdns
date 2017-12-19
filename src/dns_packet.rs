@@ -1,7 +1,8 @@
+use libc;
+
 extern "C" {
     fn dns_domain_copy(arg1: *mut *mut u8, arg2: *const u8) -> i32;
     static mut errno: i32;
-    static mut error_proto: i32;
 }
 
 #[no_mangle]
@@ -33,7 +34,7 @@ pub unsafe extern "C" fn dns_packet_copy(
     if _currentBlock == 1 {
         pos
     } else {
-        errno = error_proto;
+        errno = libc::EPROTO;
         0u32
     }
 }
@@ -75,7 +76,7 @@ pub unsafe extern "C" fn dns_packet_skipname(
     } else if _currentBlock == 7 {
         pos.wrapping_add(1u32)
     } else {
-        errno = error_proto;
+        errno = libc::EPROTO;
         0u32
     }
 }
@@ -192,7 +193,7 @@ pub unsafe extern "C" fn dns_packet_getname(
              pos
          })
     } else {
-        errno = error_proto;
+        errno = libc::EPROTO;
         0u32
     }
 }

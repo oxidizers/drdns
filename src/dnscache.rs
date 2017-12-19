@@ -1,5 +1,6 @@
 use alloc;
 use byte;
+use libc;
 
 extern "C" {
     fn cache_init(arg1: u32) -> i32;
@@ -10,9 +11,6 @@ extern "C" {
     fn droproot(arg1: *const u8);
     fn env_get(arg1: *const u8) -> *mut u8;
     static mut errno: i32;
-    static mut error_pipe: i32;
-    static mut error_proto: i32;
-    static mut error_timeout: i32;
     fn iopause(arg1: *mut pollfd, arg2: u32, arg3: *mut taia, arg4: *mut taia);
     fn ip4_scan(arg1: *const u8, arg2: *mut u8) -> u32;
     fn log_query(
@@ -280,7 +278,7 @@ unsafe extern "C" fn packetquery(
 ) -> i32 {
     let mut pos: u32;
     let mut header: [u8; 12];
-    errno = error_proto;
+    errno = libc::EPROTO;
     pos = dns_packet_copy(buf as (*const u8), len, 0u32, header.as_mut_ptr(), 12u32);
     if pos == 0 {
         0i32
@@ -359,7 +357,7 @@ pub unsafe extern "C" fn u_new() {
             }
             i = i + 1;
         }
-        errno = error_timeout;
+        errno = libc::ETIMEDOUT;
         u_drop(j);
     }
     x = u.as_mut_ptr().offset(j as (isize));
@@ -547,7 +545,7 @@ pub unsafe extern "C" fn t_close(mut j: i32) {
 #[no_mangle]
 pub unsafe extern "C" fn t_drop(mut j: i32) {
     log_querydrop(&mut t[j as (usize)].active as (*mut usize));
-    errno = error_pipe;
+    errno = libc::EPIPE;
     t_close(j);
 }
 
@@ -602,7 +600,7 @@ pub unsafe extern "C" fn t_rw(mut j: i32) {
             1usize,
         ) as (i32);
         (if r == 0i32 {
-             errno = error_pipe;
+             errno = libc::EPIPE;
              t_close(j);
          } else if r < 0i32 {
              t_close(j);
@@ -613,7 +611,7 @@ pub unsafe extern "C" fn t_rw(mut j: i32) {
          } else if (*x).state == 2i32 {
              (*x).len = (*x).len.wrapping_add(ch as (u32));
              (if (*x).len == 0 {
-                  errno = error_proto;
+                  errno = libc::EPROTO;
                   t_close(j);
               } else {
                   (*x).buf = alloc::alloc((*x).len);
@@ -706,7 +704,7 @@ pub unsafe extern "C" fn t_new() {
             }
             i = i + 1;
         }
-        errno = error_timeout;
+        errno = libc::ETIMEDOUT;
         if t[j as (usize)].state == 0i32 {
             t_drop(j);
         } else {

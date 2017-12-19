@@ -1,4 +1,5 @@
 use byte;
+use libc;
 
 extern "C" {
     fn dns_domain_equal(arg1: *const u8, arg2: *const u8) -> i32;
@@ -6,7 +7,6 @@ extern "C" {
     fn dns_packet_copy(arg1: *const u8, arg2: u32, arg3: u32, arg4: *mut u8, arg5: u32) -> u32;
     fn dns_packet_getname(arg1: *const u8, arg2: u32, arg3: u32, arg4: *mut *mut u8) -> u32;
     static mut errno: i32;
-    static mut error_proto: i32;
     fn stralloc_catb(arg1: *mut stralloc, arg2: *const u8, arg3: u32) -> i32;
     fn stralloc_cats(arg1: *mut stralloc, arg2: *const u8) -> i32;
     fn stralloc_catulong0(arg1: *mut stralloc, arg2: usize, arg3: u32) -> i32;
@@ -233,7 +233,7 @@ pub unsafe extern "C" fn printrecord_cat(
                     ) == 0
                     {
                            if datalen as (i32) != 4i32 {
-                               errno = error_proto;
+                               errno = libc::EPROTO;
                                return 0u32;
                            } else if stralloc_cats(out, (*b" A \0").as_ptr()) == 0 {
                                return 0u32;
@@ -344,7 +344,7 @@ pub unsafe extern "C" fn printrecord_cat(
                        (if stralloc_cats(out, (*b"\n\0").as_ptr()) == 0 {
                             0u32
                         } else if pos != newpos {
-                            errno = error_proto;
+                            errno = libc::EPROTO;
                             0u32
                         } else {
                             newpos

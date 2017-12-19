@@ -1,7 +1,8 @@
+use libc;
+
 extern "C" {
     fn close(arg1: i32) -> i32;
     static mut errno: i32;
-    static mut error_intr: i32;
     fn read(arg1: i32, arg2: *mut ::std::os::raw::c_void, arg3: usize) -> isize;
     fn stralloc_copys(arg1: *mut stralloc, arg2: *const u8) -> i32;
     fn stralloc_readyplus(arg1: *mut stralloc, arg2: u32) -> i32;
@@ -40,7 +41,7 @@ pub unsafe extern "C" fn readclose_append(
             bufsize as (usize),
         ) as (i32);
         if r == -1i32 {
-            if errno == error_intr {
+            if errno == libc::EINTR {
                 continue;
             }
         }
