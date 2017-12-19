@@ -56,7 +56,7 @@ impl Clone for timezone {
 
 impl taia {
     #[no_mangle]
-    pub unsafe extern "C" fn taia_add(mut t: *mut taia, mut u: *const taia, mut v: *const taia) {
+    pub unsafe extern "C" fn taia_add(t: *mut taia, u: *const taia, v: *const taia) {
         (*t).sec.x = (*u).sec.x.wrapping_add((*v).sec.x);
         (*t).nano = (*u).nano.wrapping_add((*v).nano);
         (*t).atto = (*u).atto.wrapping_add((*v).atto);
@@ -71,17 +71,17 @@ impl taia {
     }
 
     #[no_mangle]
-    pub unsafe extern "C" fn taia_approx(mut t: *const taia) -> f64 {
-        (*(&(*t).sec as (*const tai))).x as (f64) + taia_frac(t)
+    pub unsafe extern "C" fn taia_approx(t: *const taia) -> f64 {
+        (*(&(*t).sec as (*const tai))).x as (f64) + taia::taia_frac(t)
     }
 
     #[no_mangle]
-    pub unsafe extern "C" fn taia_frac(mut t: *const taia) -> f64 {
+    pub unsafe extern "C" fn taia_frac(t: *const taia) -> f64 {
         ((*t).atto as (f64) * 0.000000001f64 + (*t).nano as (f64)) * 0.000000001f64
     }
 
     #[no_mangle]
-    pub unsafe extern "C" fn taia_less(mut t: *const taia, mut u: *const taia) -> i32 {
+    pub unsafe extern "C" fn taia_less(t: *const taia, u: *const taia) -> i32 {
         if (*t).sec.x < (*u).sec.x {
             1i32
         } else if (*t).sec.x > (*u).sec.x {
@@ -96,12 +96,17 @@ impl taia {
     }
 
     #[no_mangle]
-    pub unsafe extern "C" fn taia_now(mut t: *mut taia) {
-        let mut now: timeval;
+    pub unsafe extern "C" fn taia_now(t: *mut taia) {
+        let mut now: timeval = timeval {
+            tv_sec: 0,
+            tv_usec: 0
+        };
+
         gettimeofday(
             &mut now as (*mut timeval),
             0i32 as (*mut timezone) as (*mut ::std::os::raw::c_void),
         );
+
         (*(&mut (*t).sec as (*mut tai))).x =
             4611686018427387914u64.wrapping_add(now.tv_sec as (usize) as (u64)) as (usize);
         (*t).nano = (1000i32 * now.tv_usec + 500i32) as (usize);
@@ -109,7 +114,7 @@ impl taia {
     }
 
     #[no_mangle]
-    pub unsafe extern "C" fn taia_pack(mut s: *mut u8, mut t: *const taia) {
+    pub unsafe extern "C" fn taia_pack(mut s: *mut u8, t: *const taia) {
         let mut x: usize;
         tai_pack(s, &(*t).sec as (*const tai));
         s = s.offset(8isize);
@@ -132,9 +137,9 @@ impl taia {
     }
 
     #[no_mangle]
-    pub unsafe extern "C" fn taia_sub(mut t: *mut taia, mut u: *const taia, mut v: *const taia) {
-        let mut unano: usize = (*u).nano;
-        let mut uatto: usize = (*u).atto;
+    pub unsafe extern "C" fn taia_sub(t: *mut taia, u: *const taia, v: *const taia) {
+        let unano: usize = (*u).nano;
+        let uatto: usize = (*u).atto;
         (*t).sec.x = (*u).sec.x.wrapping_sub((*v).sec.x);
         (*t).nano = unano.wrapping_sub((*v).nano);
         (*t).atto = uatto.wrapping_sub((*v).atto);
@@ -149,12 +154,12 @@ impl taia {
     }
 
     #[no_mangle]
-    pub unsafe extern "C" fn taia_tai(mut ta: *const taia, mut t: *mut tai) {
+    pub unsafe extern "C" fn taia_tai(ta: *const taia, t: *mut tai) {
         *t = (*ta).sec;
     }
 
     #[no_mangle]
-    pub unsafe extern "C" fn taia_uint(mut t: *mut taia, mut s: u32) {
+    pub unsafe extern "C" fn taia_uint(t: *mut taia, s: u32) {
         (*t).sec.x = s as (usize);
         (*t).nano = 0usize;
         (*t).atto = 0usize;

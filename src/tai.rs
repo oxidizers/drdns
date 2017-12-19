@@ -25,19 +25,19 @@ impl Clone for tai {
 
 impl tai {
     #[no_mangle]
-    pub unsafe extern "C" fn tai_add(mut t: *mut tai, mut u: *const tai, mut v: *const tai) {
+    pub unsafe extern "C" fn tai_add(t: *mut tai, u: *const tai, v: *const tai) {
         (*t).x = (*u).x.wrapping_add((*v).x);
     }
 
     #[no_mangle]
-    pub unsafe extern "C" fn tai_now(mut t: *mut tai) {
+    pub unsafe extern "C" fn tai_now(t: *mut tai) {
         (*t).x =
             4611686018427387914u64.wrapping_add(time(0i32 as (*mut isize)) as (usize) as (u64)) as
                 (usize);
     }
 
     #[no_mangle]
-    pub unsafe extern "C" fn tai_pack(mut s: *mut u8, mut t: *const tai) {
+    pub unsafe extern "C" fn tai_pack(s: *mut u8, t: *const tai) {
         let mut x: usize;
         x = (*t).x;
         *s.offset(7isize) = (x & 255usize) as (u8);
@@ -58,17 +58,17 @@ impl tai {
     }
 
     #[no_mangle]
-    pub unsafe extern "C" fn tai_sub(mut t: *mut tai, mut u: *const tai, mut v: *const tai) {
+    pub unsafe extern "C" fn tai_sub(t: *mut tai, u: *const tai, v: *const tai) {
         (*t).x = (*u).x.wrapping_sub((*v).x);
     }
 
     #[no_mangle]
-    pub unsafe extern "C" fn tai_uint(mut t: *mut tai, mut u: u32) {
+    pub unsafe extern "C" fn tai_uint(t: *mut tai, u: u32) {
         (*t).x = u as (usize);
     }
 
     #[no_mangle]
-    pub unsafe extern "C" fn tai_unpack(mut s: *const u8, mut t: *mut tai) {
+    pub unsafe extern "C" fn tai_unpack(s: *const u8, t: *mut tai) {
         let mut x: usize;
         x = *s.offset(0isize) as (usize);
         x = x << 8i32;
