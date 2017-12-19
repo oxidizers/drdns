@@ -2,6 +2,8 @@ use alloc;
 use byte;
 use errno::{self, Errno};
 use libc;
+use tai::Tai;
+use taia::TaiA;
 
 extern "C" {
     fn close(arg1: i32) -> i32;
@@ -17,37 +19,7 @@ extern "C" {
     fn socket_connected(arg1: i32) -> i32;
     fn socket_tcp() -> i32;
     fn socket_udp() -> i32;
-    fn taia_add(arg1: *mut taia, arg2: *const taia, arg3: *const taia);
-    fn taia_less(arg1: *const taia, arg2: *const taia) -> i32;
-    fn taia_now(arg1: *mut taia);
-    fn taia_uint(arg1: *mut taia, arg2: u32);
     fn uint16_pack_big(arg1: *mut u8, arg2: u16);
-}
-
-#[derive(Copy)]
-#[repr(C)]
-pub struct tai {
-    pub x: usize,
-}
-
-impl Clone for tai {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
-#[derive(Copy)]
-#[repr(C)]
-pub struct taia {
-    pub sec: tai,
-    pub nano: usize,
-    pub atto: usize,
-}
-
-impl Clone for taia {
-    fn clone(&self) -> Self {
-        *self
-    }
 }
 
 #[derive(Copy)]
@@ -61,7 +33,7 @@ pub struct dns_transmit {
     pub tcpstate: i32,
     pub udploop: u32,
     pub curserver: u32,
-    pub deadline: taia,
+    pub deadline: TaiA,
     pub pos: u32,
     pub servers: *const u8,
     pub localip: [u8; 4],
@@ -140,7 +112,7 @@ unsafe extern "C" fn randombind(mut d: *mut dns_transmit) -> i32 {
 
 unsafe extern "C" fn thistcp(mut d: *mut dns_transmit) -> i32 {
     let mut _currentBlock;
-    let mut now: taia;
+    let mut now: TaiA;
     let mut ip: *const u8;
     socketfree(d);
     packetfree(d);
@@ -169,12 +141,12 @@ unsafe extern "C" fn thistcp(mut d: *mut dns_transmit) -> i32 {
                 _currentBlock = 12;
                 break;
             }
-            taia_now(&mut now as (*mut taia));
-            taia_uint(&mut (*d).deadline as (*mut taia), 10u32);
-            taia_add(
-                &mut (*d).deadline as (*mut taia),
-                &mut (*d).deadline as (*mut taia) as (*const taia),
-                &mut now as (*mut taia) as (*const taia),
+            TaiA::now(&mut now as (*mut TaiA));
+            TaiA::uint(&mut (*d).deadline as (*mut TaiA), 10u32);
+            TaiA::add(
+                &mut (*d).deadline as (*mut TaiA),
+                &mut (*d).deadline as (*mut TaiA) as (*const TaiA),
+                &mut now as (*mut TaiA) as (*const TaiA),
             );
             if socket_connect4((*d).s1 - 1i32, ip, 53u16) == 0i32 {
                 _currentBlock = 11;
@@ -268,16 +240,16 @@ unsafe extern "C" fn thisudp(mut d: *mut dns_transmit) -> i32 {
         dns_transmit_free(d);
         -1i32
     } else if _currentBlock == 12 {
-        let mut now: taia;
-        taia_now(&mut now as (*mut taia));
-        taia_uint(
-            &mut (*d).deadline as (*mut taia),
+        let mut now: TaiA;
+        TaiA::now(&mut now as (*mut TaiA));
+        TaiA::uint(
+            &mut (*d).deadline as (*mut TaiA),
             timeouts[(*d).udploop as (usize)] as (u32),
         );
-        taia_add(
-            &mut (*d).deadline as (*mut taia),
-            &mut (*d).deadline as (*mut taia) as (*const taia),
-            &mut now as (*mut taia) as (*const taia),
+        TaiA::add(
+            &mut (*d).deadline as (*mut TaiA),
+            &mut (*d).deadline as (*mut TaiA) as (*const TaiA),
+            &mut now as (*mut TaiA) as (*const TaiA),
         );
         (*d).tcpstate = 0i32;
         0i32
@@ -364,7 +336,7 @@ impl Clone for pollfd {
 pub unsafe extern "C" fn dns_transmit_io(
     mut d: *mut dns_transmit,
     mut x: *mut pollfd,
-    mut deadline: *mut taia,
+    mut deadline: *mut TaiA,
 ) {
     (*x).fd = (*d).s1 - 1i32;
     let switch1 = (*d).tcpstate;
@@ -373,9 +345,9 @@ pub unsafe extern "C" fn dns_transmit_io(
     } else if switch1 == 5i32 || switch1 == 4i32 || switch1 == 3i32 || switch1 == 0i32 {
         (*x).events = 0x1i16;
     }
-    if taia_less(
-        &mut (*d).deadline as (*mut taia) as (*const taia),
-        deadline as (*const taia),
+    if TaiA::less(
+        &mut (*d).deadline as (*mut TaiA) as (*const TaiA),
+        deadline as (*const TaiA),
     ) != 0
     {
         *deadline = (*d).deadline;
@@ -474,7 +446,7 @@ unsafe extern "C" fn serverfailed(mut buf: *const u8, mut len: u32) -> i32 {
 pub unsafe extern "C" fn dns_transmit_get(
     mut d: *mut dns_transmit,
     mut x: *const pollfd,
-    mut when: *const taia,
+    mut when: *const TaiA,
 ) -> i32 {
     let mut udpbuf: [u8; 513];
     let mut ch: u8;
@@ -483,7 +455,7 @@ pub unsafe extern "C" fn dns_transmit_get(
     errno::set_errno(Errno(libc::EIO));
     fd = (*d).s1 - 1i32;
     if (*x).revents == 0 {
-        (if taia_less(when, &mut (*d).deadline as (*mut taia) as (*const taia)) != 0 {
+        (if TaiA::less(when, &mut (*d).deadline as (*mut TaiA) as (*const TaiA)) != 0 {
              0i32
          } else {
              errno::set_errno(Errno(libc::ETIMEDOUT));
@@ -556,13 +528,13 @@ pub unsafe extern "C" fn dns_transmit_get(
          } else {
              (*d).pos = (*d).pos.wrapping_add(r as (u32));
              if (*d).pos == (*d).querylen {
-                 let mut now: taia;
-                 taia_now(&mut now as (*mut taia));
-                 taia_uint(&mut (*d).deadline as (*mut taia), 10u32);
-                 taia_add(
-                    &mut (*d).deadline as (*mut taia),
-                    &mut (*d).deadline as (*mut taia) as (*const taia),
-                    &mut now as (*mut taia) as (*const taia),
+                 let mut now: TaiA;
+                 TaiA::now(&mut now as (*mut TaiA));
+                 TaiA::uint(&mut (*d).deadline as (*mut TaiA), 10u32);
+                 TaiA::add(
+                    &mut (*d).deadline as (*mut TaiA),
+                    &mut (*d).deadline as (*mut TaiA) as (*const TaiA),
+                    &mut now as (*mut TaiA) as (*const TaiA),
                 );
                  (*d).tcpstate = 3i32;
              }

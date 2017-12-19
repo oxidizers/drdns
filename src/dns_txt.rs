@@ -1,4 +1,6 @@
 use byte;
+use tai::Tai;
+use taia::TaiA;
 
 extern "C" {
     fn dns_domain_free(arg1: *mut *mut u8);
@@ -149,32 +151,6 @@ static mut q: *mut u8 = 0i32 as (*mut u8);
 
 #[derive(Copy)]
 #[repr(C)]
-pub struct tai {
-    pub x: usize,
-}
-
-impl Clone for tai {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
-#[derive(Copy)]
-#[repr(C)]
-pub struct taia {
-    pub sec: tai,
-    pub nano: usize,
-    pub atto: usize,
-}
-
-impl Clone for taia {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
-#[derive(Copy)]
-#[repr(C)]
 pub struct dns_transmit {
     pub query: *mut u8,
     pub querylen: u32,
@@ -184,7 +160,7 @@ pub struct dns_transmit {
     pub tcpstate: i32,
     pub udploop: u32,
     pub curserver: u32,
-    pub deadline: taia,
+    pub deadline: TaiA,
     pub pos: u32,
     pub servers: *const u8,
     pub localip: [u8; 4],

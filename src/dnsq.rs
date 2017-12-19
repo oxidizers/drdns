@@ -2,6 +2,8 @@ use byte;
 use buffer::Buffer;
 use errno::errno;
 use libc;
+use tai::Tai;
+use taia::TaiA;
 
 extern "C" {
     static mut buffer_1: *mut Buffer;
@@ -9,8 +11,8 @@ extern "C" {
     fn dns_domain_todot_cat(arg1: *mut stralloc, arg2: *const u8) -> i32;
     fn dns_ip4_qualify(arg1: *mut stralloc, arg2: *mut stralloc, arg3: *const stralloc) -> i32;
     fn dns_random_init(arg1: *const u8);
-    fn dns_transmit_get(arg1: *mut dns_transmit, arg2: *const pollfd, arg3: *const taia) -> i32;
-    fn dns_transmit_io(arg1: *mut dns_transmit, arg2: *mut pollfd, arg3: *mut taia);
+    fn dns_transmit_get(arg1: *mut dns_transmit, arg2: *const pollfd, arg3: *const TaiA) -> i32;
+    fn dns_transmit_io(arg1: *mut dns_transmit, arg2: *mut pollfd, arg3: *mut TaiA);
     fn dns_transmit_start(
         arg1: *mut dns_transmit,
         arg2: *const u8,
@@ -19,7 +21,7 @@ extern "C" {
         arg5: *const u8,
         arg6: *const u8,
     ) -> i32;
-    fn iopause(arg1: *mut pollfd, arg2: u32, arg3: *mut taia, arg4: *mut taia);
+    fn iopause(arg1: *mut pollfd, arg2: u32, arg3: *mut TaiA, arg4: *mut TaiA);
     fn parsetype(arg1: *mut u8, arg2: *mut u8) -> i32;
     fn printpacket_cat(arg1: *mut stralloc, arg2: *mut u8, arg3: u32) -> u32;
     fn stralloc_cats(arg1: *mut stralloc, arg2: *const u8) -> i32;
@@ -36,9 +38,6 @@ extern "C" {
         arg8: *const strerr,
     );
     static mut strerr_sys: strerr;
-    fn taia_add(arg1: *mut taia, arg2: *const taia, arg3: *const taia);
-    fn taia_now(arg1: *mut taia);
-    fn taia_uint(arg1: *mut taia, arg2: u32);
     fn uint16_unpack_big(arg1: *const u8, arg2: *mut u16);
 }
 
@@ -87,32 +86,6 @@ pub unsafe extern "C" fn oops() {
 
 #[derive(Copy)]
 #[repr(C)]
-pub struct tai {
-    pub x: usize,
-}
-
-impl Clone for tai {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
-#[derive(Copy)]
-#[repr(C)]
-pub struct taia {
-    pub sec: tai,
-    pub nano: usize,
-    pub atto: usize,
-}
-
-impl Clone for taia {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
-#[derive(Copy)]
-#[repr(C)]
 pub struct dns_transmit {
     pub query: *mut u8,
     pub querylen: u32,
@@ -122,7 +95,7 @@ pub struct dns_transmit {
     pub tcpstate: i32,
     pub udploop: u32,
     pub curserver: u32,
-    pub deadline: taia,
+    pub deadline: TaiA,
     pub pos: u32,
     pub servers: *const u8,
     pub localip: [u8; 4],
@@ -144,8 +117,8 @@ static mut tx: dns_transmit = dns_transmit {
     tcpstate: 0i32,
     udploop: 0u32,
     curserver: 0u32,
-    deadline: taia {
-        sec: tai { x: 0usize },
+    deadline: TaiA {
+        sec: Tai { x: 0usize },
         nano: 0usize,
         atto: 0usize,
     },
@@ -172,8 +145,8 @@ impl Clone for pollfd {
 #[no_mangle]
 pub unsafe extern "C" fn resolve(mut q: *mut u8, mut qtype: *mut u8, mut servers: *mut u8) -> i32 {
     let mut _currentBlock;
-    let mut stamp: taia;
-    let mut deadline: taia;
+    let mut stamp: TaiA;
+    let mut deadline: TaiA;
     let mut x: [pollfd; 1];
     let mut r: i32;
     if dns_transmit_start(
@@ -188,28 +161,28 @@ pub unsafe extern "C" fn resolve(mut q: *mut u8, mut qtype: *mut u8, mut servers
         -1i32
     } else {
         'loop1: loop {
-            taia_now(&mut stamp as (*mut taia));
-            taia_uint(&mut deadline as (*mut taia), 120u32);
-            taia_add(
-                &mut deadline as (*mut taia),
-                &mut deadline as (*mut taia) as (*const taia),
-                &mut stamp as (*mut taia) as (*const taia),
+            TaiA::now(&mut stamp as (*mut TaiA));
+            TaiA::uint(&mut deadline as (*mut TaiA), 120u32);
+            TaiA::add(
+                &mut deadline as (*mut TaiA),
+                &mut deadline as (*mut TaiA) as (*const TaiA),
+                &mut stamp as (*mut TaiA) as (*const TaiA),
             );
             dns_transmit_io(
                 &mut tx as (*mut dns_transmit),
                 x.as_mut_ptr(),
-                &mut deadline as (*mut taia),
+                &mut deadline as (*mut TaiA),
             );
             iopause(
                 x.as_mut_ptr(),
                 1u32,
-                &mut deadline as (*mut taia),
-                &mut stamp as (*mut taia),
+                &mut deadline as (*mut TaiA),
+                &mut stamp as (*mut TaiA),
             );
             r = dns_transmit_get(
                 &mut tx as (*mut dns_transmit),
                 x.as_mut_ptr() as (*const pollfd),
-                &mut stamp as (*mut taia) as (*const taia),
+                &mut stamp as (*mut TaiA) as (*const TaiA),
             );
             if r == -1i32 {
                 _currentBlock = 4;

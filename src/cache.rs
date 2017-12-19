@@ -1,14 +1,9 @@
 use alloc;
 use byte;
 use libc;
+use tai::Tai;
 
 extern "C" {
-    fn tai_add(arg1: *mut tai, arg2: *const tai, arg3: *const tai);
-    fn tai_now(arg1: *mut tai);
-    fn tai_pack(arg1: *mut u8, arg2: *const tai);
-    fn tai_sub(arg1: *mut tai, arg2: *const tai, arg3: *const tai);
-    fn tai_uint(arg1: *mut tai, arg2: u32);
-    fn tai_unpack(arg1: *const u8, arg2: *mut tai);
     fn uint32_pack(arg1: *mut u8, arg2: u32);
     fn uint32_unpack(arg1: *const u8, arg2: *mut u32);
 }
@@ -27,18 +22,6 @@ static mut writer: u32 = 0u32;
 static mut oldest: u32 = 0u32;
 
 static mut unused: u32 = 0u32;
-
-#[derive(Copy)]
-#[repr(C)]
-pub struct tai {
-    pub x: usize,
-}
-
-impl Clone for tai {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
 
 unsafe extern "C" fn hash(mut key: *const u8, mut keylen: u32) -> u32 {
     let mut result: u32 = 5381u32;
@@ -80,8 +63,8 @@ pub unsafe extern "C" fn cache_get(
     mut ttl: *mut u32,
 ) -> *mut u8 {
     let mut _currentBlock;
-    let mut expire: tai;
-    let mut now: tai;
+    let mut expire: Tai;
+    let mut now: Tai;
     let mut pos: u32;
     let mut prevpos: u32;
     let mut nextpos: u32;
@@ -132,20 +115,20 @@ pub unsafe extern "C" fn cache_get(
          } else if _currentBlock == 10 {
              0i32 as (*mut u8)
          } else {
-             tai_unpack(
+             Tai::unpack(
                 x.offset(pos as (isize)).offset(12isize) as (*const u8),
-                &mut expire as (*mut tai),
+                &mut expire as (*mut Tai),
             );
-             tai_now(&mut now as (*mut tai));
-             (if (*(&mut expire as (*mut tai))).x < (*(&mut now as (*mut tai))).x {
+             Tai::now(&mut now as (*mut Tai));
+             (if (*(&mut expire as (*mut Tai))).x < (*(&mut now as (*mut Tai))).x {
                   0i32 as (*mut u8)
               } else {
-                  tai_sub(
-                    &mut expire as (*mut tai),
-                    &mut expire as (*mut tai) as (*const tai),
-                    &mut now as (*mut tai) as (*const tai),
+                  Tai::sub(
+                    &mut expire as (*mut Tai),
+                    &mut expire as (*mut Tai) as (*const Tai),
+                    &mut now as (*mut Tai) as (*const Tai),
                 );
-                  d = (*(&mut expire as (*mut tai))).x as (f64);
+                  d = (*(&mut expire as (*mut Tai))).x as (f64);
                   if d > 604800i32 as (f64) {
                       d = 604800i32 as (f64);
                   }
@@ -183,8 +166,8 @@ pub unsafe extern "C" fn cache_set(
     mut ttl: u32,
 ) {
     let mut _currentBlock;
-    let mut now: tai;
-    let mut expire: tai;
+    let mut now: Tai;
+    let mut expire: Tai;
     let mut entrylen: u32;
     let mut keyhash: u32;
     let mut pos: u32;
@@ -229,12 +212,12 @@ pub unsafe extern "C" fn cache_set(
         }
         (if _currentBlock == 8 {
              keyhash = hash(key, keylen);
-             tai_now(&mut now as (*mut tai));
-             tai_uint(&mut expire as (*mut tai), ttl);
-             tai_add(
-                &mut expire as (*mut tai),
-                &mut expire as (*mut tai) as (*const tai),
-                &mut now as (*mut tai) as (*const tai),
+             Tai::now(&mut now as (*mut Tai));
+             Tai::uint(&mut expire as (*mut Tai), ttl);
+             Tai::add(
+                &mut expire as (*mut Tai),
+                &mut expire as (*mut Tai) as (*const Tai),
+                &mut now as (*mut Tai) as (*const Tai),
             );
              pos = get4(keyhash);
              if pos != 0 {
@@ -243,9 +226,9 @@ pub unsafe extern "C" fn cache_set(
              set4(writer, pos ^ keyhash);
              set4(writer.wrapping_add(4u32), keylen);
              set4(writer.wrapping_add(8u32), datalen);
-             tai_pack(
+             Tai::pack(
                 x.offset(writer as (isize)).offset(12isize),
-                &mut expire as (*mut tai) as (*const tai),
+                &mut expire as (*mut Tai) as (*const Tai),
             );
              byte::copy(
                 x.offset(writer as (isize)).offset(20isize),
