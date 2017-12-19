@@ -1,8 +1,7 @@
+use alloc;
 use byte;
 
 extern "C" {
-    fn alloc(n: u32) -> *mut u8;
-    fn alloc_free(x: *mut u8);
     fn cache_get(arg1: *const u8, arg2: u32, arg3: *mut u32, arg4: *mut u32) -> *mut u8;
     fn cache_set(arg1: *const u8, arg2: u32, arg3: *const u8, arg4: u32, arg5: u32);
     fn case_diffb(arg1: *const u8, arg2: u32, arg3: *const u8) -> i32;
@@ -646,12 +645,12 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                 if _currentBlock == 183 {
                                 } else {
                                     if !records.is_null() {
-                                        alloc_free(records as (*mut u8));
+                                        alloc::free(records as (*mut u8));
                                         records = 0i32 as (*mut u32);
                                     }
                                     k = numanswers as (i32) + numauthority as (i32) +
                                         numglue as (i32);
-                                    records = alloc((k as (usize)).wrapping_mul(
+                                    records = alloc::alloc((k as (usize)).wrapping_mul(
                                         ::std::mem::size_of::<u32>(),
                                     ) as (u32)) as
                                         (*mut u32);
@@ -1363,7 +1362,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                             }
                                             if _currentBlock == 348 {
                                             } else {
-                                                alloc_free(records as (*mut u8));
+                                                alloc::free(records as (*mut u8));
                                                 records = 0i32 as (*mut u32);
                                                 if flagcname != 0 {
                                                     ttl = cnamettl;
@@ -2725,7 +2724,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
         response_rfinish(6i32);
         _currentBlock = 317;
     } else if _currentBlock == 349 {
-        alloc_free(records as (*mut u8));
+        alloc::free(records as (*mut u8));
         records = 0i32 as (*mut u32);
         _currentBlock = 350;
     }

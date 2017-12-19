@@ -1,8 +1,8 @@
+use alloc;
 use byte;
 
 extern "C" {
     fn _exit(arg1: i32);
-    fn alloc(n: u32) -> *mut u8;
     static mut buffer_1: *mut buffer;
     fn buffer_flush(arg1: *mut buffer) -> i32;
     fn buffer_put(arg1: *mut buffer, arg2: *const u8, arg3: u32) -> i32;
@@ -372,7 +372,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
             );
         }
     }
-    x = alloc((xmax as (usize)).wrapping_mul(
+    x = alloc::alloc((xmax as (usize)).wrapping_mul(
         ::std::mem::size_of::<line>(),
     ) as (u32)) as (*mut line);
     if x.is_null() {
@@ -382,7 +382,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
         x as (*mut u8),
         (xmax as (usize)).wrapping_mul(::std::mem::size_of::<line>()) as (u32),
     );
-    io = alloc((xmax.wrapping_add(1u32) as (usize)).wrapping_mul(
+    io = alloc::alloc((xmax.wrapping_add(1u32) as (usize)).wrapping_mul(
         ::std::mem::size_of::<pollfd>(),
     ) as (u32)) as (*mut pollfd);
     if io.is_null() {

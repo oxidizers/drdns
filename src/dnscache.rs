@@ -1,8 +1,7 @@
+use alloc;
 use byte;
 
 extern "C" {
-    fn alloc(n: u32) -> *mut u8;
-    fn alloc_free(x: *mut u8);
     fn cache_init(arg1: u32) -> i32;
     fn close(arg1: i32) -> i32;
     fn dns_packet_copy(arg1: *const u8, arg2: u32, arg3: u32, arg4: *mut u8, arg5: u32) -> u32;
@@ -510,7 +509,7 @@ pub static mut tactive: i32 = 0i32;
 pub unsafe extern "C" fn t_free(mut j: i32) {
     if t[j as (usize)].buf.is_null() {
     } else {
-        alloc_free(t[j as (usize)].buf);
+        alloc::free(t[j as (usize)].buf);
         t[j as (usize)].buf = 0i32 as (*mut u8);
     }
 }
@@ -560,7 +559,7 @@ pub unsafe extern "C" fn t_respond(mut j: i32) {
         response_id(t[j as (usize)].id.as_mut_ptr() as (*const u8));
         t[j as (usize)].len = response_len.wrapping_add(2u32);
         t_free(j);
-        t[j as (usize)].buf = alloc(response_len.wrapping_add(2u32));
+        t[j as (usize)].buf = alloc::alloc(response_len.wrapping_add(2u32));
         (if t[j as (usize)].buf.is_null() {
              t_close(j);
          } else {
@@ -617,7 +616,7 @@ pub unsafe extern "C" fn t_rw(mut j: i32) {
                   errno = error_proto;
                   t_close(j);
               } else {
-                  (*x).buf = alloc((*x).len);
+                  (*x).buf = alloc::alloc((*x).len);
                   (if (*x).buf.is_null() {
                        t_close(j);
                    } else {
