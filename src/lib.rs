@@ -1,5 +1,8 @@
 //! `lib.rs`: Placeholder to ensure code compiles
 
+#![deny(warnings)]
+#![allow(dead_code)]
+
 extern crate errno;
 extern crate libc;
 
