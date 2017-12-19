@@ -1,5 +1,6 @@
+use libc;
+
 extern "C" {
-    fn str_len(arg1: *const u8) -> u32;
     fn stralloc_copyb(arg1: *mut stralloc, arg2: *const u8, arg3: u32) -> i32;
 }
 
@@ -19,5 +20,5 @@ impl Clone for stralloc {
 
 #[no_mangle]
 pub unsafe extern "C" fn stralloc_copys(mut sa: *mut stralloc, mut s: *const u8) -> i32 {
-    stralloc_copyb(sa, s, str_len(s))
+    stralloc_copyb(sa, s, libc::strlen(s))
 }

@@ -11,7 +11,6 @@ extern "C" {
     fn dns_mx(arg1: *mut stralloc, arg2: *const stralloc) -> i32;
     fn dns_random_init(arg1: *const u8);
     fn fmt_ulong(arg1: *mut u8, arg2: usize) -> u32;
-    fn str_len(arg1: *const u8) -> u32;
     fn stralloc_cats(arg1: *mut stralloc, arg2: *const u8) -> i32;
     fn stralloc_copys(arg1: *mut stralloc, arg2: *const u8) -> i32;
     fn strerr_die(
@@ -160,7 +159,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
             if dns_domain_fromdot(
                 &mut q as (*mut *mut u8),
                 *argv as (*const u8),
-                str_len(*argv as (*const u8)),
+                libc::strlen(*argv as (*const u8)),
             ) == 0
             {
                 nomem();

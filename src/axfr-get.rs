@@ -32,7 +32,6 @@ extern "C" {
     fn open_trunc(arg1: *const u8) -> i32;
     fn rename(__old: *const u8, __new: *const u8) -> i32;
     fn scan_ulong(arg1: *const u8, arg2: *mut usize) -> u32;
-    fn str_len(arg1: *const u8) -> u32;
     fn stralloc_append(arg1: *mut stralloc, arg2: *const u8) -> i32;
     fn stralloc_catb(arg1: *mut stralloc, arg2: *const u8, arg3: u32) -> i32;
     fn stralloc_cats(arg1: *mut stralloc, arg2: *const u8) -> i32;
@@ -887,7 +886,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     if dns_domain_fromdot(
         &mut zone as (*mut *mut u8),
         *argv as (*const u8),
-        str_len(*argv as (*const u8)),
+        libc::strlen(*argv as (*const u8)),
     ) == 0
     {
         die_generate();

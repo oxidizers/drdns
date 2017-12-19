@@ -1,5 +1,6 @@
 use byte;
 use errno::{self, Errno};
+use libc;
 
 extern "C" {
     fn chdir(arg1: *const u8) -> i32;
@@ -15,7 +16,6 @@ extern "C" {
     fn openreadclose(arg1: *const u8, arg2: *mut stralloc, arg3: u32) -> i32;
     fn readdir(arg1: *mut Struct1) -> *mut dirent;
     fn str_diff(arg1: *const u8, arg2: *const u8) -> i32;
-    fn str_len(arg1: *const u8) -> u32;
     fn stralloc_append(arg1: *mut stralloc, arg2: *const u8) -> i32;
     fn stralloc_catb(arg1: *mut stralloc, arg2: *const u8, arg3: u32) -> i32;
     fn stralloc_copys(arg1: *mut stralloc, arg2: *const u8) -> i32;
@@ -193,7 +193,7 @@ unsafe extern "C" fn init2(mut dir: *mut Struct1) -> i32 {
         if str_diff(fqdn, (*b"@\0").as_ptr()) == 0 {
             fqdn = (*b".\0").as_ptr();
         }
-        if dns_domain_fromdot(&mut q as (*mut *mut u8), fqdn, str_len(fqdn)) == 0 {
+        if dns_domain_fromdot(&mut q as (*mut *mut u8), fqdn, libc::strlen(fqdn)) == 0 {
             _currentBlock = 20;
             break;
         }

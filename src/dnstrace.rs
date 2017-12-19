@@ -40,7 +40,6 @@ extern "C" {
         arg5: *const u8,
         arg6: *const u8,
     ) -> u32;
-    fn str_len(arg1: *const u8) -> u32;
     fn stralloc_catb(arg1: *mut stralloc, arg2: *const u8, arg3: u32) -> i32;
     fn stralloc_cats(arg1: *mut stralloc, arg2: *const u8) -> i32;
     fn stralloc_catulong0(arg1: *mut stralloc, arg2: usize, arg3: u32) -> i32;
@@ -1389,7 +1388,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     if dns_domain_fromdot(
         &mut q as (*mut *mut u8),
         *argv as (*const u8),
-        str_len(*argv as (*const u8)),
+        libc::strlen(*argv as (*const u8)),
     ) == 0
     {
         nomem();
