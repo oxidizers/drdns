@@ -192,7 +192,7 @@ pub static mut netwrite: Buffer = Buffer {
     p: 0u32,
     n: ::std::mem::size_of::<[u8; 1024]>() as (u32),
     fd: 1i32,
-    op: safewrite as buffer::Op,
+    op: Some(safewrite as buffer::Op),
 };
 
 #[no_mangle]
@@ -282,7 +282,7 @@ pub static mut bcdb: Buffer = Buffer {
     p: 0u32,
     n: 0u32,
     fd: 0i32,
-    op: 0 as buffer::Op,
+    op: None,
 };
 
 #[no_mangle]

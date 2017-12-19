@@ -10,7 +10,7 @@ pub static mut b: Buffer = Buffer {
     p: 0u32,
     n: ::std::mem::size_of::<[u8; 256]>() as (u32),
     fd: 1i32,
-    op: buffer::unixwrite as buffer::Op,
+    op: Some(buffer::unixwrite as buffer::Op),
 };
 
 #[no_mangle]

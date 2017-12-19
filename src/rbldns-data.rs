@@ -147,7 +147,7 @@ pub static mut b: Buffer = Buffer {
     p: 0u32,
     n: 0u32,
     fd: 0i32,
-    op: 0 as buffer::Op,
+    op: None,
 };
 
 #[no_mangle]
@@ -220,7 +220,7 @@ pub static mut cdb: cdb_make = cdb_make {
         p: 0u32,
         n: 0u32,
         fd: 0i32,
-        op: 0 as buffer::Op,
+        op: None,
     },
     pos: 0u32,
     fd: 0i32,

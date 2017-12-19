@@ -20,7 +20,7 @@ pub struct Buffer {
     pub p: u32,
     pub n: u32,
     pub fd: i32,
-    pub op: Op,
+    pub op: Option<Op>,
 }
 
 impl Clone for Buffer {
@@ -39,7 +39,7 @@ impl Buffer {
     ) {
         (*s).x = buf;
         (*s).fd = fd;
-        (*s).op = op;
+        (*s).op = Some(op);
         (*s).p = 0u32;
         (*s).n = len;
     }
@@ -268,11 +268,12 @@ pub unsafe fn unixwrite(fd: i32, buf: *const u8, len: u32) -> i32 {
 }
 
 unsafe fn allwrite(
-    op: Op,
+    maybe_op: Option<Op>,
     fd: i32,
     mut buf: *const u8,
     mut len: u32,
 ) -> i32 {
+    let op = maybe_op.expect("allwrite with None op");
     let current_block;
     let mut w: i32;
     'loop1: loop {
@@ -296,11 +297,12 @@ unsafe fn allwrite(
 }
 
 unsafe fn oneread(
-    op: Op,
+    maybe_op: Option<Op>,
     fd: i32,
     buf: *mut u8,
     len: u32,
 ) -> i32 {
+    let op = maybe_op.expect("oneread with None op");
     let mut r: i32;
     'loop1: loop {
         r = op(fd, buf, len);
