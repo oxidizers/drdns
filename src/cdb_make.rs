@@ -1,5 +1,5 @@
 use alloc;
-use buffer::Buffer;
+use buffer::{self, Buffer};
 use errno::{self, Errno};
 use libc;
 
