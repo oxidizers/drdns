@@ -1,10 +1,10 @@
 use byte;
+use buffer::Buffer;
 use errno::errno;
 use libc;
 
 extern "C" {
-    static mut buffer_1: *mut buffer;
-    fn buffer_putflush(arg1: *mut buffer, arg2: *const u8, arg3: u32) -> i32;
+    static mut buffer_1: *mut Buffer;
     fn dns_domain_fromdot(arg1: *mut *mut u8, arg2: *const u8, arg3: u32) -> i32;
     fn dns_domain_todot_cat(arg1: *mut stralloc, arg2: *const u8) -> i32;
     fn dns_ip4_qualify(arg1: *mut stralloc, arg2: *mut stralloc, arg3: *const stralloc) -> i32;
@@ -282,22 +282,6 @@ fn main() {
         .collect::<Vec<_>>();
     let ret = unsafe { _c_main(argv_storage.len() as (i32), argv.as_mut_ptr()) };
     ::std::process::exit(ret);
-}
-
-#[derive(Copy)]
-#[repr(C)]
-pub struct buffer {
-    pub x: *mut u8,
-    pub p: u32,
-    pub n: u32,
-    pub fd: i32,
-    pub op: unsafe extern "C" fn() -> i32,
-}
-
-impl Clone for buffer {
-    fn clone(&self) -> Self {
-        *self
-    }
 }
 
 #[no_mangle]

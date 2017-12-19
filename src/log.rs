@@ -1,12 +1,10 @@
+use buffer::Buffer;
 use byte;
 use errno::{self, Errno};
 use libc;
 
 extern "C" {
-    static mut buffer_2: *mut buffer;
-    fn buffer_flush(arg1: *mut buffer) -> i32;
-    fn buffer_put(arg1: *mut buffer, arg2: *const u8, arg3: u32) -> i32;
-    fn buffer_puts(arg1: *mut buffer, arg2: *const u8) -> i32;
+    static mut buffer_2: *mut Buffer;
     static mut cache_motion: usize;
     static mut numqueries: usize;
     static mut tactive: i32;
@@ -16,22 +14,6 @@ extern "C" {
 }
 
 static mut u64: usize = 0usize;
-
-#[derive(Copy)]
-#[repr(C)]
-pub struct buffer {
-    pub x: *mut u8,
-    pub p: u32,
-    pub n: u32,
-    pub fd: i32,
-    pub op: unsafe extern "C" fn() -> i32,
-}
-
-impl Clone for buffer {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
 
 unsafe extern "C" fn string(mut s: *const u8) {
     buffer_puts(buffer_2, s);

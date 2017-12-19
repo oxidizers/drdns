@@ -1,13 +1,11 @@
 use alloc;
+use buffer::Buffer;
 use byte;
 use errno::{self, Errno};
 use libc;
 
 extern "C" {
-    static mut buffer_1: *mut buffer;
-    fn buffer_flush(arg1: *mut buffer) -> i32;
-    fn buffer_put(arg1: *mut buffer, arg2: *const u8, arg3: u32) -> i32;
-    fn buffer_puts(arg1: *mut buffer, arg2: *const u8) -> i32;
+    static mut buffer_1: *mut Buffer;
     fn dd(arg1: *const u8, arg2: *const u8, arg3: *mut u8) -> i32;
     fn dns_domain_copy(arg1: *mut *mut u8, arg2: *const u8) -> i32;
     fn dns_domain_equal(arg1: *const u8, arg2: *const u8) -> i32;
@@ -133,22 +131,6 @@ static mut tmp: stralloc = stralloc {
     len: 0u32,
     a: 0u32,
 };
-
-#[derive(Copy)]
-#[repr(C)]
-pub struct buffer {
-    pub x: *mut u8,
-    pub p: u32,
-    pub n: u32,
-    pub fd: i32,
-    pub op: unsafe extern "C" fn() -> i32,
-}
-
-impl Clone for buffer {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
 
 #[no_mangle]
 pub unsafe extern "C" fn printdomain(mut d: *const u8) {

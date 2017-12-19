@@ -1,18 +1,11 @@
+use buffer::{self, Buffer};
 use errno::{errno, Errno};
 use libc;
 
 extern "C" {
     static mut auto_home: *const u8;
-    fn buffer_init(
-        arg1: *mut buffer,
-        arg2: unsafe extern "C" fn() -> i32,
-        arg3: i32,
-        arg4: *mut u8,
-        arg5: u32,
-    );
-    fn buffer_unixread(arg1: i32, arg2: *mut u8, arg3: u32) -> i32;
     fn chdir(arg1: *const u8) -> i32;
-    fn copyfrom(arg1: *mut buffer);
+    fn copyfrom(arg1: *mut Buffer);
     fn finish();
     fn getgid() -> u32;
     fn getpid() -> i32;
@@ -96,29 +89,13 @@ pub static mut fdrootservers: i32 = 0i32;
 #[no_mangle]
 pub static mut rootserversbuf: [u8; 64] = [0u8; 64];
 
-#[derive(Copy)]
-#[repr(C)]
-pub struct buffer {
-    pub x: *mut u8,
-    pub p: u32,
-    pub n: u32,
-    pub fd: i32,
-    pub op: unsafe extern "C" fn() -> i32,
-}
-
-impl Clone for buffer {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
 #[no_mangle]
-pub static mut ssrootservers: buffer = buffer {
+pub static mut ssrootservers: Buffer = Buffer {
     x: 0 as (*mut u8),
     p: 0u32,
     n: 0u32,
     fd: 0i32,
-    op: 0 as (unsafe extern "C" fn() -> i32),
+    op: 0 as buffer::Op,
 };
 
 #[no_mangle]
@@ -423,13 +400,13 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     seed_addtime();
     start((*b"root/servers/@\0").as_ptr());
     buffer_init(
-        &mut ssrootservers as (*mut buffer),
-        buffer_unixread as (unsafe extern "C" fn() -> i32),
+        &mut ssrootservers as (*mut Buffer),
+        buffer_unixread as buffer::Op,
         fdrootservers,
         rootserversbuf.as_mut_ptr(),
         ::std::mem::size_of::<[u8; 64]>() as (u32),
     );
-    copyfrom(&mut ssrootservers as (*mut buffer));
+    copyfrom(&mut ssrootservers as (*mut Buffer));
     finish();
     seed_addtime();
     perm(0o644i32);

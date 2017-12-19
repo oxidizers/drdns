@@ -1,9 +1,8 @@
+use buffer::Buffer;
 use libc;
 
 extern "C" {
-    static mut buffer_2: *mut buffer;
-    fn buffer_flush(arg1: *mut buffer) -> i32;
-    fn buffer_puts(arg1: *mut buffer, arg2: *const u8) -> i32;
+    static mut buffer_2: *mut Buffer;
     fn strerr_sysinit();
 }
 
@@ -17,22 +16,6 @@ pub struct strerr {
 }
 
 impl Clone for strerr {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
-#[derive(Copy)]
-#[repr(C)]
-pub struct buffer {
-    pub x: *mut u8,
-    pub p: u32,
-    pub n: u32,
-    pub fd: i32,
-    pub op: unsafe extern "C" fn() -> i32,
-}
-
-impl Clone for buffer {
     fn clone(&self) -> Self {
         *self
     }

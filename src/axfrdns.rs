@@ -1,18 +1,8 @@
+use buffer::{self, Buffer};
 use byte;
 use libc;
 
 extern "C" {
-    fn buffer_flush(arg1: *mut buffer) -> i32;
-    fn buffer_get(arg1: *mut buffer, arg2: *mut u8, arg3: u32) -> i32;
-    fn buffer_init(
-        arg1: *mut buffer,
-        arg2: unsafe extern "C" fn() -> i32,
-        arg3: i32,
-        arg4: *mut u8,
-        arg5: u32,
-    );
-    fn buffer_put(arg1: *mut buffer, arg2: *const u8, arg3: u32) -> i32;
-    fn buffer_unixread(arg1: i32, arg2: *mut u8, arg3: u32) -> i32;
     fn case_lowerb(arg1: *mut u8, arg2: u32);
     fn cdb_find(arg1: *mut cdb, arg2: *const u8, arg3: u32) -> i32;
     fn cdb_findnext(arg1: *mut cdb, arg2: *const u8, arg3: u32) -> i32;
@@ -196,29 +186,13 @@ pub unsafe extern "C" fn safewrite(mut fd: i32, mut buf: *mut u8, mut len: u32) 
 #[no_mangle]
 pub static mut netwritespace: [u8; 1024] = [0u8; 1024];
 
-#[derive(Copy)]
-#[repr(C)]
-pub struct buffer {
-    pub x: *mut u8,
-    pub p: u32,
-    pub n: u32,
-    pub fd: i32,
-    pub op: unsafe extern "C" fn() -> i32,
-}
-
-impl Clone for buffer {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
 #[no_mangle]
-pub static mut netwrite: buffer = buffer {
+pub static mut netwrite: Buffer = Buffer {
     x: netwritespace.as_mut_ptr(),
     p: 0u32,
     n: ::std::mem::size_of::<[u8; 1024]>() as (u32),
     fd: 1i32,
-    op: safewrite as (unsafe extern "C" fn() -> i32),
+    op: safewrite as buffer::Op,
 };
 
 #[no_mangle]
@@ -226,12 +200,12 @@ pub unsafe extern "C" fn print(mut buf: *mut u8, mut len: u32) {
     let mut tcpheader: [u8; 2];
     uint16_pack_big(tcpheader.as_mut_ptr(), len as (u16));
     buffer_put(
-        &mut netwrite as (*mut buffer),
+        &mut netwrite as (*mut Buffer),
         tcpheader.as_mut_ptr() as (*const u8),
         2u32,
     );
-    buffer_put(&mut netwrite as (*mut buffer), buf as (*const u8), len);
-    buffer_flush(&mut netwrite as (*mut buffer));
+    buffer_put(&mut netwrite as (*mut Buffer), buf as (*const u8), len);
+    buffer_flush(&mut netwrite as (*mut Buffer));
 }
 
 #[no_mangle]
@@ -303,12 +277,12 @@ pub static mut typeclass: [u8; 4] = [0u8; 4];
 pub static mut fdcdb: i32 = 0i32;
 
 #[no_mangle]
-pub static mut bcdb: buffer = buffer {
+pub static mut bcdb: Buffer = Buffer {
     x: 0 as (*mut u8),
     p: 0u32,
     n: 0u32,
     fd: 0i32,
-    op: 0 as (unsafe extern "C" fn() -> i32),
+    op: 0 as buffer::Op,
 };
 
 #[no_mangle]
@@ -321,7 +295,7 @@ pub unsafe extern "C" fn get(mut buf: *mut u8, mut len: u32) {
         if !(len > 0u32) {
             break;
         }
-        r = buffer_get(&mut bcdb as (*mut buffer), buf, len);
+        r = buffer_get(&mut bcdb as (*mut Buffer), buf, len);
         if r < 0i32 {
             die_cdbread();
         }
@@ -684,8 +658,8 @@ pub unsafe extern "C" fn doaxfr(mut id: *mut u8) {
     print(soa.s, soa.len);
     seek_set(fdcdb, 0usize);
     buffer_init(
-        &mut bcdb as (*mut buffer),
-        buffer_unixread as (unsafe extern "C" fn() -> i32),
+        &mut bcdb as (*mut Buffer),
+        buffer_unixread as buffer::Op,
         fdcdb,
         bcdbspace.as_mut_ptr(),
         ::std::mem::size_of::<[u8; 1024]>() as (u32),

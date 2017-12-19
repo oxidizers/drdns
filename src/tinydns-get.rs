@@ -1,9 +1,9 @@
 use byte;
+use buffer::Buffer;
 use libc;
 
 extern "C" {
-    static mut buffer_1: *mut buffer;
-    fn buffer_putflush(arg1: *mut buffer, arg2: *const u8, arg3: u32) -> i32;
+    static mut buffer_1: *mut Buffer;
     fn case_lowerb(arg1: *mut u8, arg2: u32);
     fn dns_domain_fromdot(arg1: *mut *mut u8, arg2: *const u8, arg3: u32) -> i32;
     fn dns_domain_length(arg1: *const u8) -> u32;
@@ -117,22 +117,6 @@ fn main() {
         .collect::<Vec<_>>();
     let ret = unsafe { _c_main(argv_storage.len() as (i32), argv.as_mut_ptr()) };
     ::std::process::exit(ret);
-}
-
-#[derive(Copy)]
-#[repr(C)]
-pub struct buffer {
-    pub x: *mut u8,
-    pub p: u32,
-    pub n: u32,
-    pub fd: i32,
-    pub op: unsafe extern "C" fn() -> i32,
-}
-
-impl Clone for buffer {
-    fn clone(&self) -> Self {
-        *self
-    }
 }
 
 #[no_mangle]

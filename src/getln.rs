@@ -1,28 +1,14 @@
+use buffer::Buffer;
+
 extern "C" {
     fn getln2(
-        arg1: *mut buffer,
+        arg1: *mut Buffer,
         arg2: *mut stralloc,
         arg3: *mut *mut u8,
         arg4: *mut u32,
         arg5: i32,
     ) -> i32;
     fn stralloc_catb(arg1: *mut stralloc, arg2: *const u8, arg3: u32) -> i32;
-}
-
-#[derive(Copy)]
-#[repr(C)]
-pub struct buffer {
-    pub x: *mut u8,
-    pub p: u32,
-    pub n: u32,
-    pub fd: i32,
-    pub op: unsafe extern "C" fn() -> i32,
-}
-
-impl Clone for buffer {
-    fn clone(&self) -> Self {
-        *self
-    }
 }
 
 #[derive(Copy)]
@@ -41,7 +27,7 @@ impl Clone for stralloc {
 
 #[no_mangle]
 pub unsafe extern "C" fn getln(
-    mut ss: *mut buffer,
+    mut ss: *mut Buffer,
     mut sa: *mut stralloc,
     mut match_: *mut i32,
     mut sep: i32,

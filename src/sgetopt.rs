@@ -1,8 +1,7 @@
+use buffer::Buffer;
+
 extern "C" {
-    static mut buffer_2: *mut buffer;
-    fn buffer_flush(arg1: *mut buffer) -> i32;
-    fn buffer_put(arg1: *mut buffer, arg2: *const u8, arg3: u32) -> i32;
-    fn buffer_puts(arg1: *mut buffer, arg2: *const u8) -> i32;
+    static mut buffer_2: *mut Buffer;
     fn subgetopt(arg1: i32, arg2: *mut *mut u8, arg3: *const u8) -> i32;
     static mut subgetoptind: i32;
     static mut subgetoptproblem: i32;
@@ -13,22 +12,6 @@ pub static mut sgetopterr: i32 = 1i32;
 
 #[no_mangle]
 pub static mut sgetoptprogname: *const u8 = 0i32 as (*const u8);
-
-#[derive(Copy)]
-#[repr(C)]
-pub struct buffer {
-    pub x: *mut u8,
-    pub p: u32,
-    pub n: u32,
-    pub fd: i32,
-    pub op: unsafe extern "C" fn() -> i32,
-}
-
-impl Clone for buffer {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
 
 #[no_mangle]
 pub unsafe extern "C" fn sgetoptmine(

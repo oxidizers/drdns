@@ -1,16 +1,6 @@
+use buffer::{self, Buffer};
+
 extern "C" {
-    fn buffer_copy(arg1: *mut buffer, arg2: *mut buffer) -> i32;
-    fn buffer_flush(arg1: *mut buffer) -> i32;
-    fn buffer_init(
-        arg1: *mut buffer,
-        arg2: unsafe extern "C" fn() -> i32,
-        arg3: i32,
-        arg4: *mut u8,
-        arg5: u32,
-    );
-    fn buffer_put(arg1: *mut buffer, arg2: *const u8, arg3: u32) -> i32;
-    fn buffer_puts(arg1: *mut buffer, arg2: *const u8) -> i32;
-    fn buffer_unixwrite(arg1: i32, arg2: *const u8, arg3: u32) -> i32;
     fn chdir(arg1: *const u8) -> i32;
     fn chmod(arg1: *const u8, arg2: u16) -> i32;
     fn chown(arg1: *const u8, arg2: u32, arg3: u32) -> i32;
@@ -42,28 +32,12 @@ static mut fd: i32 = 0i32;
 
 static mut buf: [u8; 1024] = [0u8; 1024];
 
-#[derive(Copy)]
-#[repr(C)]
-pub struct buffer {
-    pub x: *mut u8,
-    pub p: u32,
-    pub n: u32,
-    pub fd: i32,
-    pub op: unsafe extern "C" fn() -> i32,
-}
-
-impl Clone for buffer {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
-static mut ss: buffer = buffer {
+static mut ss: Buffer = Buffer {
     x: 0 as (*mut u8),
     p: 0u32,
     n: 0u32,
     fd: 0i32,
-    op: 0 as (unsafe extern "C" fn() -> i32),
+    op: 0 as buffer::Op,
 };
 
 #[derive(Copy)]
@@ -154,8 +128,8 @@ pub unsafe extern "C" fn start(mut s: *const u8) {
         fail();
     }
     buffer_init(
-        &mut ss as (*mut buffer),
-        buffer_unixwrite as (unsafe extern "C" fn() -> i32),
+        &mut ss as (*mut Buffer),
+        buffer_unixwrite as buffer::Op,
         fd,
         buf.as_mut_ptr(),
         ::std::mem::size_of::<[u8; 1024]>() as (u32),
@@ -164,28 +138,28 @@ pub unsafe extern "C" fn start(mut s: *const u8) {
 
 #[no_mangle]
 pub unsafe extern "C" fn outs(mut s: *const u8) {
-    if buffer_puts(&mut ss as (*mut buffer), s) == -1i32 {
+    if buffer_puts(&mut ss as (*mut Buffer), s) == -1i32 {
         fail();
     }
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn out(mut s: *const u8, mut len: u32) {
-    if buffer_put(&mut ss as (*mut buffer), s, len) == -1i32 {
+    if buffer_put(&mut ss as (*mut Buffer), s, len) == -1i32 {
         fail();
     }
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn copyfrom(mut b: *mut buffer) {
-    if buffer_copy(&mut ss as (*mut buffer), b) < 0i32 {
+pub unsafe extern "C" fn copyfrom(mut b: *mut Buffer) {
+    if buffer_copy(&mut ss as (*mut Buffer), b) < 0i32 {
         fail();
     }
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn finish() {
-    if buffer_flush(&mut ss as (*mut buffer)) == -1i32 {
+    if buffer_flush(&mut ss as (*mut Buffer)) == -1i32 {
         fail();
     }
     if fsync(fd) == -1i32 {

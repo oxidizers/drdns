@@ -1,19 +1,9 @@
+use buffer::{self, Buffer};
 use byte;
 use libc;
 
 extern "C" {
     fn __swbuf(arg1: i32, arg2: *mut __sFILE) -> i32;
-    fn buffer_flush(arg1: *mut buffer) -> i32;
-    fn buffer_init(
-        arg1: *mut buffer,
-        arg2: unsafe extern "C" fn() -> i32,
-        arg3: i32,
-        arg4: *mut u8,
-        arg5: u32,
-    );
-    fn buffer_putalign(arg1: *mut buffer, arg2: *const u8, arg3: u32) -> i32;
-    fn buffer_unixread(arg1: i32, arg2: *mut u8, arg3: u32) -> i32;
-    fn buffer_unixwrite(arg1: i32, arg2: *const u8, arg3: u32) -> i32;
     fn close(arg1: i32) -> i32;
     fn dns_domain_equal(arg1: *const u8, arg2: *const u8) -> i32;
     fn dns_domain_fromdot(arg1: *mut *mut u8, arg2: *const u8, arg3: u32) -> i32;
@@ -22,7 +12,7 @@ extern "C" {
     fn fmt_ulong(arg1: *mut u8, arg2: usize) -> u32;
     fn fstat(arg1: i32, arg2: *mut stat) -> i32;
     fn fsync(arg1: i32) -> i32;
-    fn getln(arg1: *mut buffer, arg2: *mut stralloc, arg3: *mut i32, arg4: i32) -> i32;
+    fn getln(arg1: *mut Buffer, arg2: *mut stralloc, arg3: *mut i32, arg4: i32) -> i32;
     fn ip4_fmt(arg1: *mut u8, arg2: *const u8) -> u32;
     fn ip4_scan(arg1: *const u8, arg2: *mut u8) -> u32;
     fn open_read(arg1: *const u8) -> i32;
@@ -207,29 +197,13 @@ pub static mut targetip: [u8; 4] = [0u8; 4];
 #[no_mangle]
 pub static mut fd: i32 = 0i32;
 
-#[derive(Copy)]
-#[repr(C)]
-pub struct buffer {
-    pub x: *mut u8,
-    pub p: u32,
-    pub n: u32,
-    pub fd: i32,
-    pub op: unsafe extern "C" fn() -> i32,
-}
-
-impl Clone for buffer {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
 #[no_mangle]
-pub static mut b: buffer = buffer {
+pub static mut b: Buffer = Buffer {
     x: 0 as (*mut u8),
     p: 0u32,
     n: 0u32,
     fd: 0i32,
-    op: 0 as (unsafe extern "C" fn() -> i32),
+    op: 0 as buffer::Op,
 };
 
 #[no_mangle]
@@ -239,12 +213,12 @@ pub static mut bspace: [u8; 1024] = [0u8; 1024];
 pub static mut fdnew: i32 = 0i32;
 
 #[no_mangle]
-pub static mut bnew: buffer = buffer {
+pub static mut bnew: Buffer = Buffer {
     x: 0 as (*mut u8),
     p: 0u32,
     n: 0u32,
     fd: 0i32,
-    op: 0 as (unsafe extern "C" fn() -> i32),
+    op: 0 as buffer::Op,
 };
 
 #[no_mangle]
@@ -298,7 +272,7 @@ static mut used: [i32; 26] = [0i32; 26];
 
 #[no_mangle]
 pub unsafe extern "C" fn put(mut buf: *const u8, mut len: u32) {
-    if buffer_putalign(&mut bnew as (*mut buffer), buf, len) == -1i32 {
+    if buffer_putalign(&mut bnew as (*mut Buffer), buf, len) == -1i32 {
         die_write();
     }
 }
@@ -454,8 +428,8 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
         die_read();
     }
     buffer_init(
-        &mut b as (*mut buffer),
-        buffer_unixread as (unsafe extern "C" fn() -> i32),
+        &mut b as (*mut Buffer),
+        buffer_unixread as buffer::Op,
         fd,
         bspace.as_mut_ptr(),
         ::std::mem::size_of::<[u8; 1024]>() as (u32),
@@ -468,8 +442,8 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
         die_write();
     }
     buffer_init(
-        &mut bnew as (*mut buffer),
-        buffer_unixwrite as (unsafe extern "C" fn() -> i32),
+        &mut bnew as (*mut Buffer),
+        buffer_unixwrite as buffer::Op,
         fdnew,
         bnewspace.as_mut_ptr(),
         ::std::mem::size_of::<[u8; 1024]>() as (u32),
@@ -546,7 +520,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
             break;
         }
         if getln(
-            &mut b as (*mut buffer),
+            &mut b as (*mut Buffer),
             &mut line as (*mut stralloc),
             &mut match_ as (*mut i32),
             b'\n' as (i32),
@@ -838,7 +812,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
         nomem();
     }
     put(f[0usize].s as (*const u8), f[0usize].len);
-    if buffer_flush(&mut bnew as (*mut buffer)) == -1i32 {
+    if buffer_flush(&mut bnew as (*mut Buffer)) == -1i32 {
         die_write();
     }
     if fsync(fdnew) == -1i32 {

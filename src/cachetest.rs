@@ -1,10 +1,8 @@
+use buffer::Buffer;
 use libc;
 
 extern "C" {
-    static mut buffer_1: *mut buffer;
-    fn buffer_flush(arg1: *mut buffer) -> i32;
-    fn buffer_put(arg1: *mut buffer, arg2: *const u8, arg3: u32) -> i32;
-    fn buffer_puts(arg1: *mut buffer, arg2: *const u8) -> i32;
+    static mut buffer_1: *mut Buffer;
     fn cache_get(arg1: *const u8, arg2: u32, arg3: *mut u32, arg4: *mut u32) -> *mut u8;
     fn cache_init(arg1: u32) -> i32;
     fn cache_set(arg1: *const u8, arg2: u32, arg3: *const u8, arg4: u32, arg5: u32);
@@ -27,22 +25,6 @@ fn main() {
         .collect::<Vec<_>>();
     let ret = unsafe { _c_main(argv_storage.len() as (i32), argv.as_mut_ptr()) };
     ::std::process::exit(ret);
-}
-
-#[derive(Copy)]
-#[repr(C)]
-pub struct buffer {
-    pub x: *mut u8,
-    pub p: u32,
-    pub n: u32,
-    pub fd: i32,
-    pub op: unsafe extern "C" fn() -> i32,
-}
-
-impl Clone for buffer {
-    fn clone(&self) -> Self {
-        *self
-    }
 }
 
 #[no_mangle]

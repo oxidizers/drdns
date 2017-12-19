@@ -15,7 +15,7 @@ extern "C" {
 
 #[derive(Copy)]
 #[repr(C)]
-pub struct buffer {
+pub struct Buffer {
     pub x: *mut u8,
     pub p: u32,
     pub n: u32,
@@ -23,16 +23,16 @@ pub struct buffer {
     pub op: Op,
 }
 
-impl Clone for buffer {
+impl Clone for Buffer {
     fn clone(&self) -> Self {
         *self
     }
 }
 
-impl buffer {
+impl Buffer {
     #[no_mangle]
     pub unsafe extern "C" fn buffer_init(
-        s: *mut buffer,
+        s: *mut Buffer,
         op: Op,
         fd: i32,
         buf: *mut u8,
@@ -46,7 +46,7 @@ impl buffer {
     }
 
     #[no_mangle]
-    pub unsafe extern "C" fn buffer_copy(bout: *mut buffer, bin: *mut buffer) -> i32 {
+    pub unsafe extern "C" fn buffer_copy(bout: *mut Buffer, bin: *mut Buffer) -> i32 {
         let current_block;
         let mut n: i32;
         let mut x: *mut u8;
@@ -78,7 +78,7 @@ impl buffer {
     }
 
     #[no_mangle]
-    pub unsafe extern "C" fn buffer_feed(s: *mut buffer) -> i32 {
+    pub unsafe extern "C" fn buffer_feed(s: *mut Buffer) -> i32 {
         let r: i32;
         if (*s).p != 0 {
             (*s).p as (i32)
@@ -103,7 +103,7 @@ impl buffer {
     }
 
     #[no_mangle]
-    pub unsafe extern "C" fn buffer_bget(s: *mut buffer, buf: *mut u8, len: u32) -> i32 {
+    pub unsafe extern "C" fn buffer_bget(s: *mut Buffer, buf: *mut u8, len: u32) -> i32 {
         let r: i32;
         if (*s).p > 0u32 {
             Self::getthis(s, buf, len)
@@ -121,7 +121,7 @@ impl buffer {
     }
 
     #[no_mangle]
-    pub unsafe extern "C" fn buffer_get(s: *mut buffer, buf: *mut u8, len: u32) -> i32 {
+    pub unsafe extern "C" fn buffer_get(s: *mut Buffer, buf: *mut u8, len: u32) -> i32 {
         let r: i32;
         if (*s).p > 0u32 {
             Self::getthis(s, buf, len)
@@ -139,18 +139,18 @@ impl buffer {
     }
 
     #[no_mangle]
-    pub unsafe extern "C" fn buffer_peek(s: *mut buffer) -> *mut u8 {
+    pub unsafe extern "C" fn buffer_peek(s: *mut Buffer) -> *mut u8 {
         (*s).x.offset((*s).n as (isize))
     }
 
     #[no_mangle]
-    pub unsafe extern "C" fn buffer_seek(s: *mut buffer, len: u32) {
+    pub unsafe extern "C" fn buffer_seek(s: *mut Buffer, len: u32) {
         (*s).n = (*s).n.wrapping_add(len);
         (*s).p = (*s).p.wrapping_sub(len);
     }
 
     #[no_mangle]
-    pub unsafe extern "C" fn buffer_flush(s: *mut buffer) -> i32 {
+    pub unsafe extern "C" fn buffer_flush(s: *mut Buffer) -> i32 {
         let p: i32;
         p = (*s).p as (i32);
         if p == 0 {
@@ -168,7 +168,7 @@ impl buffer {
 
     #[no_mangle]
     pub unsafe extern "C" fn buffer_putalign(
-        s: *mut buffer,
+        s: *mut Buffer,
         mut buf: *const u8,
         mut len: u32,
     ) -> i32 {
@@ -203,7 +203,7 @@ impl buffer {
     }
 
     #[no_mangle]
-    pub unsafe extern "C" fn buffer_put(s: *mut buffer, mut buf: *const u8, mut len: u32) -> i32 {
+    pub unsafe extern "C" fn buffer_put(s: *mut Buffer, mut buf: *const u8, mut len: u32) -> i32 {
         let current_block;
         let mut n: u32;
         n = (*s).n;
@@ -248,7 +248,7 @@ impl buffer {
 
     #[no_mangle]
     pub unsafe extern "C" fn buffer_putflush(
-        s: *mut buffer,
+        s: *mut Buffer,
         buf: *const u8,
         len: u32,
     ) -> i32 {
@@ -265,17 +265,17 @@ impl buffer {
     }
 
     #[no_mangle]
-    pub unsafe extern "C" fn buffer_putsalign(s: *mut buffer, buf: *const u8) -> i32 {
+    pub unsafe extern "C" fn buffer_putsalign(s: *mut Buffer, buf: *const u8) -> i32 {
         Self::buffer_putalign(s, buf, libc::strlen(buf as *const i8) as u32)
     }
 
     #[no_mangle]
-    pub unsafe extern "C" fn buffer_puts(s: *mut buffer, buf: *const u8) -> i32 {
+    pub unsafe extern "C" fn buffer_puts(s: *mut Buffer, buf: *const u8) -> i32 {
         Self::buffer_put(s, buf, libc::strlen(buf as *const i8) as u32)
     }
 
     #[no_mangle]
-    pub unsafe extern "C" fn buffer_putsflush(s: *mut buffer, buf: *const u8) -> i32 {
+    pub unsafe extern "C" fn buffer_putsflush(s: *mut Buffer, buf: *const u8) -> i32 {
         Self::buffer_putflush(s, buf, libc::strlen(buf as *const i8) as u32)
     }
 
@@ -289,7 +289,7 @@ impl buffer {
         write(fd, buf as (*const ::std::os::raw::c_void), len as (usize)) as (i32)
     }
 
-    unsafe extern "C" fn getthis(s: *mut buffer, buf: *mut u8, mut len: u32) -> i32 {
+    unsafe extern "C" fn getthis(s: *mut Buffer, buf: *mut u8, mut len: u32) -> i32 {
         if len > (*s).p {
             len = (*s).p;
         }
