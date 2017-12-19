@@ -1,6 +1,7 @@
+use libc;
+
 extern "C" {
     static mut environ: *mut *mut u8;
-    fn str_len(arg1: *const u8) -> u32;
     fn str_start(arg1: *const u8, arg2: *const u8) -> i32;
 }
 
@@ -12,7 +13,7 @@ pub unsafe extern "C" fn env_get(mut s: *const u8) -> *mut u8 {
     if s.is_null() {
         0i32 as (*mut u8)
     } else {
-        len = str_len(s);
+        len = libc::strlen(s);
         i = 0i32;
         'loop2: loop {
             if (*environ.offset(i as (isize))).is_null() {

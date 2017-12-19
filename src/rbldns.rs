@@ -1,4 +1,5 @@
 use byte;
+use libc;
 
 extern "C" {
     fn cdb_find(arg1: *mut cdb, arg2: *const u8, arg3: u32) -> i32;
@@ -16,7 +17,6 @@ extern "C" {
     fn response_nxdomain();
     fn response_rfinish(arg1: i32);
     fn response_rstart(arg1: *const u8, arg2: *const u8, arg3: u32) -> i32;
-    fn str_len(arg1: *const u8) -> u32;
     fn strerr_die(
         arg1: i32,
         arg2: *const u8,
@@ -288,7 +288,7 @@ pub unsafe extern "C" fn initialize() {
     if dns_domain_fromdot(
         &mut base as (*mut *mut u8),
         x as (*const u8),
-        str_len(x as (*const u8)),
+        libc::strlen(x as (*const u8)),
     ) == 0
     {
         strerr_die(
