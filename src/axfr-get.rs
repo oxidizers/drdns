@@ -1,4 +1,6 @@
 use byte;
+use errno::{self, Errno};
+use libc;
 
 extern "C" {
     fn __swbuf(arg1: i32, arg2: *mut __sFILE) -> i32;
@@ -24,9 +26,6 @@ extern "C" {
     fn dns_packet_copy(arg1: *const u8, arg2: u32, arg3: u32, arg4: *mut u8, arg5: u32) -> u32;
     fn dns_packet_getname(arg1: *const u8, arg2: u32, arg3: u32, arg4: *mut *mut u8) -> u32;
     fn dns_packet_skipname(arg1: *const u8, arg2: u32, arg3: u32) -> u32;
-    static mut errno: i32;
-    static mut error_noent: i32;
-    static mut error_proto: i32;
     fn fsync(arg1: i32) -> i32;
     fn getln(arg1: *mut buffer, arg2: *mut stralloc, arg3: *mut i32, arg4: i32) -> i32;
     fn ip4_fmt(arg1: *mut u8, arg2: *const u8) -> u32;
@@ -296,7 +295,7 @@ pub unsafe extern "C" fn saferead(mut fd: i32, mut buf: *mut u8, mut len: u32) -
     let mut r: i32;
     r = timeoutread(60i32, fd, buf, len as (i32));
     if r == 0i32 {
-        errno = error_proto;
+        errno::set_errno(Errno(libc::EPROTO));
         die_parse();
     }
     if r <= 0i32 {
@@ -461,7 +460,7 @@ pub unsafe extern "C" fn doit(mut buf: *mut u8, mut len: u32, mut pos: u32) -> u
         &mut dlen as (*mut u16),
     );
     if len.wrapping_sub(pos) < dlen as (u32) {
-        errno = error_proto;
+        errno::set_errno(Errno(libc::EPROTO));
         0u32
     } else {
         len = pos.wrapping_add(dlen as (u32));
@@ -590,7 +589,7 @@ pub unsafe extern "C" fn doit(mut buf: *mut u8, mut len: u32, mut pos: u32) -> u
                  if stralloc_copys(&mut line as (*mut stralloc), (*b"&\0").as_ptr()) == 0 {
                      return 0u32;
                  } else if byte::diff(d1, 2u32, (*b"\x01*\0").as_ptr() as (*mut u8)) == 0 {
-                     errno = error_proto;
+                     errno::set_errno(Errno(libc::EPROTO));
                      return 0u32;
                  } else if dns_domain_todot_cat(
                     &mut line as (*mut stralloc),
@@ -913,7 +912,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     fntmp = *argv;
     fd = open_read(fn_ as (*const u8));
     if fd == -1i32 {
-        if errno != error_noent {
+        if errno::errno() != Errno(libc::ENOENT) {
             die_read();
         }
     } else {
@@ -998,12 +997,12 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
         pos = pos.wrapping_add(4u32);
     }
     if numanswers == 0 {
-        errno = error_proto;
+        errno::set_errno(Errno(libc::EPROTO));
         die_parse();
     }
     pos = x_getname(packet.s, packet.len, pos, &mut d1 as (*mut *mut u8));
     if dns_domain_equal(zone as (*const u8), d1 as (*const u8)) == 0 {
-        errno = error_proto;
+        errno::set_errno(Errno(libc::EPROTO));
         die_parse();
     }
     pos = x_copy(packet.s, packet.len, pos, out.as_mut_ptr(), 10u32);
@@ -1013,7 +1012,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
         (*b"\0\x06\0\x01\0").as_ptr() as (*mut u8),
     ) != 0
     {
-        errno = error_proto;
+        errno::set_errno(Errno(libc::EPROTO));
         die_parse();
     }
     pos = x_skipname(packet.s, packet.len, pos);

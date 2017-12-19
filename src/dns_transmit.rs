@@ -1,5 +1,7 @@
 use alloc;
 use byte;
+use errno::{self, Errno};
+use libc;
 
 extern "C" {
     fn close(arg1: i32) -> i32;
@@ -8,13 +10,6 @@ extern "C" {
     fn dns_packet_copy(arg1: *const u8, arg2: u32, arg3: u32, arg4: *mut u8, arg5: u32) -> u32;
     fn dns_packet_getname(arg1: *const u8, arg2: u32, arg3: u32, arg4: *mut *mut u8) -> u32;
     fn dns_random(arg1: u32) -> u32;
-    static mut errno: i32;
-    static mut error_again: i32;
-    static mut error_connrefused: i32;
-    static mut error_inprogress: i32;
-    static mut error_io: i32;
-    static mut error_timeout: i32;
-    static mut error_wouldblock: i32;
     fn read(arg1: i32, arg2: *mut ::std::os::raw::c_void, arg3: usize) -> isize;
     fn recv(arg1: i32, arg2: *mut ::std::os::raw::c_void, arg3: usize, arg4: i32) -> isize;
     fn send(arg1: i32, arg2: *const ::std::os::raw::c_void, arg3: usize, arg4: i32) -> isize;
@@ -187,7 +182,7 @@ unsafe extern "C" fn thistcp(mut d: *mut dns_transmit) -> i32 {
                 _currentBlock = 11;
                 break;
             }
-            if errno == error_inprogress || errno == error_wouldblock {
+            if errno::errno() == Errno(libc::EINPROGRESS) || errno::errno() == Errno(libc::EWOULDBLOCK) {
                 _currentBlock = 10;
                 break;
             }
@@ -313,7 +308,7 @@ pub unsafe extern "C" fn dns_transmit_start(
 ) -> i32 {
     let mut len: u32;
     dns_transmit_free(d);
-    errno = error_io;
+    errno::set_errno(Errno(libc::EIO));
     len = dns_domain_length(q);
     (*d).querylen = len.wrapping_add(18u32);
     (*d).query = alloc::alloc((*d).querylen);
@@ -469,7 +464,7 @@ unsafe extern "C" fn serverfailed(mut buf: *const u8, mut len: u32) -> i32 {
         rcode = out[3usize] as (u32);
         rcode = rcode & 15u32;
         (if rcode != 0 && (rcode != 3u32) {
-             errno = error_again;
+             errno::set_errno(Errno(libc::EAGAIN));
              1i32
          } else {
              0i32
@@ -487,13 +482,13 @@ pub unsafe extern "C" fn dns_transmit_get(
     let mut ch: u8;
     let mut r: i32;
     let mut fd: i32;
-    errno = error_io;
+    errno::set_errno(Errno(libc::EIO));
     fd = (*d).s1 - 1i32;
     if (*x).revents == 0 {
         (if taia_less(when, &mut (*d).deadline as (*mut taia) as (*const taia)) != 0 {
              0i32
          } else {
-             errno = error_timeout;
+             errno::set_errno(Errno(libc::ETIMEDOUT));
              (if (*d).tcpstate == 0i32 {
                   nextudp(d)
               } else {
@@ -508,7 +503,7 @@ pub unsafe extern "C" fn dns_transmit_get(
             0i32,
         ) as (i32);
         (if r <= 0i32 {
-             if errno == error_connrefused {
+             if errno::errno() == Errno(libc::ECONNREFUSED) {
                  if (*d).udploop == 2u32 {
                      return 0i32;
                  }

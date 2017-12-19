@@ -1,4 +1,6 @@
 use byte;
+use errno::{self, Errno};
+use libc;
 
 extern "C" {
     static mut buffer_2: *mut buffer;
@@ -6,8 +8,6 @@ extern "C" {
     fn buffer_put(arg1: *mut buffer, arg2: *const u8, arg3: u32) -> i32;
     fn buffer_puts(arg1: *mut buffer, arg2: *const u8) -> i32;
     static mut cache_motion: usize;
-    static mut errno: i32;
-    fn error_str(arg1: i32) -> *const u8;
     static mut numqueries: usize;
     static mut tactive: i32;
     static mut uactive: i32;
@@ -194,7 +194,7 @@ pub unsafe extern "C" fn log_querydone(mut qnum: *mut usize, mut len: u32) {
 
 #[no_mangle]
 pub unsafe extern "C" fn log_querydrop(mut qnum: *mut usize) {
-    let mut x: *const u8 = error_str(errno);
+    let mut x = libc::strerror(errno().0);
     string((*b"drop \0").as_ptr());
     u64 = *qnum;
     u64_print();
@@ -215,7 +215,7 @@ pub unsafe extern "C" fn log_tcpopen(mut client: *const u8, mut port: u32) {
 
 #[no_mangle]
 pub unsafe extern "C" fn log_tcpclose(mut client: *const u8, mut port: u32) {
-    let mut x: *const u8 = error_str(errno);
+    let mut x = libc::strerror(errno().0);
     string((*b"tcpclose \0").as_ptr());
     ip(client);
     string((*b":\0").as_ptr());
@@ -345,7 +345,7 @@ pub unsafe extern "C" fn log_lame(
 
 #[no_mangle]
 pub unsafe extern "C" fn log_servfail(mut dn: *const u8) {
-    let mut x: *const u8 = error_str(errno);
+    let mut x = libc::strerror(errno().0);
     string((*b"servfail \0").as_ptr());
     name(dn);
     space();

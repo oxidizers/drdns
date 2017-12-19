@@ -1,4 +1,5 @@
 use byte;
+use errno::{self, Errno};
 
 extern "C" {
     fn chdir(arg1: *const u8) -> i32;
@@ -7,7 +8,6 @@ extern "C" {
     fn dns_domain_equal(arg1: *const u8, arg2: *const u8) -> i32;
     fn dns_domain_fromdot(arg1: *mut *mut u8, arg2: *const u8, arg3: u32) -> i32;
     fn dns_domain_length(arg1: *const u8) -> u32;
-    static mut errno: i32;
     fn fchdir(arg1: i32) -> i32;
     fn ip4_scan(arg1: *const u8, arg2: *mut u8) -> u32;
     fn open_read(arg1: *const u8) -> i32;
@@ -167,7 +167,7 @@ unsafe extern "C" fn init2(mut dir: *mut Struct1) -> i32 {
     let mut i: i32;
     let mut j: i32;
     'loop1: loop {
-        errno = 0i32;
+        errno::set_errno(Errno(0i32));
         d = readdir(dir);
         if d.is_null() {
             _currentBlock = 23;
@@ -251,7 +251,7 @@ unsafe extern "C" fn init2(mut dir: *mut Struct1) -> i32 {
         0i32
     } else if _currentBlock == 22 {
         0i32
-    } else if errno != 0 {
+    } else if errno::errno().0 != 0 {
         0i32
     } else {
         1i32

@@ -1,5 +1,7 @@
 use alloc;
 use byte;
+use errno::{self, Errno};
+use libc;
 
 extern "C" {
     fn cache_get(arg1: *const u8, arg2: u32, arg3: *mut u32, arg4: *mut u32) -> *mut u8;
@@ -28,9 +30,6 @@ extern "C" {
         arg5: *const u8,
         arg6: *const u8,
     ) -> i32;
-    static mut errno: i32;
-    static mut error_io: i32;
-    static mut error_perm: i32;
     fn log_cachedanswer(arg1: *const u8, arg2: *const u8);
     fn log_cachedcname(arg1: *const u8, arg2: *const u8);
     fn log_cachedns(arg1: *const u8, arg2: *const u8);
@@ -434,7 +433,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
     let mut k: i32;
     let mut p: i32;
     let mut q: i32;
-    errno = error_io;
+    errno::set_errno(Errno(libc::EIO));
     if state == 1i32 {
         if {
             (*z).loopvar = (*z).loopvar.wrapping_add(1u32);
@@ -2749,7 +2748,7 @@ pub unsafe extern "C" fn query_start(
     mut localip: *mut u8,
 ) -> i32 {
     if byte::diff(type_, 2u32, (*b"\0\xFC\0").as_ptr() as (*mut u8)) == 0 {
-        errno = error_perm;
+        errno::set_errno(Errno(libc::EPERM));
         -1i32
     } else {
         cleanup(z);

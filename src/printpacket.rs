@@ -1,11 +1,11 @@
 use byte;
+use errno::{self, Errno};
+use libc;
 
 extern "C" {
     fn dns_domain_todot_cat(arg1: *mut stralloc, arg2: *const u8) -> i32;
     fn dns_packet_copy(arg1: *const u8, arg2: u32, arg3: u32, arg4: *mut u8, arg5: u32) -> u32;
     fn dns_packet_getname(arg1: *const u8, arg2: u32, arg3: u32, arg4: *mut *mut u8) -> u32;
-    static mut errno: i32;
-    static mut error_proto: i32;
     fn printrecord_cat(
         arg1: *mut stralloc,
         arg2: *const u8,
@@ -246,7 +246,7 @@ pub unsafe extern "C" fn printpacket_cat(
                        }
                        (if _currentBlock == 44 {
                             (if pos != len {
-                                 errno = error_proto;
+                                 errno::set_errno(Errno(libc::EPROTO));
                                  0u32
                              } else {
                                  1u32

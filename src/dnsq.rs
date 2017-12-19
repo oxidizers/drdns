@@ -1,4 +1,6 @@
 use byte;
+use errno::errno;
+use libc;
 
 extern "C" {
     fn _exit(arg1: i32);
@@ -18,8 +20,6 @@ extern "C" {
         arg5: *const u8,
         arg6: *const u8,
     ) -> i32;
-    static mut errno: i32;
-    fn error_str(arg1: i32) -> *const u8;
     fn iopause(arg1: *mut pollfd, arg2: u32, arg3: *mut taia, arg4: *mut taia);
     fn parsetype(arg1: *mut u8, arg2: *mut u8) -> i32;
     fn printpacket_cat(arg1: *mut stralloc, arg2: *mut u8, arg3: u32) -> u32;
@@ -374,7 +374,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
         oops();
     }
     if resolve(q, type_.as_mut_ptr(), servers.as_mut_ptr()) == -1i32 {
-        if stralloc_cats(&mut out as (*mut stralloc), error_str(errno)) == 0 {
+        if stralloc_cats(&mut out as (*mut stralloc), libc::strerror(errno().0)) == 0 {
             oops();
         }
         if stralloc_cats(&mut out as (*mut stralloc), (*b"\n\0").as_ptr()) == 0 {

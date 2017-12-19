@@ -1,9 +1,6 @@
 use byte;
-
-extern "C" {
-    static mut errno: i32;
-    static mut error_intr: i32;
-}
+use errno::{errno, Errno};
+use libc;
 
 #[derive(Copy)]
 #[repr(C)]
@@ -33,7 +30,7 @@ unsafe extern "C" fn oneread(
         if !(r == -1i32) {
             break;
         }
-        if !(errno == error_intr) {
+        if !(errno() == Errno(libc::EINTR)) {
             break;
         }
     }

@@ -1,8 +1,7 @@
 use byte;
+use errno::{errno, Errno};
 
 extern "C" {
-    static mut errno: i32;
-    static mut error_intr: i32;
     fn str_len(arg1: *const u8) -> u32;
 }
 
@@ -37,7 +36,7 @@ unsafe extern "C" fn allwrite(
         }
         w = op(fd, buf, len);
         if w == -1i32 {
-            if !(errno == error_intr) {
+            if !(errno() == Errno(libc::EINTR)) {
                 _currentBlock = 7;
                 break;
             }
