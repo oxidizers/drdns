@@ -1,9 +1,9 @@
 use byte;
+use libc;
 
 extern "C" {
     fn connect(arg1: i32, arg2: *const sockaddr, arg3: u32) -> i32;
     fn getpeername(arg1: i32, arg2: *mut sockaddr, arg3: *mut u32) -> i32;
-    fn read(arg1: i32, arg2: *mut ::std::os::raw::c_void, arg3: usize) -> isize;
     fn uint16_pack_big(arg1: *mut u8, arg2: u16);
 }
 
@@ -82,9 +82,9 @@ pub unsafe extern "C" fn socket_connected(mut s: i32) -> i32 {
         &mut dummy as (*mut i32) as (*mut u32),
     ) == -1i32
     {
-        read(
+        libc::read(
             s,
-            &mut ch as (*mut u8) as (*mut ::std::os::raw::c_void),
+            &mut ch as (*mut u8) as (*mut libc::c_void),
             1usize,
         );
         0i32

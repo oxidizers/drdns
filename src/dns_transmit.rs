@@ -10,7 +10,6 @@ extern "C" {
     fn dns_packet_copy(arg1: *const u8, arg2: u32, arg3: u32, arg4: *mut u8, arg5: u32) -> u32;
     fn dns_packet_getname(arg1: *const u8, arg2: u32, arg3: u32, arg4: *mut *mut u8) -> u32;
     fn dns_random(arg1: u32) -> u32;
-    fn read(arg1: i32, arg2: *mut ::std::os::raw::c_void, arg3: usize) -> isize;
     fn recv(arg1: i32, arg2: *mut ::std::os::raw::c_void, arg3: usize, arg4: i32) -> isize;
     fn send(arg1: i32, arg2: *const ::std::os::raw::c_void, arg3: usize, arg4: i32) -> isize;
     fn socket_bind4(arg1: i32, arg2: *mut u8, arg3: u16) -> i32;
@@ -23,7 +22,6 @@ extern "C" {
     fn taia_now(arg1: *mut taia);
     fn taia_uint(arg1: *mut taia, arg2: u32);
     fn uint16_pack_big(arg1: *mut u8, arg2: u16);
-    fn write(__fd: i32, __buf: *const ::std::os::raw::c_void, __nbyte: usize) -> isize;
 }
 
 #[derive(Copy)]
@@ -548,9 +546,9 @@ pub unsafe extern "C" fn dns_transmit_get(
              0i32
          })
     } else if (*d).tcpstate == 2i32 {
-        r = write(
+        r = libc::write(
             fd,
-            (*d).query.offset((*d).pos as (isize)) as (*const ::std::os::raw::c_void),
+            (*d).query.offset((*d).pos as (isize)) as (*const libc::c_void),
             (*d).querylen.wrapping_sub((*d).pos) as (usize),
         ) as (i32);
         (if r <= 0i32 {
@@ -571,9 +569,9 @@ pub unsafe extern "C" fn dns_transmit_get(
              0i32
          })
     } else if (*d).tcpstate == 3i32 {
-        r = read(
+        r = libc::read(
             fd,
-            &mut ch as (*mut u8) as (*mut ::std::os::raw::c_void),
+            &mut ch as (*mut u8) as (*mut libc::c_void),
             1usize,
         ) as (i32);
         (if r <= 0i32 {
@@ -584,9 +582,9 @@ pub unsafe extern "C" fn dns_transmit_get(
              0i32
          })
     } else if (*d).tcpstate == 4i32 {
-        r = read(
+        r = libc::read(
             fd,
-            &mut ch as (*mut u8) as (*mut ::std::os::raw::c_void),
+            &mut ch as (*mut u8) as (*mut libc::c_void),
             1usize,
         ) as (i32);
         (if r <= 0i32 {
@@ -605,9 +603,9 @@ pub unsafe extern "C" fn dns_transmit_get(
               })
          })
     } else if (*d).tcpstate == 5i32 {
-        r = read(
+        r = libc::read(
             fd,
-            (*d).packet.offset((*d).pos as (isize)) as (*mut ::std::os::raw::c_void),
+            (*d).packet.offset((*d).pos as (isize)) as (*mut libc::c_void),
             (*d).packetlen.wrapping_sub((*d).pos) as (usize),
         ) as (i32);
         (if r <= 0i32 {

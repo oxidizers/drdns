@@ -21,7 +21,6 @@ extern "C" {
     ) -> i32;
     fn iopause(arg1: *mut pollfd, arg2: u32, arg3: *mut taia, arg4: *mut taia);
     fn ip4_scan(arg1: *const u8, arg2: *mut u8) -> u32;
-    fn read(arg1: i32, arg2: *mut ::std::os::raw::c_void, arg3: usize) -> isize;
     fn scan_ulong(arg1: *const u8, arg2: *mut usize) -> u32;
     fn sgetoptmine(arg1: i32, arg2: *mut *mut u8, arg3: *const u8) -> i32;
     fn stralloc_append(arg1: *mut stralloc, arg2: *const u8) -> i32;
@@ -424,10 +423,10 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
         if flag0 != 0 {
             if inbuflen as (usize) < ::std::mem::size_of::<[u8; 1024]>() {
                 if (*inio).revents != 0 {
-                    r = read(
+                    r = libc::read(
                         0i32,
                         inbuf.as_mut_ptr().offset(inbuflen as (isize)) as
-                            (*mut ::std::os::raw::c_void),
+                            (*mut libc::c_void),
                         ::std::mem::size_of::<[u8; 1024]>().wrapping_sub(inbuflen as (usize)),
                     ) as (i32);
                     if r <= 0i32 {

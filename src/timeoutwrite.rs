@@ -7,7 +7,6 @@ extern "C" {
     fn taia_less(arg1: *const taia, arg2: *const taia) -> i32;
     fn taia_now(arg1: *mut taia);
     fn taia_uint(arg1: *mut taia, arg2: u32);
-    fn write(__fd: i32, __buf: *const ::std::os::raw::c_void, __nbyte: usize) -> isize;
 }
 
 #[derive(Copy)]
@@ -95,6 +94,6 @@ pub unsafe extern "C" fn timeoutwrite(
         errno::set_errno(Errno(libc::ETIMEDOUT));
         -1i32
     } else {
-        write(fd, buf as (*const ::std::os::raw::c_void), len as (usize)) as (i32)
+        libc::write(fd, buf as (*const libc::c_void), len as (usize)) as (i32)
     }
 }
