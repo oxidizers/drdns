@@ -288,7 +288,7 @@ pub unsafe extern "C" fn initialize() {
     if dns_domain_fromdot(
         &mut base as (*mut *mut u8),
         x as (*const u8),
-        libc::strlen(x as (*const u8)),
+        libc::strlen(x as *const i8) as u32,
     ) == 0
     {
         strerr_die(

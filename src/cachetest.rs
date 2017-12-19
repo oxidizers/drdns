@@ -76,7 +76,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
                 x as (*const u8),
                 i as (u32),
                 x.offset(i as (isize)).offset(1isize) as (*const u8),
-                libc::strlen(x as (*const u8))
+                libc::strlen(x as *const i8) as u32
                     .wrapping_sub(i as (u32))
                     .wrapping_sub(1u32),
                 86400u32,

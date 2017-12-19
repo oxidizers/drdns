@@ -163,15 +163,15 @@ pub unsafe extern "C" fn buffer_putflush(
 
 #[no_mangle]
 pub unsafe extern "C" fn buffer_putsalign(mut s: *mut buffer, mut buf: *const u8) -> i32 {
-    buffer_putalign(s, buf, libc::strlen(buf))
+    buffer_putalign(s, buf, libc::strlen(buf as *const i8) as u32)
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn buffer_puts(mut s: *mut buffer, mut buf: *const u8) -> i32 {
-    buffer_put(s, buf, libc::strlen(buf))
+    buffer_put(s, buf, libc::strlen(buf as *const i8) as u32)
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn buffer_putsflush(mut s: *mut buffer, mut buf: *const u8) -> i32 {
-    buffer_putflush(s, buf, libc::strlen(buf))
+    buffer_putflush(s, buf, libc::strlen(buf as *const i8) as u32)
 }

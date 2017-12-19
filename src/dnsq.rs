@@ -327,7 +327,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     if dns_domain_fromdot(
         &mut q as (*mut *mut u8),
         *argv as (*const u8),
-        libc::strlen(*argv as (*const u8)),
+        libc::strlen(*argv as *const i8) as u32,
     ) == 0
     {
         oops();
