@@ -1,7 +1,7 @@
 use byte;
+use libc;
 
 extern "C" {
-    fn _exit(arg1: i32);
     fn buffer_flush(arg1: *mut buffer) -> i32;
     fn buffer_get(arg1: *mut buffer, arg2: *mut u8, arg3: u32) -> i32;
     fn buffer_init(
@@ -765,7 +765,7 @@ pub unsafe extern "C" fn netread(mut buf: *mut u8, mut len: u32) {
         }
         r = timeoutread(60i32, 0i32, buf, len as (i32));
         if r == 0i32 {
-            _exit(0i32);
+            libc::_exit(0i32);
         }
         if r < 0i32 {
             die_netread();

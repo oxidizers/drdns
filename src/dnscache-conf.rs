@@ -2,7 +2,6 @@ use errno::{errno, Errno};
 use libc;
 
 extern "C" {
-    fn _exit(arg1: i32);
     static mut auto_home: *const u8;
     fn buffer_init(
         arg1: *mut buffer,
@@ -439,6 +438,5 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     out(seed.as_mut_ptr() as (*mut u8) as (*const u8), 128u32);
     finish();
     perm(0o600i32);
-    _exit(0i32);
-    0
+    libc::_exit(0i32);
 }

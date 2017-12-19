@@ -1,5 +1,6 @@
+use libc;
+
 extern "C" {
-    fn _exit(arg1: i32);
     static mut auto_home: *const u8;
     fn finish();
     fn getpwnam(arg1: *const u8) -> *mut passwd;
@@ -185,6 +186,5 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     perm(0o755i32);
     makedir((*b"root\0").as_ptr());
     perm(0o2755i32);
-    _exit(0i32);
-    0
+    libc::_exit(0i32);
 }

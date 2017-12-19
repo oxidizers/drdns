@@ -1,5 +1,6 @@
+use libc;
+
 extern "C" {
-    fn _exit(arg1: i32);
     fn buffer_flush(arg1: *mut buffer) -> i32;
     fn buffer_puts(arg1: *mut buffer, arg2: *const u8) -> i32;
     fn buffer_unixwrite(arg1: i32, arg2: *const u8, arg3: u32) -> i32;
@@ -36,7 +37,7 @@ pub static mut b: buffer = buffer {
 #[no_mangle]
 pub unsafe extern "C" fn puts(mut s: *const u8) {
     if buffer_puts(&mut b as (*mut buffer), s) == -1i32 {
-        _exit(111i32);
+        libc::_exit(111i32);
     }
 }
 
@@ -66,11 +67,11 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     let mut octal: [u8; 4];
     name = *argv.offset(1isize);
     if name.is_null() {
-        _exit(100i32);
+        libc::_exit(100i32);
     }
     value = *argv.offset(2isize);
     if value.is_null() {
-        _exit(100i32);
+        libc::_exit(100i32);
     }
     puts((*b"const char \0").as_ptr());
     puts(name as (*const u8));
@@ -98,8 +99,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     }
     puts((*b"\\\n\";\n\0").as_ptr());
     if buffer_flush(&mut b as (*mut buffer)) == -1i32 {
-        _exit(111i32);
+        libc::_exit(111i32);
     }
-    _exit(0i32);
-    0
+    libc::_exit(0i32);
 }

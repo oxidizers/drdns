@@ -4,7 +4,6 @@ use libc;
 
 extern "C" {
     fn __swbuf(arg1: i32, arg2: *mut __sFILE) -> i32;
-    fn _exit(arg1: i32);
     fn buffer_flush(arg1: *mut buffer) -> i32;
     fn buffer_get(arg1: *mut buffer, arg2: *mut u8, arg3: u32) -> i32;
     fn buffer_init(
@@ -1024,7 +1023,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     );
     if oldserial != 0 && (newserial != 0) {
         if oldserial == newserial {
-            _exit(0i32);
+            libc::_exit(0i32);
         }
     }
     fd = open_trunc(fntmp as (*const u8));
@@ -1126,6 +1125,5 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
             &mut strerr_sys as (*mut strerr) as (*const strerr),
         );
     }
-    _exit(0i32);
-    0
+    libc::_exit(0i32);
 }

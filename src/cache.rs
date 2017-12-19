@@ -1,8 +1,8 @@
 use alloc;
 use byte;
+use libc;
 
 extern "C" {
-    fn _exit(arg1: i32);
     fn tai_add(arg1: *mut tai, arg2: *const tai, arg3: *const tai);
     fn tai_now(arg1: *mut tai);
     fn tai_pack(arg1: *mut u8, arg2: *const tai);
@@ -57,7 +57,7 @@ unsafe extern "C" fn hash(mut key: *const u8, mut keylen: u32) -> u32 {
 }
 
 unsafe extern "C" fn cache_impossible() {
-    _exit(111i32);
+    libc::_exit(111i32);
 }
 
 unsafe extern "C" fn get4(mut pos: u32) -> u32 {
