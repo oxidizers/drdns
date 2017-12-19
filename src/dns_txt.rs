@@ -162,7 +162,7 @@ impl Clone for tai {
 #[derive(Copy)]
 #[repr(C)]
 pub struct taia {
-    pub sec: tai,
+    pub sec: Tai,
     pub nano: usize,
     pub atto: usize,
 }
@@ -184,7 +184,7 @@ pub struct dns_transmit {
     pub tcpstate: i32,
     pub udploop: u32,
     pub curserver: u32,
-    pub deadline: taia,
+    pub deadline: TaiA,
     pub pos: u32,
     pub servers: *const u8,
     pub localip: [u8; 4],

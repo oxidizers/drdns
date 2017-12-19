@@ -1,8 +1,8 @@
 extern "C" {
     fn getpid() -> i32;
     fn getppid() -> i32;
-    fn taia_now(arg1: *mut taia);
-    fn taia_pack(arg1: *mut u8, arg2: *const taia);
+    fn taia_now(arg1: *mut TaiA);
+    fn taia_pack(arg1: *mut u8, arg2: *const TaiA);
     fn uint32_unpack(arg1: *const u8, arg2: *mut u32);
 }
 
@@ -29,7 +29,7 @@ impl Clone for tai {
 #[derive(Copy)]
 #[repr(C)]
 pub struct taia {
-    pub sec: tai,
+    pub sec: Tai,
     pub nano: usize,
     pub atto: usize,
 }
@@ -43,7 +43,7 @@ impl Clone for taia {
 #[no_mangle]
 pub unsafe extern "C" fn dns_random_init(mut data: *const u8) {
     let mut i: i32;
-    let mut t: taia;
+    let mut t: TaiA;
     let mut tpack: [u8; 16];
     i = 0i32;
     'loop1: loop {
@@ -56,8 +56,8 @@ pub unsafe extern "C" fn dns_random_init(mut data: *const u8) {
         );
         i = i + 1;
     }
-    taia_now(&mut t as (*mut taia));
-    taia_pack(tpack.as_mut_ptr(), &mut t as (*mut taia) as (*const taia));
+    taia_now(&mut t as (*mut TaiA));
+    taia_pack(tpack.as_mut_ptr(), &mut t as (*mut TaiA) as (*const TaiA));
     i = 0i32;
     'loop3: loop {
         if !(i < 4i32) {

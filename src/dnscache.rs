@@ -11,7 +11,7 @@ extern "C" {
     fn dns_random_init(arg1: *const u8);
     fn droproot(arg1: *const u8);
     fn env_get(arg1: *const u8) -> *mut u8;
-    fn iopause(arg1: *mut pollfd, arg2: u32, arg3: *mut taia, arg4: *mut taia);
+    fn iopause(arg1: *mut pollfd, arg2: u32, arg3: *mut TaiA, arg4: *mut TaiA);
     fn ip4_scan(arg1: *const u8, arg2: *mut u8) -> u32;
     fn log_query(
         arg1: *mut usize,
@@ -29,8 +29,8 @@ extern "C" {
     fn ndelay_on(arg1: i32) -> i32;
     fn okclient(arg1: *mut u8) -> i32;
     fn query_forwardonly();
-    fn query_get(arg1: *mut query, arg2: *mut pollfd, arg3: *mut taia) -> i32;
-    fn query_io(arg1: *mut query, arg2: *mut pollfd, arg3: *mut taia);
+    fn query_get(arg1: *mut query, arg2: *mut pollfd, arg3: *mut TaiA) -> i32;
+    fn query_io(arg1: *mut query, arg2: *mut pollfd, arg3: *mut TaiA);
     fn query_start(
         arg1: *mut query,
         arg2: *mut u8,
@@ -64,10 +64,10 @@ extern "C" {
         arg8: *const strerr,
     );
     static mut strerr_sys: strerr;
-    fn taia_add(arg1: *mut taia, arg2: *const taia, arg3: *const taia);
-    fn taia_less(arg1: *const taia, arg2: *const taia) -> i32;
-    fn taia_now(arg1: *mut taia);
-    fn taia_uint(arg1: *mut taia, arg2: u32);
+    fn taia_add(arg1: *mut TaiA, arg2: *const TaiA, arg3: *const TaiA);
+    fn taia_less(arg1: *const TaiA, arg2: *const TaiA) -> i32;
+    fn taia_now(arg1: *mut TaiA);
+    fn taia_uint(arg1: *mut TaiA, arg2: u32);
     fn uint16_pack_big(arg1: *mut u8, arg2: u16);
 }
 
@@ -97,7 +97,7 @@ impl Clone for tai {
 #[derive(Copy)]
 #[repr(C)]
 pub struct taia {
-    pub sec: tai,
+    pub sec: Tai,
     pub nano: usize,
     pub atto: usize,
 }
@@ -119,7 +119,7 @@ pub struct dns_transmit {
     pub tcpstate: i32,
     pub udploop: u32,
     pub curserver: u32,
-    pub deadline: taia,
+    pub deadline: TaiA,
     pub pos: u32,
     pub servers: *const u8,
     pub localip: [u8; 4],
@@ -173,7 +173,7 @@ impl Clone for pollfd {
 #[repr(C)]
 pub struct udpclient {
     pub q: query,
-    pub start: taia,
+    pub start: TaiA,
     pub active: usize,
     pub io: *mut pollfd,
     pub ip: [u8; 4],
@@ -209,8 +209,8 @@ static mut u: [udpclient; 200] = [udpclient {
             tcpstate: 0i32,
             udploop: 0u32,
             curserver: 0u32,
-            deadline: taia {
-                sec: tai { x: 0usize },
+            deadline: TaiA {
+                sec: Tai { x: 0usize },
                 nano: 0usize,
                 atto: 0usize,
             },
@@ -220,8 +220,8 @@ static mut u: [udpclient; 200] = [udpclient {
             qtype: [0u8; 2],
         },
     },
-    start: taia {
-        sec: tai { x: 0usize },
+    start: TaiA {
+        sec: Tai { x: 0usize },
         nano: 0usize,
         atto: 0usize,
     },
@@ -347,8 +347,8 @@ pub unsafe extern "C" fn u_new() {
                 break;
             }
             if taia_less(
-                &mut u[i as (usize)].start as (*mut taia) as (*const taia),
-                &mut u[j as (usize)].start as (*mut taia) as (*const taia),
+                &mut u[i as (usize)].start as (*mut TaiA) as (*const TaiA),
+                &mut u[j as (usize)].start as (*mut TaiA) as (*const TaiA),
             ) != 0
             {
                 j = i;
@@ -359,7 +359,7 @@ pub unsafe extern "C" fn u_new() {
         u_drop(j);
     }
     x = u.as_mut_ptr().offset(j as (isize));
-    taia_now(&mut (*x).start as (*mut taia));
+    taia_now(&mut (*x).start as (*mut TaiA));
     len = socket_recv4(
         udp53,
         buf.as_mut_ptr(),
@@ -422,8 +422,8 @@ static mut tcp53: i32 = 0i32;
 #[repr(C)]
 pub struct tcpclient {
     pub q: query,
-    pub start: taia,
-    pub timeout: taia,
+    pub start: TaiA,
+    pub timeout: TaiA,
     pub active: usize,
     pub io: *mut pollfd,
     pub ip: [u8; 4],
@@ -465,8 +465,8 @@ pub static mut t: [tcpclient; 20] = [tcpclient {
             tcpstate: 0i32,
             udploop: 0u32,
             curserver: 0u32,
-            deadline: taia {
-                sec: tai { x: 0usize },
+            deadline: TaiA {
+                sec: Tai { x: 0usize },
                 nano: 0usize,
                 atto: 0usize,
             },
@@ -476,13 +476,13 @@ pub static mut t: [tcpclient; 20] = [tcpclient {
             qtype: [0u8; 2],
         },
     },
-    start: taia {
-        sec: tai { x: 0usize },
+    start: TaiA {
+        sec: Tai { x: 0usize },
         nano: 0usize,
         atto: 0usize,
     },
-    timeout: taia {
-        sec: tai { x: 0usize },
+    timeout: TaiA {
+        sec: Tai { x: 0usize },
         nano: 0usize,
         atto: 0usize,
     },
@@ -512,15 +512,15 @@ pub unsafe extern "C" fn t_free(mut j: i32) {
 
 #[no_mangle]
 pub unsafe extern "C" fn t_timeout(mut j: i32) {
-    let mut now: taia;
+    let mut now: TaiA;
     if t[j as (usize)].active == 0 {
     } else {
-        taia_now(&mut now as (*mut taia));
-        taia_uint(&mut t[j as (usize)].timeout as (*mut taia), 10u32);
+        taia_now(&mut now as (*mut TaiA));
+        taia_uint(&mut t[j as (usize)].timeout as (*mut TaiA), 10u32);
         taia_add(
-            &mut t[j as (usize)].timeout as (*mut taia),
-            &mut t[j as (usize)].timeout as (*mut taia) as (*const taia),
-            &mut now as (*mut taia) as (*const taia),
+            &mut t[j as (usize)].timeout as (*mut TaiA),
+            &mut t[j as (usize)].timeout as (*mut TaiA) as (*const TaiA),
+            &mut now as (*mut TaiA) as (*const TaiA),
         );
     }
 }
@@ -694,8 +694,8 @@ pub unsafe extern "C" fn t_new() {
                 break;
             }
             if taia_less(
-                &mut t[i as (usize)].start as (*mut taia) as (*const taia),
-                &mut t[j as (usize)].start as (*mut taia) as (*const taia),
+                &mut t[i as (usize)].start as (*mut TaiA) as (*const TaiA),
+                &mut t[j as (usize)].start as (*mut TaiA) as (*const TaiA),
             ) != 0
             {
                 j = i;
@@ -710,7 +710,7 @@ pub unsafe extern "C" fn t_new() {
         }
     }
     x = t.as_mut_ptr().offset(j as (isize));
-    taia_now(&mut (*x).start as (*mut taia));
+    taia_now(&mut (*x).start as (*mut TaiA));
     (*x).tcp = socket_accept4(tcp53, (*x).ip.as_mut_ptr(), &mut (*x).port as (*mut u16));
     if (*x).tcp == -1i32 {
     } else {
@@ -772,17 +772,17 @@ impl Clone for strerr {
 
 unsafe extern "C" fn doit() {
     let mut j: i32;
-    let mut deadline: taia;
-    let mut stamp: taia;
+    let mut deadline: TaiA;
+    let mut stamp: TaiA;
     let mut iolen: i32;
     let mut r: i32;
     'loop1: loop {
-        taia_now(&mut stamp as (*mut taia));
-        taia_uint(&mut deadline as (*mut taia), 120u32);
+        taia_now(&mut stamp as (*mut TaiA));
+        taia_uint(&mut deadline as (*mut TaiA), 120u32);
         taia_add(
-            &mut deadline as (*mut taia),
-            &mut deadline as (*mut taia) as (*const taia),
-            &mut stamp as (*mut taia) as (*const taia),
+            &mut deadline as (*mut TaiA),
+            &mut deadline as (*mut TaiA) as (*const TaiA),
+            &mut stamp as (*mut TaiA) as (*const TaiA),
         );
         iolen = 0i32;
         udp53io = io.as_mut_ptr().offset({
@@ -813,7 +813,7 @@ unsafe extern "C" fn doit() {
                 query_io(
                     &mut u[j as (usize)].q as (*mut query),
                     u[j as (usize)].io,
-                    &mut deadline as (*mut taia),
+                    &mut deadline as (*mut TaiA),
                 );
             }
             j = j + 1;
@@ -833,12 +833,12 @@ unsafe extern "C" fn doit() {
                     query_io(
                         &mut t[j as (usize)].q as (*mut query),
                         t[j as (usize)].io,
-                        &mut deadline as (*mut taia),
+                        &mut deadline as (*mut TaiA),
                     );
                 } else {
                     if taia_less(
-                        &mut t[j as (usize)].timeout as (*mut taia) as (*const taia),
-                        &mut deadline as (*mut taia) as (*const taia),
+                        &mut t[j as (usize)].timeout as (*mut TaiA) as (*const TaiA),
+                        &mut deadline as (*mut TaiA) as (*const TaiA),
                     ) != 0
                     {
                         deadline = t[j as (usize)].timeout;
@@ -856,8 +856,8 @@ unsafe extern "C" fn doit() {
         iopause(
             io.as_mut_ptr(),
             iolen as (u32),
-            &mut deadline as (*mut taia),
-            &mut stamp as (*mut taia),
+            &mut deadline as (*mut TaiA),
+            &mut stamp as (*mut TaiA),
         );
         j = 0i32;
         'loop6: loop {
@@ -868,7 +868,7 @@ unsafe extern "C" fn doit() {
                 r = query_get(
                     &mut u[j as (usize)].q as (*mut query),
                     u[j as (usize)].io,
-                    &mut stamp as (*mut taia),
+                    &mut stamp as (*mut TaiA),
                 );
                 if r == -1i32 {
                     u_drop(j);
@@ -892,7 +892,7 @@ unsafe extern "C" fn doit() {
                     r = query_get(
                         &mut t[j as (usize)].q as (*mut query),
                         t[j as (usize)].io,
-                        &mut stamp as (*mut taia),
+                        &mut stamp as (*mut TaiA),
                     );
                     if r == -1i32 {
                         t_drop(j);
@@ -902,8 +902,8 @@ unsafe extern "C" fn doit() {
                     }
                 } else if (*t[j as (usize)].io).revents != 0 ||
                            taia_less(
-                        &mut t[j as (usize)].timeout as (*mut taia) as (*const taia),
-                        &mut stamp as (*mut taia) as (*const taia),
+                        &mut t[j as (usize)].timeout as (*mut TaiA) as (*const TaiA),
+                        &mut stamp as (*mut TaiA) as (*const TaiA),
                     ) != 0
                 {
                     t_rw(j);

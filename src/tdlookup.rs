@@ -23,9 +23,9 @@ extern "C" {
     fn response_nxdomain();
     fn response_rfinish(arg1: i32);
     fn response_rstart(arg1: *const u8, arg2: *const u8, arg3: u32) -> i32;
-    fn tai_now(arg1: *mut tai);
-    fn tai_sub(arg1: *mut tai, arg2: *const tai, arg3: *const tai);
-    fn tai_unpack(arg1: *const u8, arg2: *mut tai);
+    fn tai_now(arg1: *mut Tai);
+    fn tai_sub(arg1: *mut Tai, arg2: *const Tai, arg3: *const Tai);
+    fn tai_unpack(arg1: *const u8, arg2: *mut Tai);
     fn uint16_unpack_big(arg1: *const u8, arg2: *mut u16);
     fn uint32_unpack_big(arg1: *const u8, arg2: *mut u32);
 }
@@ -46,7 +46,7 @@ impl Clone for tai {
     }
 }
 
-static mut now: tai = tai { x: 0usize };
+static mut now: Tai = Tai { x: 0usize };
 
 #[derive(Copy)]
 #[repr(C)]
@@ -96,7 +96,7 @@ unsafe extern "C" fn find(mut d: *mut u8, mut flagwild: i32) -> i32 {
     let mut _currentBlock;
     let mut r: i32;
     let mut ch: u8;
-    let mut cutoff: tai;
+    let mut cutoff: Tai;
     let mut ttd: [u8; 8];
     let mut ttlstr: [u8; 4];
     let mut recordloc: [u8; 2];
@@ -200,24 +200,24 @@ unsafe extern "C" fn find(mut d: *mut u8, mut flagwild: i32) -> i32 {
             _currentBlock = 21;
             break;
         }
-        tai_unpack(ttd.as_mut_ptr() as (*const u8), &mut cutoff as (*mut tai));
+        tai_unpack(ttd.as_mut_ptr() as (*const u8), &mut cutoff as (*mut Tai));
         if ttl == 0u32 {
-            if !((*(&mut cutoff as (*mut tai))).x < (*(&mut now as (*mut tai))).x) {
+            if !((*(&mut cutoff as (*mut Tai))).x < (*(&mut now as (*mut Tai))).x) {
                 _currentBlock = 16;
                 break;
             }
-        } else if !!((*(&mut cutoff as (*mut tai))).x < (*(&mut now as (*mut tai))).x) {
+        } else if !!((*(&mut cutoff as (*mut Tai))).x < (*(&mut now as (*mut Tai))).x) {
             _currentBlock = 21;
             break;
         }
     }
     if _currentBlock == 16 {
         tai_sub(
-            &mut cutoff as (*mut tai),
-            &mut cutoff as (*mut tai) as (*const tai),
-            &mut now as (*mut tai) as (*const tai),
+            &mut cutoff as (*mut Tai),
+            &mut cutoff as (*mut Tai) as (*const Tai),
+            &mut now as (*mut Tai) as (*const Tai),
         );
-        newttl = (*(&mut cutoff as (*mut tai))).x as (f64);
+        newttl = (*(&mut cutoff as (*mut Tai))).x as (f64);
         if newttl <= 2.0f64 {
             newttl = 2.0f64;
         }
@@ -821,7 +821,7 @@ pub unsafe extern "C" fn respond(mut q: *mut u8, mut qtype: *mut u8, mut ip: *mu
     let mut fd: i32;
     let mut r: i32;
     let mut key: [u8; 6];
-    tai_now(&mut now as (*mut tai));
+    tai_now(&mut now as (*mut Tai));
     fd = open_read((*b"data.cdb\0").as_ptr());
     if fd == -1i32 {
         0i32

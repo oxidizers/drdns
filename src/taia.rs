@@ -7,22 +7,22 @@
 //! 9192631770 periods of the radiation corresponding to the transition
 //! between the two hyperfine levels of the ground state of the cesium atom.
 
-use tai::tai;
+use tai::Tai;
 
 extern "C" {
     fn gettimeofday(arg1: *mut timeval, arg2: *mut ::std::os::raw::c_void) -> i32;
-    fn tai_pack(arg1: *mut u8, arg2: *const tai);
+    fn tai_pack(arg1: *mut u8, arg2: *const Tai);
 }
 
 #[derive(Copy)]
 #[repr(C)]
-pub struct taia {
-    pub sec: tai,
+pub struct TaiA {
+    pub sec: Tai,
     pub nano: usize,
     pub atto: usize,
 }
 
-impl Clone for taia {
+impl Clone for TaiA {
     fn clone(&self) -> Self {
         *self
     }
@@ -54,9 +54,9 @@ impl Clone for timezone {
     }
 }
 
-impl taia {
+impl TaiA {
     #[no_mangle]
-    pub unsafe extern "C" fn taia_add(t: *mut taia, u: *const taia, v: *const taia) {
+    pub unsafe extern "C" fn taia_add(t: *mut TaiA, u: *const TaiA, v: *const TaiA) {
         (*t).sec.x = (*u).sec.x.wrapping_add((*v).sec.x);
         (*t).nano = (*u).nano.wrapping_add((*v).nano);
         (*t).atto = (*u).atto.wrapping_add((*v).atto);
@@ -71,17 +71,17 @@ impl taia {
     }
 
     #[no_mangle]
-    pub unsafe extern "C" fn taia_approx(t: *const taia) -> f64 {
-        (*(&(*t).sec as (*const tai))).x as (f64) + taia::taia_frac(t)
+    pub unsafe extern "C" fn taia_approx(t: *const TaiA) -> f64 {
+        (*(&(*t).sec as (*const Tai))).x as (f64) + TaiA::taia_frac(t)
     }
 
     #[no_mangle]
-    pub unsafe extern "C" fn taia_frac(t: *const taia) -> f64 {
+    pub unsafe extern "C" fn taia_frac(t: *const TaiA) -> f64 {
         ((*t).atto as (f64) * 0.000000001f64 + (*t).nano as (f64)) * 0.000000001f64
     }
 
     #[no_mangle]
-    pub unsafe extern "C" fn taia_less(t: *const taia, u: *const taia) -> i32 {
+    pub unsafe extern "C" fn taia_less(t: *const TaiA, u: *const TaiA) -> i32 {
         if (*t).sec.x < (*u).sec.x {
             1i32
         } else if (*t).sec.x > (*u).sec.x {
@@ -96,7 +96,7 @@ impl taia {
     }
 
     #[no_mangle]
-    pub unsafe extern "C" fn taia_now(t: *mut taia) {
+    pub unsafe extern "C" fn taia_now(t: *mut TaiA) {
         let mut now: timeval = timeval {
             tv_sec: 0,
             tv_usec: 0
@@ -107,16 +107,16 @@ impl taia {
             0i32 as (*mut timezone) as (*mut ::std::os::raw::c_void),
         );
 
-        (*(&mut (*t).sec as (*mut tai))).x =
+        (*(&mut (*t).sec as (*mut Tai))).x =
             4611686018427387914u64.wrapping_add(now.tv_sec as (usize) as (u64)) as (usize);
         (*t).nano = (1000i32 * now.tv_usec + 500i32) as (usize);
         (*t).atto = 0usize;
     }
 
     #[no_mangle]
-    pub unsafe extern "C" fn taia_pack(mut s: *mut u8, t: *const taia) {
+    pub unsafe extern "C" fn taia_pack(mut s: *mut u8, t: *const TaiA) {
         let mut x: usize;
-        tai_pack(s, &(*t).sec as (*const tai));
+        tai_pack(s, &(*t).sec as (*const Tai));
         s = s.offset(8isize);
         x = (*t).atto;
         *s.offset(7isize) = (x & 255usize) as (u8);
@@ -137,7 +137,7 @@ impl taia {
     }
 
     #[no_mangle]
-    pub unsafe extern "C" fn taia_sub(t: *mut taia, u: *const taia, v: *const taia) {
+    pub unsafe extern "C" fn taia_sub(t: *mut TaiA, u: *const TaiA, v: *const TaiA) {
         let unano: usize = (*u).nano;
         let uatto: usize = (*u).atto;
         (*t).sec.x = (*u).sec.x.wrapping_sub((*v).sec.x);
@@ -154,12 +154,12 @@ impl taia {
     }
 
     #[no_mangle]
-    pub unsafe extern "C" fn taia_tai(ta: *const taia, t: *mut tai) {
+    pub unsafe extern "C" fn taia_tai(ta: *const TaiA, t: *mut Tai) {
         *t = (*ta).sec;
     }
 
     #[no_mangle]
-    pub unsafe extern "C" fn taia_uint(t: *mut taia, s: u32) {
+    pub unsafe extern "C" fn taia_uint(t: *mut TaiA, s: u32) {
         (*t).sec.x = s as (usize);
         (*t).nano = 0usize;
         (*t).atto = 0usize;

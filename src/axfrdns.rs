@@ -50,8 +50,8 @@ extern "C" {
         arg8: *const strerr,
     );
     static mut strerr_sys: strerr;
-    fn tai_now(arg1: *mut tai);
-    fn tai_unpack(arg1: *const u8, arg2: *mut tai);
+    fn tai_now(arg1: *mut Tai);
+    fn tai_unpack(arg1: *const u8, arg2: *mut Tai);
     fn timeoutread(t: i32, fd: i32, buf: *mut u8, len: i32) -> i32;
     fn timeoutwrite(t: i32, fd: i32, buf: *mut u8, len: i32) -> i32;
     fn uint16_pack_big(arg1: *mut u8, arg2: u16);
@@ -329,7 +329,7 @@ impl Clone for tai {
 }
 
 #[no_mangle]
-pub static mut now: tai = tai { x: 0usize };
+pub static mut now: Tai = Tai { x: 0usize };
 
 #[no_mangle]
 pub static mut data: [u8; 32767] = [0u8; 32767];
@@ -392,7 +392,7 @@ pub unsafe extern "C" fn build(
     let mut recordloc: [u8; 2];
     let mut ttl: [u8; 4];
     let mut ttd: [u8; 8];
-    let mut cutoff: tai;
+    let mut cutoff: Tai;
     dpos = 0u32;
     copy(type_.as_mut_ptr(), 2u32);
     if flagsoa != 0 {
@@ -454,19 +454,19 @@ pub unsafe extern "C" fn build(
         (*b"\0\0\0\0\0\0\0\0\0").as_ptr() as (*mut u8),
     ) != 0
     {
-        tai_unpack(ttd.as_mut_ptr() as (*const u8), &mut cutoff as (*mut tai));
+        tai_unpack(ttd.as_mut_ptr() as (*const u8), &mut cutoff as (*mut Tai));
         if byte::diff(
             ttl.as_mut_ptr(),
             4u32,
             (*b"\0\0\0\0\0").as_ptr() as (*mut u8),
         ) == 0
         {
-            if (*(&mut cutoff as (*mut tai))).x < (*(&mut now as (*mut tai))).x {
+            if (*(&mut cutoff as (*mut Tai))).x < (*(&mut now as (*mut Tai))).x {
                 return 0i32;
             } else {
                 uint32_pack_big(ttl.as_mut_ptr(), 2u32);
             }
-        } else if !((*(&mut cutoff as (*mut tai))).x < (*(&mut now as (*mut tai))).x) {
+        } else if !((*(&mut cutoff as (*mut Tai))).x < (*(&mut now as (*mut Tai))).x) {
             return 0i32;
         }
     }
@@ -595,7 +595,7 @@ pub unsafe extern "C" fn doaxfr(mut id: *mut u8) {
     let mut pos: u32;
     let mut r: i32;
     axfrcheck(zone);
-    tai_now(&mut now as (*mut tai));
+    tai_now(&mut now as (*mut Tai));
     cdb_init(&mut c as (*mut cdb), fdcdb);
     byte::zero(clientloc.as_mut_ptr(), 2u32);
     key[0usize] = 0u8;

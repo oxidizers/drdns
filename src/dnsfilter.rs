@@ -9,8 +9,8 @@ extern "C" {
     fn dns_name4_domain(arg1: *mut u8, arg2: *const u8);
     fn dns_name_packet(arg1: *mut stralloc, arg2: *const u8, arg3: u32) -> i32;
     fn dns_resolvconfip(arg1: *mut u8) -> i32;
-    fn dns_transmit_get(arg1: *mut dns_transmit, arg2: *const pollfd, arg3: *const taia) -> i32;
-    fn dns_transmit_io(arg1: *mut dns_transmit, arg2: *mut pollfd, arg3: *mut taia);
+    fn dns_transmit_get(arg1: *mut dns_transmit, arg2: *const pollfd, arg3: *const TaiA) -> i32;
+    fn dns_transmit_io(arg1: *mut dns_transmit, arg2: *mut pollfd, arg3: *mut TaiA);
     fn dns_transmit_start(
         arg1: *mut dns_transmit,
         arg2: *const u8,
@@ -19,7 +19,7 @@ extern "C" {
         arg5: *const u8,
         arg6: *const u8,
     ) -> i32;
-    fn iopause(arg1: *mut pollfd, arg2: u32, arg3: *mut taia, arg4: *mut taia);
+    fn iopause(arg1: *mut pollfd, arg2: u32, arg3: *mut TaiA, arg4: *mut TaiA);
     fn ip4_scan(arg1: *const u8, arg2: *mut u8) -> u32;
     fn scan_ulong(arg1: *const u8, arg2: *mut usize) -> u32;
     fn sgetoptmine(arg1: i32, arg2: *mut *mut u8, arg3: *const u8) -> i32;
@@ -41,9 +41,9 @@ extern "C" {
     static mut strerr_sys: strerr;
     static mut subgetoptarg: *mut u8;
     static mut subgetoptdone: i32;
-    fn taia_add(arg1: *mut taia, arg2: *const taia, arg3: *const taia);
-    fn taia_now(arg1: *mut taia);
-    fn taia_uint(arg1: *mut taia, arg2: u32);
+    fn taia_add(arg1: *mut TaiA, arg2: *const TaiA, arg3: *const TaiA);
+    fn taia_now(arg1: *mut TaiA);
+    fn taia_uint(arg1: *mut TaiA, arg2: u32);
 }
 
 #[derive(Copy)]
@@ -104,7 +104,7 @@ impl Clone for tai {
 #[derive(Copy)]
 #[repr(C)]
 pub struct taia {
-    pub sec: tai,
+    pub sec: Tai,
     pub nano: usize,
     pub atto: usize,
 }
@@ -126,7 +126,7 @@ pub struct dns_transmit {
     pub tcpstate: i32,
     pub udploop: u32,
     pub curserver: u32,
-    pub deadline: taia,
+    pub deadline: TaiA,
     pub pos: u32,
     pub servers: *const u8,
     pub localip: [u8; 4],
@@ -199,8 +199,8 @@ pub static mut tmp: line = line {
         tcpstate: 0i32,
         udploop: 0u32,
         curserver: 0u32,
-        deadline: taia {
-            sec: tai { x: 0usize },
+        deadline: TaiA {
+            sec: Tai { x: 0usize },
             nano: 0usize,
             atto: 0usize,
         },
@@ -307,8 +307,8 @@ fn main() {
 
 #[no_mangle]
 pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
-    let mut stamp: taia;
-    let mut deadline: taia;
+    let mut stamp: TaiA;
+    let mut deadline: TaiA;
     let mut opt: i32;
     let mut u: usize;
     let mut i: i32;
@@ -376,12 +376,12 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
         if !(flag0 != 0 || inbuflen != 0 || partial.len != 0 || xnum != 0) {
             break;
         }
-        taia_now(&mut stamp as (*mut taia));
-        taia_uint(&mut deadline as (*mut taia), 120u32);
+        taia_now(&mut stamp as (*mut TaiA));
+        taia_uint(&mut deadline as (*mut TaiA), 120u32);
         taia_add(
-            &mut deadline as (*mut taia),
-            &mut deadline as (*mut taia) as (*const taia),
-            &mut stamp as (*mut taia) as (*const taia),
+            &mut deadline as (*mut TaiA),
+            &mut deadline as (*mut TaiA) as (*const TaiA),
+            &mut stamp as (*mut TaiA) as (*const TaiA),
         );
         iolen = 0i32;
         if flag0 != 0 {
@@ -409,7 +409,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
                 dns_transmit_io(
                     &mut (*x.offset(i as (isize))).dt as (*mut dns_transmit),
                     (*x.offset(i as (isize))).io,
-                    &mut deadline as (*mut taia),
+                    &mut deadline as (*mut TaiA),
                 );
             }
             i = i + 1;
@@ -417,8 +417,8 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
         iopause(
             io,
             iolen as (u32),
-            &mut deadline as (*mut taia),
-            &mut stamp as (*mut taia),
+            &mut deadline as (*mut TaiA),
+            &mut stamp as (*mut TaiA),
         );
         if flag0 != 0 {
             if inbuflen as (usize) < ::std::mem::size_of::<[u8; 1024]>() {
@@ -446,7 +446,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
                 r = dns_transmit_get(
                     &mut (*x.offset(i as (isize))).dt as (*mut dns_transmit),
                     (*x.offset(i as (isize))).io as (*const pollfd),
-                    &mut stamp as (*mut taia) as (*const taia),
+                    &mut stamp as (*mut TaiA) as (*const TaiA),
                 );
                 if r == -1i32 {
                     errout(i);

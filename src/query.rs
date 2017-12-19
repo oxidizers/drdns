@@ -20,8 +20,8 @@ extern "C" {
     fn dns_packet_skipname(arg1: *const u8, arg2: u32, arg3: u32) -> u32;
     fn dns_sortip(arg1: *mut u8, arg2: u32);
     fn dns_transmit_free(arg1: *mut dns_transmit);
-    fn dns_transmit_get(arg1: *mut dns_transmit, arg2: *const pollfd, arg3: *const taia) -> i32;
-    fn dns_transmit_io(arg1: *mut dns_transmit, arg2: *mut pollfd, arg3: *mut taia);
+    fn dns_transmit_get(arg1: *mut dns_transmit, arg2: *const pollfd, arg3: *const TaiA) -> i32;
+    fn dns_transmit_io(arg1: *mut dns_transmit, arg2: *mut pollfd, arg3: *mut TaiA);
     fn dns_transmit_start(
         arg1: *mut dns_transmit,
         arg2: *const u8,
@@ -114,7 +114,7 @@ impl Clone for tai {
 #[derive(Copy)]
 #[repr(C)]
 pub struct taia {
-    pub sec: tai,
+    pub sec: Tai,
     pub nano: usize,
     pub atto: usize,
 }
@@ -136,7 +136,7 @@ pub struct dns_transmit {
     pub tcpstate: i32,
     pub udploop: u32,
     pub curserver: u32,
-    pub deadline: taia,
+    pub deadline: TaiA,
     pub pos: u32,
     pub servers: *const u8,
     pub localip: [u8; 4],
@@ -2783,12 +2783,12 @@ impl Clone for pollfd {
 pub unsafe extern "C" fn query_get(
     mut z: *mut query,
     mut x: *mut pollfd,
-    mut stamp: *mut taia,
+    mut stamp: *mut TaiA,
 ) -> i32 {
     let switch1 = dns_transmit_get(
         &mut (*z).dt as (*mut dns_transmit),
         x as (*const pollfd),
-        stamp as (*const taia),
+        stamp as (*const TaiA),
     );
     if switch1 == -1i32 {
         doit(z, -1i32)
@@ -2800,6 +2800,6 @@ pub unsafe extern "C" fn query_get(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn query_io(mut z: *mut query, mut x: *mut pollfd, mut deadline: *mut taia) {
+pub unsafe extern "C" fn query_io(mut z: *mut query, mut x: *mut pollfd, mut deadline: *mut TaiA) {
     dns_transmit_io(&mut (*z).dt as (*mut dns_transmit), x, deadline);
 }

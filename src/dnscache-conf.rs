@@ -31,8 +31,8 @@ extern "C" {
         arg8: *const strerr,
     );
     static mut strerr_sys: strerr;
-    fn taia_now(arg1: *mut taia);
-    fn taia_pack(arg1: *mut u8, arg2: *const taia);
+    fn taia_now(arg1: *mut TaiA);
+    fn taia_pack(arg1: *mut u8, arg2: *const TaiA);
 }
 
 static UUID_NULL: [u8; 16] = [
@@ -179,7 +179,7 @@ impl Clone for tai {
 #[derive(Copy)]
 #[repr(C)]
 pub struct taia {
-    pub sec: tai,
+    pub sec: Tai,
     pub nano: usize,
     pub atto: usize,
 }
@@ -192,11 +192,11 @@ impl Clone for taia {
 
 #[no_mangle]
 pub unsafe extern "C" fn seed_addtime() {
-    let mut t: taia;
+    let mut t: TaiA;
     let mut tpack: [u8; 16];
     let mut i: i32;
-    taia_now(&mut t as (*mut taia));
-    taia_pack(tpack.as_mut_ptr(), &mut t as (*mut taia) as (*const taia));
+    taia_now(&mut t as (*mut TaiA));
+    taia_pack(tpack.as_mut_ptr(), &mut t as (*mut TaiA) as (*const TaiA));
     i = 0i32;
     'loop1: loop {
         if !(i < 16i32) {
