@@ -1,8 +1,7 @@
+use alloc;
 use byte;
 
 extern "C" {
-    fn alloc(n: u32) -> *mut u8;
-    fn alloc_free(x: *mut u8);
     fn close(arg1: i32) -> i32;
     fn dns_domain_equal(arg1: *const u8, arg2: *const u8) -> i32;
     fn dns_domain_length(arg1: *const u8) -> u32;
@@ -85,7 +84,7 @@ impl Clone for dns_transmit {
 unsafe extern "C" fn queryfree(mut d: *mut dns_transmit) {
     if (*d).query.is_null() {
     } else {
-        alloc_free((*d).query);
+        alloc::free((*d).query);
         (*d).query = 0i32 as (*mut u8);
     }
 }
@@ -101,7 +100,7 @@ unsafe extern "C" fn socketfree(mut d: *mut dns_transmit) {
 unsafe extern "C" fn packetfree(mut d: *mut dns_transmit) {
     if (*d).packet.is_null() {
     } else {
-        alloc_free((*d).packet);
+        alloc::free((*d).packet);
         (*d).packet = 0i32 as (*mut u8);
     }
 }
@@ -317,7 +316,7 @@ pub unsafe extern "C" fn dns_transmit_start(
     errno = error_io;
     len = dns_domain_length(q);
     (*d).querylen = len.wrapping_add(18u32);
-    (*d).query = alloc((*d).querylen);
+    (*d).query = alloc::alloc((*d).querylen);
     if (*d).query.is_null() {
         -1i32
     } else {
@@ -427,10 +426,10 @@ unsafe extern "C" fn irrelevant(
             (*d).query.offset(14isize) as (*const u8),
         ) == 0
         {
-             alloc_free(dn);
+             alloc::free(dn);
              1i32
          } else {
-             alloc_free(dn);
+             alloc::free(dn);
              pos = dns_packet_copy(buf, len, pos, out.as_mut_ptr(), 4u32);
              (if pos == 0 {
                   1i32
@@ -535,7 +534,7 @@ pub unsafe extern "C" fn dns_transmit_get(
          } else {
              socketfree(d);
              (*d).packetlen = r as (u32);
-             (*d).packet = alloc((*d).packetlen);
+             (*d).packet = alloc::alloc((*d).packetlen);
              (if (*d).packet.is_null() {
                   dns_transmit_free(d);
                   -1i32
@@ -602,7 +601,7 @@ pub unsafe extern "C" fn dns_transmit_get(
              (*d).packetlen = (*d).packetlen.wrapping_add(ch as (u32));
              (*d).tcpstate = 5i32;
              (*d).pos = 0u32;
-             (*d).packet = alloc((*d).packetlen);
+             (*d).packet = alloc::alloc((*d).packetlen);
              (if (*d).packet.is_null() {
                   dns_transmit_free(d);
                   -1i32

@@ -1,9 +1,8 @@
+use alloc;
 use byte;
 
 extern "C" {
     fn _exit(arg1: i32);
-    fn alloc(n: u32) -> *mut u8;
-    fn alloc_free(x: *mut u8);
     fn tai_add(arg1: *mut tai, arg2: *const tai, arg3: *const tai);
     fn tai_now(arg1: *mut tai);
     fn tai_pack(arg1: *mut u8, arg2: *const tai);
@@ -270,7 +269,7 @@ pub unsafe extern "C" fn cache_set(
 #[no_mangle]
 pub unsafe extern "C" fn cache_init(mut cachesize: u32) -> i32 {
     if !x.is_null() {
-        alloc_free(x);
+        alloc::free(x);
         x = 0i32 as (*mut u8);
     }
     if cachesize > 1000000000u32 {
@@ -287,7 +286,7 @@ pub unsafe extern "C" fn cache_init(mut cachesize: u32) -> i32 {
         }
         hsize = hsize << 1i32;
     }
-    x = alloc(size);
+    x = alloc::alloc(size);
     if x.is_null() {
         0i32
     } else {

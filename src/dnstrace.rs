@@ -1,9 +1,8 @@
+use alloc;
 use byte;
 
 extern "C" {
     fn _exit(arg1: i32);
-    fn alloc(n: u32) -> *mut u8;
-    fn alloc_re(x: *mut *mut u8, m: u32, n: u32) -> i32;
     static mut buffer_1: *mut buffer;
     fn buffer_flush(arg1: *mut buffer) -> i32;
     fn buffer_put(arg1: *mut buffer, arg2: *const u8, arg3: u32) -> i32;
@@ -363,7 +362,7 @@ pub unsafe extern "C" fn address_alloc_readyplus(mut x: *mut address_alloc, mut 
         n = n.wrapping_add((*x).len);
         (if n > i {
              (*x).a = 30u32.wrapping_add(n).wrapping_add(n >> 3i32);
-             (if alloc_re(
+             (if alloc::alloc_re(
                 &mut (*x).s as (*mut *mut address) as (*mut *mut u8),
                 (i as (usize)).wrapping_mul(::std::mem::size_of::<address>()) as (u32),
                 ((*x).a as (usize)).wrapping_mul(::std::mem::size_of::<address>()) as (u32),
@@ -380,7 +379,7 @@ pub unsafe extern "C" fn address_alloc_readyplus(mut x: *mut address_alloc, mut 
     } else {
         (*x).len = 0u32;
         !{
-            (*x).s = alloc(({
+            (*x).s = alloc::alloc(({
                  (*x).a = n;
                  (*x).a
              } as (usize))
@@ -449,7 +448,7 @@ pub unsafe extern "C" fn ns_alloc_readyplus(mut x: *mut ns_alloc, mut n: u32) ->
         n = n.wrapping_add((*x).len);
         (if n > i {
              (*x).a = 30u32.wrapping_add(n).wrapping_add(n >> 3i32);
-             (if alloc_re(
+             (if alloc::alloc_re(
                 &mut (*x).s as (*mut *mut ns) as (*mut *mut u8),
                 (i as (usize)).wrapping_mul(::std::mem::size_of::<ns>()) as (u32),
                 ((*x).a as (usize)).wrapping_mul(::std::mem::size_of::<ns>()) as (u32),
@@ -466,7 +465,7 @@ pub unsafe extern "C" fn ns_alloc_readyplus(mut x: *mut ns_alloc, mut n: u32) ->
     } else {
         (*x).len = 0u32;
         !{
-            (*x).s = alloc(({
+            (*x).s = alloc::alloc(({
                  (*x).a = n;
                  (*x).a
              } as (usize))
@@ -532,7 +531,7 @@ pub unsafe extern "C" fn query_alloc_readyplus(mut x: *mut query_alloc, mut n: u
         n = n.wrapping_add((*x).len);
         (if n > i {
              (*x).a = 30u32.wrapping_add(n).wrapping_add(n >> 3i32);
-             (if alloc_re(
+             (if alloc::alloc_re(
                 &mut (*x).s as (*mut *mut query) as (*mut *mut u8),
                 (i as (usize)).wrapping_mul(::std::mem::size_of::<query>()) as (u32),
                 ((*x).a as (usize)).wrapping_mul(::std::mem::size_of::<query>()) as (u32),
@@ -549,7 +548,7 @@ pub unsafe extern "C" fn query_alloc_readyplus(mut x: *mut query_alloc, mut n: u
     } else {
         (*x).len = 0u32;
         !{
-            (*x).s = alloc(({
+            (*x).s = alloc::alloc(({
                  (*x).a = n;
                  (*x).a
              } as (usize))
@@ -617,7 +616,7 @@ pub unsafe extern "C" fn qt_alloc_readyplus(mut x: *mut qt_alloc, mut n: u32) ->
         n = n.wrapping_add((*x).len);
         (if n > i {
              (*x).a = 30u32.wrapping_add(n).wrapping_add(n >> 3i32);
-             (if alloc_re(
+             (if alloc::alloc_re(
                 &mut (*x).s as (*mut *mut qt) as (*mut *mut u8),
                 (i as (usize)).wrapping_mul(::std::mem::size_of::<qt>()) as (u32),
                 ((*x).a as (usize)).wrapping_mul(::std::mem::size_of::<qt>()) as (u32),
@@ -634,7 +633,7 @@ pub unsafe extern "C" fn qt_alloc_readyplus(mut x: *mut qt_alloc, mut n: u32) ->
     } else {
         (*x).len = 0u32;
         !{
-            (*x).s = alloc(({
+            (*x).s = alloc::alloc(({
                  (*x).a = n;
                  (*x).a
              } as (usize))

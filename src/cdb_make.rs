@@ -1,5 +1,6 @@
+use alloc;
+
 extern "C" {
-    fn alloc(n: u32) -> *mut u8;
     fn buffer_flush(arg1: *mut buffer) -> i32;
     fn buffer_init(
         arg1: *mut buffer,
@@ -122,7 +123,7 @@ pub unsafe extern "C" fn cdb_make_addend(
     let mut head: *mut cdb_hplist;
     head = (*c).head;
     if head.is_null() || (*head).num >= 1000i32 {
-        head = alloc(::std::mem::size_of::<cdb_hplist>() as (u32)) as (*mut cdb_hplist);
+        head = alloc::alloc(::std::mem::size_of::<cdb_hplist>() as (u32)) as (*mut cdb_hplist);
         if head.is_null() {
             return -1i32;
         } else {
@@ -254,7 +255,7 @@ pub unsafe extern "C" fn cdb_make_finish(mut c: *mut cdb_make) -> i32 {
         errno = error_nomem;
         -1i32
     } else {
-        (*c).split = alloc((memsize as (usize)).wrapping_mul(
+        (*c).split = alloc::alloc((memsize as (usize)).wrapping_mul(
             ::std::mem::size_of::<cdb_hp>(),
         ) as (u32)) as (*mut cdb_hp);
         (if (*c).split.is_null() {

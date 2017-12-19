@@ -1,8 +1,6 @@
 use byte;
 
 extern "C" {
-    fn alloc(n: u32) -> *mut u8;
-    fn alloc_free(x: *mut u8);
     static mut errno: i32;
     static mut error_proto: i32;
 }
@@ -130,13 +128,13 @@ pub unsafe extern "C" fn dns_domain_fromdot(
                       namelen = namelen.wrapping_add(1u32);
                       _old
                   } as (usize)] = 0u8;
-             x = alloc(namelen);
+             x = alloc::alloc(namelen);
              (if x.is_null() {
                   0i32
               } else {
                   byte::copy(x, namelen, name.as_mut_ptr());
                   if !(*out).is_null() {
-                      alloc_free(*out);
+                      alloc::alloc_free(*out);
                   }
                   *out = x;
                   1i32
