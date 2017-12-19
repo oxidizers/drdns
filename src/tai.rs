@@ -1,4 +1,4 @@
-//! `tai.rs`: Timestamp-related functionality
+//! `tai.rs`: TAI64 timestamps with 1-second precision
 //!
 //! This module should probably be replaced with e.g. chrono
 //!
