@@ -615,9 +615,9 @@ pub unsafe extern "C" fn _c_main() -> i32 {
         );
     }
     defaultsoa_init(fddata);
-    buffer_init(
+    Buffer::init(
         &mut b as (*mut Buffer),
-        buffer_unixread as buffer::Op,
+        buffer::unixread as buffer::Op,
         fddata,
         bspace.as_mut_ptr(),
         ::std::mem::size_of::<[u8; 1024]>() as (u32),

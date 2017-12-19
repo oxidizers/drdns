@@ -332,7 +332,7 @@ pub unsafe extern "C" fn netget(mut buf: *mut u8, mut len: u32) {
         if !(len > 0u32) {
             break;
         }
-        r = buffer_get(&mut netread as (*mut Buffer), buf, len);
+        r = Buffer::get(&mut netread as (*mut Buffer), buf, len);
         buf = buf.offset(r as (isize));
         len = len.wrapping_sub(r as (u32));
     }
@@ -355,7 +355,7 @@ pub static mut bspace: [u8; 1024] = [0u8; 1024];
 
 #[no_mangle]
 pub unsafe extern "C" fn put(mut buf: *mut u8, mut len: u32) {
-    if buffer_put(&mut b as (*mut Buffer), buf as (*const u8), len) == -1i32 {
+    if Buffer::put(&mut b as (*mut Buffer), buf as (*const u8), len) == -1i32 {
         die_write();
     }
 }
@@ -887,9 +887,9 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
             die_read();
         }
     } else {
-        buffer_init(
+        Buffer::init(
             &mut b as (*mut Buffer),
-            buffer_unixread as buffer::Op,
+            buffer::unixread as buffer::Op,
             fd,
             bspace.as_mut_ptr(),
             ::std::mem::size_of::<[u8; 1024]>() as (u32),
@@ -932,17 +932,17 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
         die_generate();
     }
     uint16_pack_big(out.as_mut_ptr(), packet.len as (u16));
-    buffer_put(
+    Buffer::put(
         &mut netwrite as (*mut Buffer),
         out.as_mut_ptr() as (*const u8),
         2u32,
     );
-    buffer_put(
+    Buffer::put(
         &mut netwrite as (*mut Buffer),
         packet.s as (*const u8),
         packet.len,
     );
-    buffer_flush(&mut netwrite as (*mut Buffer));
+    Buffer::flush(&mut netwrite as (*mut Buffer));
     netget(out.as_mut_ptr(), 2u32);
     uint16_unpack_big(out.as_mut_ptr() as (*const u8), &mut dlen as (*mut u16));
     if stralloc_ready(&mut packet as (*mut stralloc), dlen as (u32)) == 0 {
@@ -1002,9 +1002,9 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     if fd == -1i32 {
         die_write();
     }
-    buffer_init(
+    Buffer::init(
         &mut b as (*mut Buffer),
-        buffer_unixwrite as buffer::Op,
+        buffer::unixwrite as buffer::Op,
         fd,
         bspace.as_mut_ptr(),
         ::std::mem::size_of::<[u8; 1024]>() as (u32),
@@ -1029,17 +1029,17 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
         die_generate();
     }
     uint16_pack_big(out.as_mut_ptr(), packet.len as (u16));
-    buffer_put(
+    Buffer::put(
         &mut netwrite as (*mut Buffer),
         out.as_mut_ptr() as (*const u8),
         2u32,
     );
-    buffer_put(
+    Buffer::put(
         &mut netwrite as (*mut Buffer),
         packet.s as (*const u8),
         packet.len,
     );
-    buffer_flush(&mut netwrite as (*mut Buffer));
+    Buffer::flush(&mut netwrite as (*mut Buffer));
     numsoa = 0i32;
     'loop48: loop {
         if !(numsoa < 2i32) {
@@ -1076,7 +1076,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
             die_parse();
         }
     }
-    if buffer_flush(&mut b as (*mut Buffer)) == -1i32 {
+    if Buffer::flush(&mut b as (*mut Buffer)) == -1i32 {
         die_write();
     }
     if fsync(fd) == -1i32 {

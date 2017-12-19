@@ -128,17 +128,17 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
             if !((i + 4i32) as (u32) <= out.len) {
                 break;
             }
-            buffer_put(
+            Buffer::put(
                 buffer_1,
                 str.as_mut_ptr() as (*const u8),
                 ip4_fmt(str.as_mut_ptr(), out.s.offset(i as (isize)) as (*const u8)),
             );
-            buffer_puts(buffer_1, (*b" \0").as_ptr());
+            Buffer::puts(buffer_1, (*b" \0").as_ptr());
             i = i + 4i32;
         }
-        buffer_puts(buffer_1, (*b"\n\0").as_ptr());
+        Buffer::puts(buffer_1, (*b"\n\0").as_ptr());
         argv = argv.offset(1isize);
     }
-    buffer_flush(buffer_1);
+    Buffer::flush(buffer_1);
     libc::_exit(0i32);
 }

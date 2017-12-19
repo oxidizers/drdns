@@ -118,10 +118,10 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
                 &mut strerr_sys as (*mut strerr) as (*const strerr),
             );
         }
-        buffer_put(buffer_1, out.s as (*const u8), out.len);
-        buffer_puts(buffer_1, (*b"\n\0").as_ptr());
+        Buffer::put(buffer_1, out.s as (*const u8), out.len);
+        Buffer::puts(buffer_1, (*b"\n\0").as_ptr());
         argv = argv.offset(1isize);
     }
-    buffer_flush(buffer_1);
+    Buffer::flush(buffer_1);
     libc::_exit(0i32);
 }

@@ -10,12 +10,12 @@ pub static mut b: Buffer = Buffer {
     p: 0u32,
     n: ::std::mem::size_of::<[u8; 256]>() as (u32),
     fd: 1i32,
-    op: buffer_unixwrite as buffer::Op,
+    op: buffer::unixwrite as buffer::Op,
 };
 
 #[no_mangle]
 pub unsafe extern "C" fn puts(mut s: *const u8) {
-    if buffer_puts(&mut b as (*mut Buffer), s) == -1i32 {
+    if Buffer::puts(&mut b as (*mut Buffer), s) == -1i32 {
         libc::_exit(111i32);
     }
 }
@@ -77,7 +77,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
         puts(octal.as_mut_ptr() as (*const u8));
     }
     puts((*b"\\\n\";\n\0").as_ptr());
-    if buffer_flush(&mut b as (*mut Buffer)) == -1i32 {
+    if Buffer::flush(&mut b as (*mut Buffer)) == -1i32 {
         libc::_exit(111i32);
     }
     libc::_exit(0i32);

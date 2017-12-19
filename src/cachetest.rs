@@ -71,11 +71,11 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
                 &mut ttl as (*mut u32),
             );
             if !y.is_null() {
-                buffer_put(buffer_1, y as (*const u8), u);
+                Buffer::put(buffer_1, y as (*const u8), u);
             }
-            buffer_puts(buffer_1, (*b"\n\0").as_ptr());
+            Buffer::puts(buffer_1, (*b"\n\0").as_ptr());
         }
     }
-    buffer_flush(buffer_1);
+    Buffer::flush(buffer_1);
     libc::_exit(0i32);
 }

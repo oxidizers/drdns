@@ -199,13 +199,13 @@ pub static mut netwrite: Buffer = Buffer {
 pub unsafe extern "C" fn print(mut buf: *mut u8, mut len: u32) {
     let mut tcpheader: [u8; 2];
     uint16_pack_big(tcpheader.as_mut_ptr(), len as (u16));
-    buffer_put(
+    Buffer::put(
         &mut netwrite as (*mut Buffer),
         tcpheader.as_mut_ptr() as (*const u8),
         2u32,
     );
-    buffer_put(&mut netwrite as (*mut Buffer), buf as (*const u8), len);
-    buffer_flush(&mut netwrite as (*mut Buffer));
+    Buffer::put(&mut netwrite as (*mut Buffer), buf as (*const u8), len);
+    Buffer::flush(&mut netwrite as (*mut Buffer));
 }
 
 #[no_mangle]
@@ -295,7 +295,7 @@ pub unsafe extern "C" fn get(mut buf: *mut u8, mut len: u32) {
         if !(len > 0u32) {
             break;
         }
-        r = buffer_get(&mut bcdb as (*mut Buffer), buf, len);
+        r = Buffer::get(&mut bcdb as (*mut Buffer), buf, len);
         if r < 0i32 {
             die_cdbread();
         }
@@ -657,9 +657,9 @@ pub unsafe extern "C" fn doaxfr(mut id: *mut u8) {
     cdb_free(&mut c as (*mut cdb));
     print(soa.s, soa.len);
     seek_set(fdcdb, 0usize);
-    buffer_init(
+    Buffer::init(
         &mut bcdb as (*mut Buffer),
-        buffer_unixread as buffer::Op,
+        buffer::unixread as buffer::Op,
         fdcdb,
         bcdbspace.as_mut_ptr(),
         ::std::mem::size_of::<[u8; 1024]>() as (u32),

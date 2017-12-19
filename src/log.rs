@@ -16,12 +16,12 @@ extern "C" {
 static mut u64: usize = 0usize;
 
 unsafe extern "C" fn string(mut s: *const u8) {
-    buffer_puts(buffer_2, s);
+    Buffer::puts(buffer_2, s);
 }
 
 unsafe extern "C" fn line() {
     string((*b"\n\0").as_ptr());
-    buffer_flush(buffer_2);
+    Buffer::flush(buffer_2);
 }
 
 #[no_mangle]
@@ -47,7 +47,7 @@ unsafe extern "C" fn u64_print() {
             break;
         }
     }
-    buffer_put(
+    Buffer::put(
         buffer_2,
         buf.as_mut_ptr().offset(pos as (isize)) as (*const u8),
         ::std::mem::size_of::<[u8; 20]>().wrapping_sub(pos as (usize)) as (u32),
@@ -59,7 +59,7 @@ unsafe extern "C" fn space() {
 }
 
 unsafe extern "C" fn hex(mut c: u8) {
-    buffer_put(
+    Buffer::put(
         buffer_2,
         (*b"0123456789abcdef\0").as_ptr().offset(
             (c as (i32) >> 4i32) as
@@ -67,7 +67,7 @@ unsafe extern "C" fn hex(mut c: u8) {
         ),
         1u32,
     );
-    buffer_put(
+    Buffer::put(
         buffer_2,
         (*b"0123456789abcdef\0").as_ptr().offset(
             (c as (i32) & 15i32) as
@@ -130,7 +130,7 @@ unsafe extern "C" fn name(mut q: *const u8) {
                 if ch as (i32) >= b'A' as (i32) && (ch as (i32) <= b'Z' as (i32)) {
                     ch = (ch as (i32) + 32i32) as (u8);
                 }
-                buffer_put(buffer_2, &mut ch as (*mut u8) as (*const u8), 1u32);
+                Buffer::put(buffer_2, &mut ch as (*mut u8) as (*const u8), 1u32);
             }
             string((*b".\0").as_ptr());
         }

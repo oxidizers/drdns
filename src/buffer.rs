@@ -6,7 +6,7 @@ use byte;
 use errno::{errno, Errno};
 use libc;
 
-type Op = unsafe extern "C" fn(i32, *const u8, u32) -> i32;
+type Op = unsafe fn(i32, *const u8, u32) -> i32;
 
 extern "C" {
     fn read(arg1: i32, arg2: *mut ::std::os::raw::c_void, arg3: usize) -> isize;
@@ -30,8 +30,7 @@ impl Clone for Buffer {
 }
 
 impl Buffer {
-    #[no_mangle]
-    pub unsafe extern "C" fn buffer_init(
+    pub unsafe fn init(
         s: *mut Buffer,
         op: Op,
         fd: i32,
@@ -45,13 +44,12 @@ impl Buffer {
         (*s).n = len;
     }
 
-    #[no_mangle]
-    pub unsafe extern "C" fn buffer_copy(bout: *mut Buffer, bin: *mut Buffer) -> i32 {
+    pub unsafe fn copy(bout: *mut Buffer, bin: *mut Buffer) -> i32 {
         let current_block;
         let mut n: i32;
         let mut x: *mut u8;
         'loop1: loop {
-            n = Self::buffer_feed(bin);
+            n = Buffer::feed(bin);
             if n < 0i32 {
                 current_block = 7;
                 break;
@@ -61,7 +59,7 @@ impl Buffer {
                 break;
             }
             x = (*bin).x.offset((*bin).n as (isize));
-            if Self::buffer_put(bout, x as (*const u8), n as (u32)) == -1i32 {
+            if Buffer::put(bout, x as (*const u8), n as (u32)) == -1i32 {
                 current_block = 5;
                 break;
             }
@@ -77,8 +75,7 @@ impl Buffer {
         }
     }
 
-    #[no_mangle]
-    pub unsafe extern "C" fn buffer_feed(s: *mut Buffer) -> i32 {
+    pub unsafe fn feed(s: *mut Buffer) -> i32 {
         let r: i32;
         if (*s).p != 0 {
             (*s).p as (i32)
@@ -102,29 +99,10 @@ impl Buffer {
         }
     }
 
-    #[no_mangle]
-    pub unsafe extern "C" fn buffer_bget(s: *mut Buffer, buf: *mut u8, len: u32) -> i32 {
+    pub unsafe fn get(s: *mut Buffer, buf: *mut u8, len: u32) -> i32 {
         let r: i32;
         if (*s).p > 0u32 {
-            Self::getthis(s, buf, len)
-        } else if (*s).n <= len {
-            oneread(
-                (*s).op,
-                (*s).fd,
-                buf,
-                (*s).n,
-            )
-        } else {
-            r = Self::buffer_feed(s);
-            (if r <= 0i32 { r } else { Self::getthis(s, buf, len) })
-        }
-    }
-
-    #[no_mangle]
-    pub unsafe extern "C" fn buffer_get(s: *mut Buffer, buf: *mut u8, len: u32) -> i32 {
-        let r: i32;
-        if (*s).p > 0u32 {
-            Self::getthis(s, buf, len)
+            Buffer::getthis(s, buf, len)
         } else if (*s).n <= len {
             oneread(
                 (*s).op,
@@ -133,24 +111,21 @@ impl Buffer {
                 len,
             )
         } else {
-            r = Self::buffer_feed(s);
-            (if r <= 0i32 { r } else { Self::getthis(s, buf, len) })
+            r = Buffer::feed(s);
+            (if r <= 0i32 { r } else { Buffer::getthis(s, buf, len) })
         }
     }
 
-    #[no_mangle]
-    pub unsafe extern "C" fn buffer_peek(s: *mut Buffer) -> *mut u8 {
+    pub unsafe fn peek(s: *mut Buffer) -> *mut u8 {
         (*s).x.offset((*s).n as (isize))
     }
 
-    #[no_mangle]
-    pub unsafe extern "C" fn buffer_seek(s: *mut Buffer, len: u32) {
+    pub unsafe fn seek(s: *mut Buffer, len: u32) {
         (*s).n = (*s).n.wrapping_add(len);
         (*s).p = (*s).p.wrapping_sub(len);
     }
 
-    #[no_mangle]
-    pub unsafe extern "C" fn buffer_flush(s: *mut Buffer) -> i32 {
+    pub unsafe fn flush(s: *mut Buffer) -> i32 {
         let p: i32;
         p = (*s).p as (i32);
         if p == 0 {
@@ -166,8 +141,7 @@ impl Buffer {
         }
     }
 
-    #[no_mangle]
-    pub unsafe extern "C" fn buffer_putalign(
+    pub unsafe fn putalign(
         s: *mut Buffer,
         mut buf: *const u8,
         mut len: u32,
@@ -188,7 +162,7 @@ impl Buffer {
             (*s).p = (*s).p.wrapping_add(n);
             buf = buf.offset(n as (isize));
             len = len.wrapping_sub(n);
-            if Self::buffer_flush(s) == -1i32 {
+            if Buffer::flush(s) == -1i32 {
                 current_block = 4;
                 break;
             }
@@ -202,13 +176,12 @@ impl Buffer {
         }
     }
 
-    #[no_mangle]
-    pub unsafe extern "C" fn buffer_put(s: *mut Buffer, mut buf: *const u8, mut len: u32) -> i32 {
+    pub unsafe fn put(s: *mut Buffer, mut buf: *const u8, mut len: u32) -> i32 {
         let current_block;
         let mut n: u32;
         n = (*s).n;
         if len > n.wrapping_sub((*s).p) {
-            if Self::buffer_flush(s) == -1i32 {
+            if Buffer::flush(s) == -1i32 {
                 return -1i32;
             } else {
                 if n < 8192u32 {
@@ -246,13 +219,12 @@ impl Buffer {
         0i32
     }
 
-    #[no_mangle]
-    pub unsafe extern "C" fn buffer_putflush(
+    pub unsafe fn putflush(
         s: *mut Buffer,
         buf: *const u8,
         len: u32,
     ) -> i32 {
-        if Self::buffer_flush(s) == -1i32 {
+        if Buffer::flush(s) == -1i32 {
             -1i32
         } else {
             allwrite(
@@ -264,32 +236,19 @@ impl Buffer {
         }
     }
 
-    #[no_mangle]
-    pub unsafe extern "C" fn buffer_putsalign(s: *mut Buffer, buf: *const u8) -> i32 {
-        Self::buffer_putalign(s, buf, libc::strlen(buf as *const i8) as u32)
+    pub unsafe fn putsalign(s: *mut Buffer, buf: *const u8) -> i32 {
+        Buffer::putalign(s, buf, libc::strlen(buf as *const i8) as u32)
     }
 
-    #[no_mangle]
-    pub unsafe extern "C" fn buffer_puts(s: *mut Buffer, buf: *const u8) -> i32 {
-        Self::buffer_put(s, buf, libc::strlen(buf as *const i8) as u32)
+    pub unsafe fn puts(s: *mut Buffer, buf: *const u8) -> i32 {
+        Buffer::put(s, buf, libc::strlen(buf as *const i8) as u32)
     }
 
-    #[no_mangle]
-    pub unsafe extern "C" fn buffer_putsflush(s: *mut Buffer, buf: *const u8) -> i32 {
-        Self::buffer_putflush(s, buf, libc::strlen(buf as *const i8) as u32)
+    pub unsafe fn putsflush(s: *mut Buffer, buf: *const u8) -> i32 {
+        Buffer::putflush(s, buf, libc::strlen(buf as *const i8) as u32)
     }
 
-    #[no_mangle]
-    pub unsafe extern "C" fn buffer_unixread(fd: i32, buf: *mut u8, len: u32) -> i32 {
-        read(fd, buf as (*mut ::std::os::raw::c_void), len as (usize)) as (i32)
-    }
-
-    #[no_mangle]
-    pub unsafe extern "C" fn buffer_unixwrite(fd: i32, buf: *const u8, len: u32) -> i32 {
-        write(fd, buf as (*const ::std::os::raw::c_void), len as (usize)) as (i32)
-    }
-
-    unsafe extern "C" fn getthis(s: *mut Buffer, buf: *mut u8, mut len: u32) -> i32 {
+    unsafe fn getthis(s: *mut Buffer, buf: *mut u8, mut len: u32) -> i32 {
         if len > (*s).p {
             len = (*s).p;
         }
@@ -300,7 +259,15 @@ impl Buffer {
     }
 }
 
-unsafe extern "C" fn allwrite(
+pub unsafe fn unixread(fd: i32, buf: *mut u8, len: u32) -> i32 {
+    read(fd, buf as (*mut ::std::os::raw::c_void), len as (usize)) as (i32)
+}
+
+pub unsafe fn unixwrite(fd: i32, buf: *const u8, len: u32) -> i32 {
+    write(fd, buf as (*const ::std::os::raw::c_void), len as (usize)) as (i32)
+}
+
+unsafe fn allwrite(
     op: Op,
     fd: i32,
     mut buf: *const u8,
@@ -328,7 +295,7 @@ unsafe extern "C" fn allwrite(
     if current_block == 2 { 0i32 } else { -1i32 }
 }
 
-unsafe extern "C" fn oneread(
+unsafe fn oneread(
     op: Op,
     fd: i32,
     buf: *mut u8,

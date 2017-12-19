@@ -127,9 +127,9 @@ pub unsafe extern "C" fn start(mut s: *const u8) {
     if fd == -1i32 {
         fail();
     }
-    buffer_init(
+    Buffer::init(
         &mut ss as (*mut Buffer),
-        buffer_unixwrite as buffer::Op,
+        buffer::unixwrite as buffer::Op,
         fd,
         buf.as_mut_ptr(),
         ::std::mem::size_of::<[u8; 1024]>() as (u32),
@@ -138,28 +138,28 @@ pub unsafe extern "C" fn start(mut s: *const u8) {
 
 #[no_mangle]
 pub unsafe extern "C" fn outs(mut s: *const u8) {
-    if buffer_puts(&mut ss as (*mut Buffer), s) == -1i32 {
+    if Buffer::puts(&mut ss as (*mut Buffer), s) == -1i32 {
         fail();
     }
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn out(mut s: *const u8, mut len: u32) {
-    if buffer_put(&mut ss as (*mut Buffer), s, len) == -1i32 {
+    if Buffer::put(&mut ss as (*mut Buffer), s, len) == -1i32 {
         fail();
     }
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn copyfrom(mut b: *mut Buffer) {
-    if buffer_copy(&mut ss as (*mut Buffer), b) < 0i32 {
+    if Buffer::copy(&mut ss as (*mut Buffer), b) < 0i32 {
         fail();
     }
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn finish() {
-    if buffer_flush(&mut ss as (*mut Buffer)) == -1i32 {
+    if Buffer::flush(&mut ss as (*mut Buffer)) == -1i32 {
         fail();
     }
     if fsync(fd) == -1i32 {

@@ -43,14 +43,14 @@ pub unsafe extern "C" fn sgetoptmine(
             let mut chp: [u8; 2];
             chp[0usize] = subgetoptproblem as (u8);
             chp[1usize] = b'\n';
-            buffer_puts(buffer_2, sgetoptprogname);
+            Buffer::puts(buffer_2, sgetoptprogname);
             if !(*argv.offset(subgetoptind as (isize))).is_null() && (subgetoptind < argc) {
-                buffer_puts(buffer_2, (*b": illegal option -- \0").as_ptr());
+                Buffer::puts(buffer_2, (*b": illegal option -- \0").as_ptr());
             } else {
-                buffer_puts(buffer_2, (*b": option requires an argument -- \0").as_ptr());
+                Buffer::puts(buffer_2, (*b": option requires an argument -- \0").as_ptr());
             }
-            buffer_put(buffer_2, chp.as_mut_ptr() as (*const u8), 2u32);
-            buffer_flush(buffer_2);
+            Buffer::put(buffer_2, chp.as_mut_ptr() as (*const u8), 2u32);
+            Buffer::flush(buffer_2);
         }
     }
     c

@@ -37,7 +37,7 @@ pub unsafe extern "C" fn getln2(
     } else {
         (*sa).len = 0u32;
         'loop2: loop {
-            n = buffer_feed(ss);
+            n = Buffer::feed(ss);
             if n < 0i32 {
                 _currentBlock = 10;
                 break;
@@ -57,7 +57,7 @@ pub unsafe extern "C" fn getln2(
                 break;
             }
             i = (*sa).len;
-            (*sa).len = i.wrapping_add(buffer_get(ss, (*sa).s.offset(i as (isize)), n as (u32)) as
+            (*sa).len = i.wrapping_add(Buffer::get(ss, (*sa).s.offset(i as (isize)), n as (u32)) as
                 (u32));
         }
         (if _currentBlock == 7 {

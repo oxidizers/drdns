@@ -217,6 +217,6 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
             oops();
         }
     }
-    buffer_putflush(buffer_1, out.s as (*const u8), out.len);
+    Buffer::putflush(buffer_1, out.s as (*const u8), out.len);
     libc::_exit(0i32);
 }

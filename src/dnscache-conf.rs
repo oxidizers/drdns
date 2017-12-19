@@ -399,9 +399,9 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     perm(0o2755i32);
     seed_addtime();
     start((*b"root/servers/@\0").as_ptr());
-    buffer_init(
+    Buffer::init(
         &mut ssrootservers as (*mut Buffer),
-        buffer_unixread as buffer::Op,
+        buffer::unixread as buffer::Op,
         fdrootservers,
         rootserversbuf.as_mut_ptr(),
         ::std::mem::size_of::<[u8; 64]>() as (u32),

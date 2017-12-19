@@ -293,7 +293,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
     initialize();
     ndelay_off(udp53);
     socket_tryreservein(udp53, 65536i32);
-    buffer_putsflush(buffer_2, starting as (*const u8));
+    Buffer::putsflush(buffer_2, starting as (*const u8));
     'loop9: loop {
         len = socket_recv4(
             udp53,

@@ -272,7 +272,7 @@ static mut used: [i32; 26] = [0i32; 26];
 
 #[no_mangle]
 pub unsafe extern "C" fn put(mut buf: *const u8, mut len: u32) {
-    if buffer_putalign(&mut bnew as (*mut Buffer), buf, len) == -1i32 {
+    if Buffer::putalign(&mut bnew as (*mut Buffer), buf, len) == -1i32 {
         die_write();
     }
 }
@@ -427,9 +427,9 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     if fstat(fd, &mut st as (*mut stat)) == -1i32 {
         die_read();
     }
-    buffer_init(
+    Buffer::init(
         &mut b as (*mut Buffer),
-        buffer_unixread as buffer::Op,
+        buffer::unixread as buffer::Op,
         fd,
         bspace.as_mut_ptr(),
         ::std::mem::size_of::<[u8; 1024]>() as (u32),
@@ -441,9 +441,9 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     if fchmod(fdnew, (st.st_mode as (i32) & 0o644i32) as (u16)) == -1i32 {
         die_write();
     }
-    buffer_init(
+    Buffer::init(
         &mut bnew as (*mut Buffer),
-        buffer_unixwrite as buffer::Op,
+        buffer::unixwrite as buffer::Op,
         fdnew,
         bnewspace.as_mut_ptr(),
         ::std::mem::size_of::<[u8; 1024]>() as (u32),
@@ -812,7 +812,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
         nomem();
     }
     put(f[0usize].s as (*const u8), f[0usize].len);
-    if buffer_flush(&mut bnew as (*mut Buffer)) == -1i32 {
+    if Buffer::flush(&mut bnew as (*mut Buffer)) == -1i32 {
         die_write();
     }
     if fsync(fdnew) == -1i32 {

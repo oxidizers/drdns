@@ -191,34 +191,34 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
             }
         }
         u = ip[0usize] as (usize);
-        buffer_put(
+        Buffer::put(
             buffer_1,
             strnum.as_mut_ptr() as (*const u8),
             fmt_ulong(strnum.as_mut_ptr(), u),
         );
-        buffer_puts(buffer_1, (*b".\0").as_ptr());
+        Buffer::puts(buffer_1, (*b".\0").as_ptr());
         u = ip[1usize] as (usize);
-        buffer_put(
+        Buffer::put(
             buffer_1,
             strnum.as_mut_ptr() as (*const u8),
             fmt_ulong(strnum.as_mut_ptr(), u),
         );
-        buffer_puts(buffer_1, (*b".\0").as_ptr());
+        Buffer::puts(buffer_1, (*b".\0").as_ptr());
         u = ip[2usize] as (usize);
-        buffer_put(
+        Buffer::put(
             buffer_1,
             strnum.as_mut_ptr() as (*const u8),
             fmt_ulong(strnum.as_mut_ptr(), u),
         );
-        buffer_puts(buffer_1, (*b".\0").as_ptr());
+        Buffer::puts(buffer_1, (*b".\0").as_ptr());
         u = ip[3usize] as (usize);
-        buffer_put(
+        Buffer::put(
             buffer_1,
             strnum.as_mut_ptr() as (*const u8),
             fmt_ulong(strnum.as_mut_ptr(), u),
         );
-        buffer_puts(buffer_1, (*b"\n\0").as_ptr());
+        Buffer::puts(buffer_1, (*b"\n\0").as_ptr());
     }
-    buffer_flush(buffer_1);
+    Buffer::flush(buffer_1);
     libc::_exit(0i32);
 }
