@@ -1,5 +1,6 @@
 use alloc;
 use byte;
+use errno::{self, Errno};
 use libc;
 
 extern "C" {
@@ -29,7 +30,6 @@ extern "C" {
         arg5: *const u8,
         arg6: *const u8,
     ) -> i32;
-    static mut errno: i32;
     fn log_cachedanswer(arg1: *const u8, arg2: *const u8);
     fn log_cachedcname(arg1: *const u8, arg2: *const u8);
     fn log_cachedns(arg1: *const u8, arg2: *const u8);
@@ -433,7 +433,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
     let mut k: i32;
     let mut p: i32;
     let mut q: i32;
-    errno = libc::EIO;
+    errno::set_errno(Errno(libc::EIO));
     if state == 1i32 {
         if {
             (*z).loopvar = (*z).loopvar.wrapping_add(1u32);
@@ -2748,7 +2748,7 @@ pub unsafe extern "C" fn query_start(
     mut localip: *mut u8,
 ) -> i32 {
     if byte::diff(type_, 2u32, (*b"\0\xFC\0").as_ptr() as (*mut u8)) == 0 {
-        errno = libc::EPERM;
+        errno::set_errno(Errno(libc::EPERM));
         -1i32
     } else {
         cleanup(z);

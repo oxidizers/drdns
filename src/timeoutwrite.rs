@@ -1,7 +1,7 @@
+use errno::{self, Errno};
 use libc;
 
 extern "C" {
-    static mut errno: i32;
     fn iopause(arg1: *mut pollfd, arg2: u32, arg3: *mut taia, arg4: *mut taia);
     fn taia_add(arg1: *mut taia, arg2: *const taia, arg3: *const taia);
     fn taia_less(arg1: *const taia, arg2: *const taia) -> i32;
@@ -92,7 +92,7 @@ pub unsafe extern "C" fn timeoutwrite(
         }
     }
     if _currentBlock == 3 {
-        errno = libc::ETIMEDOUT;
+        errno::set_errno(Errno(libc::ETIMEDOUT));
         -1i32
     } else {
         write(fd, buf as (*const ::std::os::raw::c_void), len as (usize)) as (i32)

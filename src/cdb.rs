@@ -1,9 +1,9 @@
 use byte;
+use errno::{self, Errno};
 use libc;
 
 extern "C" {
     fn cdb_hash(arg1: *const u8, arg2: u32) -> u32;
-    static mut errno: i32;
     fn fstat(arg1: i32, arg2: *mut stat) -> i32;
     fn mmap(
         arg1: *mut ::std::os::raw::c_void,
@@ -153,7 +153,7 @@ pub unsafe extern "C" fn cdb_read(
                     buf as (*mut ::std::os::raw::c_void),
                     len as (usize),
                 ) as (i32);
-                if !(r == -1i32 && (errno == libc::EINTR)) {
+                if !(r == -1i32 && (errno::errno() == Errno(libc::EINTR))) {
                     break;
                 }
             }
@@ -177,7 +177,7 @@ pub unsafe extern "C" fn cdb_read(
     if _currentBlock == 13 {
         0i32
     } else {
-        errno = libc::EPROTO;
+        errno::set_errno(Errno(libc::EPROTO));
         -1i32
     }
 }

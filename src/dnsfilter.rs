@@ -1,5 +1,6 @@
 use alloc;
 use byte;
+use errno::errno;
 use libc;
 
 extern "C" {
@@ -20,7 +21,6 @@ extern "C" {
         arg5: *const u8,
         arg6: *const u8,
     ) -> i32;
-    static mut errno: i32;
     fn iopause(arg1: *mut pollfd, arg2: u32, arg3: *mut taia, arg4: *mut taia);
     fn ip4_scan(arg1: *const u8, arg2: *mut u8) -> u32;
     fn read(arg1: i32, arg2: *mut ::std::os::raw::c_void, arg3: usize) -> isize;
@@ -273,7 +273,7 @@ pub unsafe extern "C" fn errout(mut i: i32) {
     }
     if stralloc_cats(
         &mut (*x.offset(i as (isize))).middle as (*mut stralloc),
-        libc::strerror(errno),
+        libc::strerror(errno().0),
     ) == 0
     {
         nomem();

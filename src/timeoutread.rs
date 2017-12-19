@@ -1,5 +1,6 @@
+use errno::{self, Errno};
+
 extern "C" {
-    static mut errno: i32;
     fn iopause(arg1: *mut pollfd, arg2: u32, arg3: *mut taia, arg4: *mut taia);
     fn read(arg1: i32, arg2: *mut ::std::os::raw::c_void, arg3: usize) -> isize;
     fn taia_add(arg1: *mut taia, arg2: *const taia, arg3: *const taia);
@@ -90,7 +91,7 @@ pub unsafe extern "C" fn timeoutread(
         }
     }
     if _currentBlock == 3 {
-        errno = libc::ETIMEDOUT;
+        errno::set_errno(Errno(libc::ETIMEDOUT));
         -1i32
     } else {
         read(fd, buf as (*mut ::std::os::raw::c_void), len as (usize)) as (i32)

@@ -1,9 +1,6 @@
 use byte;
+use errno::{self, Errno};
 use libc;
-
-extern "C" {
-    static mut errno: i32;
-}
 
 #[no_mangle]
 pub unsafe extern "C" fn dns_domain_fromdot(
@@ -18,7 +15,7 @@ pub unsafe extern "C" fn dns_domain_fromdot(
     let mut namelen: u32 = 0u32;
     let mut ch: u8;
     let mut x: *mut u8;
-    errno = libc::EPROTO;
+    errno::set_errno(Errno(libc::EPROTO));
     'loop1: loop {
         if n == 0 {
             _currentBlock = 16;

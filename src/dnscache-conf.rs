@@ -1,3 +1,4 @@
+use errno::{errno, Errno};
 use libc;
 
 extern "C" {
@@ -13,7 +14,6 @@ extern "C" {
     fn buffer_unixread(arg1: i32, arg2: *mut u8, arg3: u32) -> i32;
     fn chdir(arg1: *const u8) -> i32;
     fn copyfrom(arg1: *mut buffer);
-    static mut errno: i32;
     fn finish();
     fn getgid() -> u32;
     fn getpid() -> i32;
@@ -303,7 +303,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     }
     fdrootservers = open_read((*b"/etc/dnsroots.local\0").as_ptr());
     if fdrootservers == -1i32 {
-        if errno != libc::ENOENT {
+        if errno() != Errno(libc::ENOENT) {
             strerr_die(
                 111i32,
                 (*b"dnscache-conf: fatal: \0").as_ptr(),
