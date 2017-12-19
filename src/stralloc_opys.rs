@@ -20,5 +20,5 @@ impl Clone for stralloc {
 
 #[no_mangle]
 pub unsafe extern "C" fn stralloc_copys(mut sa: *mut stralloc, mut s: *const u8) -> i32 {
-    stralloc_copyb(sa, s, libc::strlen(s))
+    stralloc_copyb(sa, s, libc::strlen(s as *const i8) as u32)
 }

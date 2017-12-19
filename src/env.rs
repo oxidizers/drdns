@@ -13,7 +13,7 @@ pub unsafe extern "C" fn env_get(mut s: *const u8) -> *mut u8 {
     if s.is_null() {
         0i32 as (*mut u8)
     } else {
-        len = libc::strlen(s);
+        len = libc::strlen(s as *const i8) as u32;
         i = 0i32;
         'loop2: loop {
             if (*environ.offset(i as (isize))).is_null() {

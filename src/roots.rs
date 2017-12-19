@@ -193,7 +193,7 @@ unsafe extern "C" fn init2(mut dir: *mut Struct1) -> i32 {
         if str_diff(fqdn, (*b"@\0").as_ptr()) == 0 {
             fqdn = (*b".\0").as_ptr();
         }
-        if dns_domain_fromdot(&mut q as (*mut *mut u8), fqdn, libc::strlen(fqdn)) == 0 {
+        if dns_domain_fromdot(&mut q as (*mut *mut u8), fqdn, libc::strlen(fqdn as *const i8) as u32) == 0 {
             _currentBlock = 20;
             break;
         }
