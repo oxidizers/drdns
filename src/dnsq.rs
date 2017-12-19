@@ -3,7 +3,6 @@ use errno::errno;
 use libc;
 
 extern "C" {
-    fn _exit(arg1: i32);
     static mut buffer_1: *mut buffer;
     fn buffer_putflush(arg1: *mut buffer, arg2: *const u8, arg3: u32) -> i32;
     fn dns_domain_fromdot(arg1: *mut *mut u8, arg2: *const u8, arg3: u32) -> i32;
@@ -384,6 +383,5 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
         oops();
     }
     buffer_putflush(buffer_1, out.s as (*const u8), out.len);
-    _exit(0i32);
-    0
+    libc::_exit(0i32);
 }

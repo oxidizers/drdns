@@ -1,5 +1,6 @@
+use libc;
+
 extern "C" {
-    fn _exit(arg1: i32);
     static mut buffer_1: *mut buffer;
     fn buffer_flush(arg1: *mut buffer) -> i32;
     fn buffer_put(arg1: *mut buffer, arg2: *const u8, arg3: u32) -> i32;
@@ -140,6 +141,5 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
         argv = argv.offset(1isize);
     }
     buffer_flush(buffer_1);
-    _exit(0i32);
-    0
+    libc::_exit(0i32);
 }

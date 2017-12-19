@@ -1,5 +1,6 @@
+use libc;
+
 extern "C" {
-    fn _exit(arg1: i32);
     static mut buffer_2: *mut buffer;
     fn buffer_flush(arg1: *mut buffer) -> i32;
     fn buffer_puts(arg1: *mut buffer, arg2: *const u8) -> i32;
@@ -97,5 +98,5 @@ pub unsafe extern "C" fn strerr_die(
     mut se: *const strerr,
 ) {
     strerr_warn(x1, x2, x3, x4, x5, x6, se);
-    _exit(e);
+    libc::_exit(e);
 }

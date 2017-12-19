@@ -1,8 +1,8 @@
 use byte;
+use libc;
 
 extern "C" {
     fn __swbuf(arg1: i32, arg2: *mut __sFILE) -> i32;
-    fn _exit(arg1: i32);
     fn buffer_flush(arg1: *mut buffer) -> i32;
     fn buffer_init(
         arg1: *mut buffer,
@@ -860,6 +860,5 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
             &mut strerr_sys as (*mut strerr) as (*const strerr),
         );
     }
-    _exit(0i32);
-    0
+    libc::_exit(0i32);
 }
