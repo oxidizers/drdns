@@ -7,8 +7,8 @@ use byte;
 use errno::{self, Errno};
 use libc;
 
-pub unsafe fn alloc(mut n: u32) -> *mut u8 {
-    let mut x: *mut u8;
+pub unsafe fn alloc(n: u32) -> *mut u8 {
+    let x: *mut u8;
     x = libc::malloc(n as (usize)) as (*mut u8);
     if x.is_null() {
         errno::set_errno(Errno(libc::ENOMEM));
@@ -16,8 +16,8 @@ pub unsafe fn alloc(mut n: u32) -> *mut u8 {
     x
 }
 
-pub unsafe fn alloc_re(mut x: *mut *mut u8, mut m: u32, mut n: u32) -> i32 {
-    let mut y: *mut u8;
+pub unsafe fn alloc_re(x: *mut *mut u8, m: u32, n: u32) -> i32 {
+    let y: *mut u8;
     y = alloc(n);
     if y.is_null() {
         0i32
@@ -29,6 +29,6 @@ pub unsafe fn alloc_re(mut x: *mut *mut u8, mut m: u32, mut n: u32) -> i32 {
     }
 }
 
-pub unsafe fn free(mut x: *mut u8) {
+pub unsafe fn free(x: *mut u8) {
     libc::free(x as (*mut libc::c_void));
 }
