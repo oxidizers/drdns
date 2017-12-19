@@ -1,8 +1,8 @@
+use buffer::Buffer;
 use byte;
 
 extern "C" {
-    static mut buffer_2: *mut buffer;
-    fn buffer_putsflush(arg1: *mut buffer, arg2: *const u8) -> i32;
+    static mut buffer_2: *mut Buffer;
     fn case_lowerb(arg1: *mut u8, arg2: u32);
     fn dns_domain_length(arg1: *const u8) -> u32;
     fn dns_packet_copy(arg1: *const u8, arg2: u32, arg3: u32, arg4: *mut u8, arg5: u32) -> u32;
@@ -71,22 +71,6 @@ pub struct strerr {
 }
 
 impl Clone for strerr {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
-#[derive(Copy)]
-#[repr(C)]
-pub struct buffer {
-    pub x: *mut u8,
-    pub p: u32,
-    pub n: u32,
-    pub fd: i32,
-    pub op: unsafe extern "C" fn() -> i32,
-}
-
-impl Clone for buffer {
     fn clone(&self) -> Self {
         *self
     }
@@ -309,7 +293,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
     initialize();
     ndelay_off(udp53);
     socket_tryreservein(udp53, 65536i32);
-    buffer_putsflush(buffer_2, starting as (*const u8));
+    Buffer::putsflush(buffer_2, starting as (*const u8));
     'loop9: loop {
         len = socket_recv4(
             udp53,

@@ -1,16 +1,9 @@
+use buffer::{self, Buffer};
 use byte;
 use libc;
 
 extern "C" {
     fn __swbuf(arg1: i32, arg2: *mut __sFILE) -> i32;
-    fn buffer_init(
-        arg1: *mut buffer,
-        arg2: unsafe extern "C" fn() -> i32,
-        arg3: i32,
-        arg4: *mut u8,
-        arg5: u32,
-    );
-    fn buffer_unixread(arg1: i32, arg2: *mut u8, arg3: u32) -> i32;
     fn case_lowerb(arg1: *mut u8, arg2: u32);
     fn cdb_make_add(
         arg1: *mut cdb_make,
@@ -28,7 +21,7 @@ extern "C" {
     fn fmt_ulong(arg1: *mut u8, arg2: usize) -> u32;
     fn fstat(arg1: i32, arg2: *mut stat) -> i32;
     fn fsync(arg1: i32) -> i32;
-    fn getln(arg1: *mut buffer, arg2: *mut stralloc, arg3: *mut i32, arg4: i32) -> i32;
+    fn getln(arg1: *mut Buffer, arg2: *mut stralloc, arg3: *mut i32, arg4: i32) -> i32;
     fn ip4_scan(arg1: *const u8, arg2: *mut u8) -> u32;
     fn open_read(arg1: *const u8) -> i32;
     fn open_trunc(arg1: *const u8) -> i32;
@@ -416,22 +409,6 @@ impl Clone for cdb_hplist {
 
 #[derive(Copy)]
 #[repr(C)]
-pub struct buffer {
-    pub x: *mut u8,
-    pub p: u32,
-    pub n: u32,
-    pub fd: i32,
-    pub op: unsafe extern "C" fn() -> i32,
-}
-
-impl Clone for buffer {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
-#[derive(Copy)]
-#[repr(C)]
 pub struct cdb_make {
     pub bspace: [u8; 8192],
     pub final_: [u8; 2048],
@@ -441,7 +418,7 @@ pub struct cdb_make {
     pub split: *mut cdb_hp,
     pub hash: *mut cdb_hp,
     pub numentries: u32,
-    pub b: buffer,
+    pub b: Buffer,
     pub pos: u32,
     pub fd: i32,
 }
@@ -462,12 +439,12 @@ pub static mut cdb: cdb_make = cdb_make {
     split: 0 as (*mut cdb_hp),
     hash: 0 as (*mut cdb_hp),
     numentries: 0u32,
-    b: buffer {
+    b: Buffer {
         x: 0 as (*mut u8),
         p: 0u32,
         n: 0u32,
         fd: 0i32,
-        op: 0 as (unsafe extern "C" fn() -> i32),
+        op: None,
     },
     pos: 0u32,
     fd: 0i32,
@@ -549,12 +526,12 @@ pub unsafe extern "C" fn rr_finish(mut owner: *const u8) {
 }
 
 #[no_mangle]
-pub static mut b: buffer = buffer {
+pub static mut b: Buffer = Buffer {
     x: 0 as (*mut u8),
     p: 0u32,
     n: 0u32,
     fd: 0i32,
-    op: 0 as (unsafe extern "C" fn() -> i32),
+    op: None,
 };
 
 #[no_mangle]
@@ -638,9 +615,9 @@ pub unsafe extern "C" fn _c_main() -> i32 {
         );
     }
     defaultsoa_init(fddata);
-    buffer_init(
-        &mut b as (*mut buffer),
-        buffer_unixread as (unsafe extern "C" fn() -> i32),
+    Buffer::init(
+        &mut b as (*mut Buffer),
+        buffer::unixread as buffer::Op,
         fddata,
         bspace.as_mut_ptr(),
         ::std::mem::size_of::<[u8; 1024]>() as (u32),
@@ -658,7 +635,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
         }
         linenum = linenum.wrapping_add(1usize);
         if getln(
-            &mut b as (*mut buffer),
+            &mut b as (*mut Buffer),
             &mut line as (*mut stralloc),
             &mut match_ as (*mut i32),
             b'\n' as (i32),

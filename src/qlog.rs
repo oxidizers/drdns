@@ -1,28 +1,11 @@
+use buffer::Buffer;
+
 extern "C" {
-    static mut buffer_2: *mut buffer;
-    fn buffer_flush(arg1: *mut buffer) -> i32;
-    fn buffer_put(arg1: *mut buffer, arg2: *const u8, arg3: u32) -> i32;
-    fn buffer_puts(arg1: *mut buffer, arg2: *const u8) -> i32;
-}
-
-#[derive(Copy)]
-#[repr(C)]
-pub struct buffer {
-    pub x: *mut u8,
-    pub p: u32,
-    pub n: u32,
-    pub fd: i32,
-    pub op: unsafe extern "C" fn() -> i32,
-}
-
-impl Clone for buffer {
-    fn clone(&self) -> Self {
-        *self
-    }
+    static mut buffer_2: *mut Buffer;
 }
 
 unsafe extern "C" fn put(mut c: u8) {
-    buffer_put(buffer_2, &mut c as (*mut u8) as (*const u8), 1u32);
+    Buffer::put(buffer_2, &mut c as (*mut u8) as (*const u8), 1u32);
 }
 
 unsafe extern "C" fn hex(mut c: u8) {
@@ -60,7 +43,7 @@ pub unsafe extern "C" fn qlog(
     put(b':');
     hex(*id.offset(0isize));
     hex(*id.offset(1isize));
-    buffer_puts(buffer_2, result);
+    Buffer::puts(buffer_2, result);
     hex(*qtype.offset(0isize));
     hex(*qtype.offset(1isize));
     put(b' ');
@@ -107,5 +90,5 @@ pub unsafe extern "C" fn qlog(
         }
     }
     put(b'\n');
-    buffer_flush(buffer_2);
+    Buffer::flush(buffer_2);
 }

@@ -1,11 +1,9 @@
+use buffer::Buffer;
 use byte;
 use libc;
 
 extern "C" {
-    static mut buffer_1: *mut buffer;
-    fn buffer_flush(arg1: *mut buffer) -> i32;
-    fn buffer_put(arg1: *mut buffer, arg2: *const u8, arg3: u32) -> i32;
-    fn buffer_puts(arg1: *mut buffer, arg2: *const u8) -> i32;
+    static mut buffer_1: *mut Buffer;
     fn dns_domain_fromdot(arg1: *mut *mut u8, arg2: *const u8, arg3: u32) -> i32;
     fn dns_domain_todot_cat(arg1: *mut stralloc, arg2: *const u8) -> i32;
     fn dns_mx(arg1: *mut stralloc, arg2: *const stralloc) -> i32;
@@ -107,22 +105,6 @@ fn main() {
     ::std::process::exit(ret);
 }
 
-#[derive(Copy)]
-#[repr(C)]
-pub struct buffer {
-    pub x: *mut u8,
-    pub p: u32,
-    pub n: u32,
-    pub fd: i32,
-    pub op: unsafe extern "C" fn() -> i32,
-}
-
-impl Clone for buffer {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
 #[no_mangle]
 pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     let mut i: i32;
@@ -173,7 +155,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
             if stralloc_cats(&mut out as (*mut stralloc), (*b"\n\0").as_ptr()) == 0 {
                 nomem();
             }
-            buffer_put(buffer_1, out.s as (*const u8), out.len);
+            Buffer::put(buffer_1, out.s as (*const u8), out.len);
         } else {
             i = 0i32;
             'loop10: loop {
@@ -189,23 +171,23 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
                     out.s.offset(i as (isize)) as (*const u8),
                     &mut pref as (*mut u16),
                 );
-                buffer_put(
+                Buffer::put(
                     buffer_1,
                     strnum.as_mut_ptr() as (*const u8),
                     fmt_ulong(strnum.as_mut_ptr(), pref as (usize)),
                 );
-                buffer_puts(buffer_1, (*b" \0").as_ptr());
-                buffer_put(
+                Buffer::puts(buffer_1, (*b" \0").as_ptr());
+                Buffer::put(
                     buffer_1,
                     out.s.offset(i as (isize)).offset(2isize) as (*const u8),
                     j as (u32),
                 );
-                buffer_puts(buffer_1, (*b"\n\0").as_ptr());
+                Buffer::puts(buffer_1, (*b"\n\0").as_ptr());
                 i = i + (j + 3i32);
             }
         }
         argv = argv.offset(1isize);
     }
-    buffer_flush(buffer_1);
+    Buffer::flush(buffer_1);
     libc::_exit(0i32);
 }

@@ -1,10 +1,8 @@
+use buffer::Buffer;
 use libc;
 
 extern "C" {
-    static mut buffer_1: *mut buffer;
-    fn buffer_flush(arg1: *mut buffer) -> i32;
-    fn buffer_put(arg1: *mut buffer, arg2: *const u8, arg3: u32) -> i32;
-    fn buffer_puts(arg1: *mut buffer, arg2: *const u8) -> i32;
+    static mut buffer_1: *mut Buffer;
     fn dns_random_init(arg1: *const u8);
     fn dns_txt(arg1: *mut stralloc, arg2: *const stralloc) -> i32;
     fn stralloc_copys(arg1: *mut stralloc, arg2: *const u8) -> i32;
@@ -82,22 +80,6 @@ impl Clone for strerr {
     }
 }
 
-#[derive(Copy)]
-#[repr(C)]
-pub struct buffer {
-    pub x: *mut u8,
-    pub p: u32,
-    pub n: u32,
-    pub fd: i32,
-    pub op: unsafe extern "C" fn() -> i32,
-}
-
-impl Clone for buffer {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
 #[no_mangle]
 pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     dns_random_init(seed.as_mut_ptr() as (*const u8));
@@ -136,10 +118,10 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
                 &mut strerr_sys as (*mut strerr) as (*const strerr),
             );
         }
-        buffer_put(buffer_1, out.s as (*const u8), out.len);
-        buffer_puts(buffer_1, (*b"\n\0").as_ptr());
+        Buffer::put(buffer_1, out.s as (*const u8), out.len);
+        Buffer::puts(buffer_1, (*b"\n\0").as_ptr());
         argv = argv.offset(1isize);
     }
-    buffer_flush(buffer_1);
+    Buffer::flush(buffer_1);
     libc::_exit(0i32);
 }

@@ -1,42 +1,21 @@
+use buffer::{self, Buffer};
 use libc;
-
-extern "C" {
-    fn buffer_flush(arg1: *mut buffer) -> i32;
-    fn buffer_puts(arg1: *mut buffer, arg2: *const u8) -> i32;
-    fn buffer_unixwrite(arg1: i32, arg2: *const u8, arg3: u32) -> i32;
-}
 
 #[no_mangle]
 pub static mut bspace: [u8; 256] = [0u8; 256];
 
-#[derive(Copy)]
-#[repr(C)]
-pub struct buffer {
-    pub x: *mut u8,
-    pub p: u32,
-    pub n: u32,
-    pub fd: i32,
-    pub op: unsafe extern "C" fn() -> i32,
-}
-
-impl Clone for buffer {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
 #[no_mangle]
-pub static mut b: buffer = buffer {
+pub static mut b: Buffer = Buffer {
     x: bspace.as_mut_ptr(),
     p: 0u32,
     n: ::std::mem::size_of::<[u8; 256]>() as (u32),
     fd: 1i32,
-    op: buffer_unixwrite as (unsafe extern "C" fn() -> i32),
+    op: Some(buffer::unixwrite as buffer::Op),
 };
 
 #[no_mangle]
 pub unsafe extern "C" fn puts(mut s: *const u8) {
-    if buffer_puts(&mut b as (*mut buffer), s) == -1i32 {
+    if Buffer::puts(&mut b as (*mut Buffer), s) == -1i32 {
         libc::_exit(111i32);
     }
 }
@@ -98,7 +77,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
         puts(octal.as_mut_ptr() as (*const u8));
     }
     puts((*b"\\\n\";\n\0").as_ptr());
-    if buffer_flush(&mut b as (*mut buffer)) == -1i32 {
+    if Buffer::flush(&mut b as (*mut Buffer)) == -1i32 {
         libc::_exit(111i32);
     }
     libc::_exit(0i32);

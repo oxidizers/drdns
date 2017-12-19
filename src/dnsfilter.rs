@@ -1,12 +1,11 @@
 use alloc;
+use buffer::Buffer;
 use byte;
 use errno::errno;
 use libc;
 
 extern "C" {
-    static mut buffer_1: *mut buffer;
-    fn buffer_flush(arg1: *mut buffer) -> i32;
-    fn buffer_put(arg1: *mut buffer, arg2: *const u8, arg3: u32) -> i32;
+    static mut buffer_1: *mut Buffer;
     fn dns_name4_domain(arg1: *mut u8, arg2: *const u8);
     fn dns_name_packet(arg1: *mut stralloc, arg2: *const u8, arg3: u32) -> i32;
     fn dns_resolvconfip(arg1: *mut u8) -> i32;
@@ -307,22 +306,6 @@ fn main() {
     ::std::process::exit(ret);
 }
 
-#[derive(Copy)]
-#[repr(C)]
-pub struct buffer {
-    pub x: *mut u8,
-    pub p: u32,
-    pub n: u32,
-    pub fd: i32,
-    pub op: unsafe extern "C" fn() -> i32,
-}
-
-impl Clone for buffer {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
 #[no_mangle]
 pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     let mut stamp: taia;
@@ -496,22 +479,22 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
         }
         'loop23: loop {
             if xnum != 0 && ((*x.offset(0isize)).flagactive == 0) {
-                buffer_put(
+                Buffer::put(
                     buffer_1,
                     (*x.offset(0isize)).left.s as (*const u8),
                     (*x.offset(0isize)).left.len,
                 );
-                buffer_put(
+                Buffer::put(
                     buffer_1,
                     (*x.offset(0isize)).middle.s as (*const u8),
                     (*x.offset(0isize)).middle.len,
                 );
-                buffer_put(
+                Buffer::put(
                     buffer_1,
                     (*x.offset(0isize)).right.s as (*const u8),
                     (*x.offset(0isize)).right.len,
                 );
-                buffer_flush(buffer_1);
+                Buffer::flush(buffer_1);
                 xnum = xnum.wrapping_sub(1u32);
                 tmp = *x.offset(0isize);
                 i = 0i32;

@@ -1,9 +1,9 @@
 use byte;
+use buffer::Buffer;
 use libc;
 
 extern "C" {
-    static mut buffer_1: *mut buffer;
-    fn buffer_putflush(arg1: *mut buffer, arg2: *const u8, arg3: u32) -> i32;
+    static mut buffer_1: *mut Buffer;
     fn case_lowerb(arg1: *mut u8, arg2: u32);
     fn dns_domain_fromdot(arg1: *mut *mut u8, arg2: *const u8, arg3: u32) -> i32;
     fn dns_domain_length(arg1: *const u8) -> u32;
@@ -119,22 +119,6 @@ fn main() {
     ::std::process::exit(ret);
 }
 
-#[derive(Copy)]
-#[repr(C)]
-pub struct buffer {
-    pub x: *mut u8,
-    pub p: u32,
-    pub n: u32,
-    pub fd: i32,
-    pub op: unsafe extern "C" fn() -> i32,
-}
-
-impl Clone for buffer {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
 #[no_mangle]
 pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     let mut _currentBlock;
@@ -233,6 +217,6 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
             oops();
         }
     }
-    buffer_putflush(buffer_1, out.s as (*const u8), out.len);
+    Buffer::putflush(buffer_1, out.s as (*const u8), out.len);
     libc::_exit(0i32);
 }

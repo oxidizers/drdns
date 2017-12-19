@@ -1,19 +1,9 @@
 use alloc;
+use buffer::{self, Buffer};
 use errno::{self, Errno};
 use libc;
 
 extern "C" {
-    fn buffer_flush(arg1: *mut buffer) -> i32;
-    fn buffer_init(
-        arg1: *mut buffer,
-        arg2: unsafe extern "C" fn() -> i32,
-        arg3: i32,
-        arg4: *mut u8,
-        arg5: u32,
-    );
-    fn buffer_putalign(arg1: *mut buffer, arg2: *const u8, arg3: u32) -> i32;
-    fn buffer_putflush(arg1: *mut buffer, arg2: *const u8, arg3: u32) -> i32;
-    fn buffer_unixwrite(arg1: i32, arg2: *const u8, arg3: u32) -> i32;
     fn cdb_hash(arg1: *const u8, arg2: u32) -> u32;
     fn seek_set(arg1: i32, arg2: usize) -> i32;
     fn uint32_pack(arg1: *mut u8, arg2: u32);
@@ -48,22 +38,6 @@ impl Clone for cdb_hplist {
 
 #[derive(Copy)]
 #[repr(C)]
-pub struct buffer {
-    pub x: *mut u8,
-    pub p: u32,
-    pub n: u32,
-    pub fd: i32,
-    pub op: unsafe extern "C" fn() -> i32,
-}
-
-impl Clone for buffer {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
-#[derive(Copy)]
-#[repr(C)]
 pub struct cdb_make {
     pub bspace: [u8; 8192],
     pub final_: [u8; 2048],
@@ -73,7 +47,7 @@ pub struct cdb_make {
     pub split: *mut cdb_hp,
     pub hash: *mut cdb_hp,
     pub numentries: u32,
-    pub b: buffer,
+    pub b: Buffer,
     pub pos: u32,
     pub fd: i32,
 }
@@ -92,9 +66,9 @@ pub unsafe extern "C" fn cdb_make_start(mut c: *mut cdb_make, mut fd: i32) -> i3
     (*c).numentries = 0u32;
     (*c).fd = fd;
     (*c).pos = ::std::mem::size_of::<[u8; 2048]>() as (u32);
-    buffer_init(
-        &mut (*c).b as (*mut buffer),
-        buffer_unixwrite as (unsafe extern "C" fn() -> i32),
+    Buffer::init(
+        &mut (*c).b as (*mut Buffer),
+        buffer::unixwrite as buffer::Op,
         fd,
         (*c).bspace.as_mut_ptr(),
         ::std::mem::size_of::<[u8; 8192]>() as (u32),
@@ -163,8 +137,8 @@ pub unsafe extern "C" fn cdb_make_addbegin(
     } else {
         uint32_pack(buf.as_mut_ptr(), keylen);
         uint32_pack(buf.as_mut_ptr().offset(4isize), datalen);
-        (if buffer_putalign(
-            &mut (*c).b as (*mut buffer),
+        (if Buffer::putalign(
+            &mut (*c).b as (*mut Buffer),
             buf.as_mut_ptr() as (*const u8),
             8u32,
         ) == -1i32
@@ -186,9 +160,9 @@ pub unsafe extern "C" fn cdb_make_add(
 ) -> i32 {
     if cdb_make_addbegin(c, keylen, datalen) == -1i32 {
         -1i32
-    } else if buffer_putalign(&mut (*c).b as (*mut buffer), key, keylen) == -1i32 {
+    } else if Buffer::putalign(&mut (*c).b as (*mut Buffer), key, keylen) == -1i32 {
         -1i32
-    } else if buffer_putalign(&mut (*c).b as (*mut buffer), data, datalen) == -1i32 {
+    } else if Buffer::putalign(&mut (*c).b as (*mut Buffer), data, datalen) == -1i32 {
         -1i32
     } else {
         cdb_make_addend(c, keylen, datalen, cdb_hash(key, keylen))
@@ -366,8 +340,8 @@ pub unsafe extern "C" fn cdb_make_finish(mut c: *mut cdb_make) -> i32 {
                         buf.as_mut_ptr().offset(4isize),
                         (*(*c).hash.offset(u as (isize))).p,
                     );
-                     if buffer_putalign(
-                        &mut (*c).b as (*mut buffer),
+                     if Buffer::putalign(
+                        &mut (*c).b as (*mut Buffer),
                         buf.as_mut_ptr() as (*const u8),
                         8u32,
                     ) == -1i32
@@ -384,13 +358,13 @@ pub unsafe extern "C" fn cdb_make_finish(mut c: *mut cdb_make) -> i32 {
                  i = i + 1;
              }
              (if _currentBlock == 14 {
-                  (if buffer_flush(&mut (*c).b as (*mut buffer)) == -1i32 {
+                  (if Buffer::flush(&mut (*c).b as (*mut Buffer)) == -1i32 {
                        -1i32
                    } else if seek_set((*c).fd, 0usize) == -1i32 {
                        -1i32
                    } else {
-                       buffer_putflush(
-                        &mut (*c).b as (*mut buffer),
+                       Buffer::putflush(
+                        &mut (*c).b as (*mut Buffer),
                         (*c).final_.as_mut_ptr() as (*const u8),
                         ::std::mem::size_of::<[u8; 2048]>() as (u32),
                     )

@@ -1,13 +1,11 @@
 use alloc;
+use buffer::Buffer;
 use byte;
 use errno::{self, Errno};
 use libc;
 
 extern "C" {
-    static mut buffer_1: *mut buffer;
-    fn buffer_flush(arg1: *mut buffer) -> i32;
-    fn buffer_put(arg1: *mut buffer, arg2: *const u8, arg3: u32) -> i32;
-    fn buffer_puts(arg1: *mut buffer, arg2: *const u8) -> i32;
+    static mut buffer_1: *mut Buffer;
     fn dd(arg1: *const u8, arg2: *const u8, arg3: *mut u8) -> i32;
     fn dns_domain_copy(arg1: *mut *mut u8, arg2: *const u8) -> i32;
     fn dns_domain_equal(arg1: *const u8, arg2: *const u8) -> i32;
@@ -134,22 +132,6 @@ static mut tmp: stralloc = stralloc {
     a: 0u32,
 };
 
-#[derive(Copy)]
-#[repr(C)]
-pub struct buffer {
-    pub x: *mut u8,
-    pub p: u32,
-    pub n: u32,
-    pub fd: i32,
-    pub op: unsafe extern "C" fn() -> i32,
-}
-
-impl Clone for buffer {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
 #[no_mangle]
 pub unsafe extern "C" fn printdomain(mut d: *const u8) {
     if stralloc_copys(&mut tmp as (*mut stralloc), (*b"\0").as_ptr()) == 0 {
@@ -158,7 +140,7 @@ pub unsafe extern "C" fn printdomain(mut d: *const u8) {
     if dns_domain_todot_cat(&mut tmp as (*mut stralloc), d) == 0 {
         nomem();
     }
-    buffer_put(buffer_1, tmp.s as (*const u8), tmp.len);
+    Buffer::put(buffer_1, tmp.s as (*const u8), tmp.len);
 }
 
 #[derive(Copy)]
@@ -314,8 +296,8 @@ pub unsafe extern "C" fn resolve(mut q: *mut u8, mut qtype: *mut u8, mut ip: *mu
                 &mut stamp as (*mut taia) as (*const taia),
             ) != 0
             {
-                 buffer_put(buffer_1, querystr.s as (*const u8), querystr.len);
-                 buffer_puts(buffer_1, (*b"ALERT:took more than 1 second\n\0").as_ptr());
+                 Buffer::put(buffer_1, querystr.s as (*const u8), querystr.len);
+                 Buffer::puts(buffer_1, (*b"ALERT:took more than 1 second\n\0").as_ptr());
              }
              0i32
          } else {
@@ -807,12 +789,12 @@ pub unsafe extern "C" fn ns_add(mut owner: *const u8, mut server: *const u8) {
     let mut x: ns;
     let mut i: i32;
     let mut j: i32;
-    buffer_put(buffer_1, querystr.s as (*const u8), querystr.len);
-    buffer_puts(buffer_1, (*b"NS:\0").as_ptr());
+    Buffer::put(buffer_1, querystr.s as (*const u8), querystr.len);
+    Buffer::puts(buffer_1, (*b"NS:\0").as_ptr());
     printdomain(owner);
-    buffer_puts(buffer_1, (*b":\0").as_ptr());
+    Buffer::puts(buffer_1, (*b":\0").as_ptr());
     printdomain(server);
-    buffer_puts(buffer_1, (*b"\n\0").as_ptr());
+    Buffer::puts(buffer_1, (*b"\n\0").as_ptr());
     i = 0i32;
     'loop1: loop {
         if !(i as (u32) < ns.len) {
@@ -883,16 +865,16 @@ pub unsafe extern "C" fn address_add(mut owner: *const u8, mut ip: *const u8) {
     let mut x: address;
     let mut i: i32;
     let mut j: i32;
-    buffer_put(buffer_1, querystr.s as (*const u8), querystr.len);
-    buffer_puts(buffer_1, (*b"A:\0").as_ptr());
+    Buffer::put(buffer_1, querystr.s as (*const u8), querystr.len);
+    Buffer::puts(buffer_1, (*b"A:\0").as_ptr());
     printdomain(owner);
-    buffer_puts(buffer_1, (*b":\0").as_ptr());
-    buffer_put(
+    Buffer::puts(buffer_1, (*b":\0").as_ptr());
+    Buffer::put(
         buffer_1,
         ipstr.as_mut_ptr() as (*const u8),
         ip4_fmt(ipstr.as_mut_ptr(), ip),
     );
-    buffer_puts(buffer_1, (*b"\n\0").as_ptr());
+    Buffer::puts(buffer_1, (*b"\n\0").as_ptr());
     i = 0i32;
     'loop1: loop {
         if !(i as (u32) < address.len) {
@@ -1142,13 +1124,13 @@ pub unsafe extern "C" fn parsepacket(
                             if dns_domain_equal(referral as (*const u8), control) != 0 ||
                                 dns_domain_suffix(referral as (*const u8), control) == 0
                             {
-                                buffer_put(buffer_1, querystr.s as (*const u8), querystr.len);
-                                buffer_puts(
+                                Buffer::put(buffer_1, querystr.s as (*const u8), querystr.len);
+                                Buffer::puts(
                                     buffer_1,
                                     (*b"ALERT:lame server; refers to \0").as_ptr(),
                                 );
                                 printdomain(referral as (*const u8));
-                                buffer_puts(buffer_1, (*b"\n\0").as_ptr());
+                                Buffer::puts(buffer_1, (*b"\n\0").as_ptr());
                                 return;
                             }
                         }
@@ -1229,19 +1211,19 @@ pub unsafe extern "C" fn parsepacket(
                         if _currentBlock == 60 {
                         } else if flagcname != 0 {
                             query_add(cname as (*const u8), dtype);
-                            buffer_put(buffer_1, querystr.s as (*const u8), querystr.len);
-                            buffer_puts(buffer_1, (*b"CNAME:\0").as_ptr());
+                            Buffer::put(buffer_1, querystr.s as (*const u8), querystr.len);
+                            Buffer::puts(buffer_1, (*b"CNAME:\0").as_ptr());
                             printdomain(cname as (*const u8));
-                            buffer_puts(buffer_1, (*b"\n\0").as_ptr());
+                            Buffer::puts(buffer_1, (*b"\n\0").as_ptr());
                             return;
                         } else if rcode == 3u32 {
-                            buffer_put(buffer_1, querystr.s as (*const u8), querystr.len);
-                            buffer_puts(buffer_1, (*b"NXDOMAIN\n\0").as_ptr());
+                            Buffer::put(buffer_1, querystr.s as (*const u8), querystr.len);
+                            Buffer::puts(buffer_1, (*b"NXDOMAIN\n\0").as_ptr());
                             return;
                         } else if flagout != 0 || flagsoa != 0 || flagreferral == 0 {
                             if flagout == 0 {
-                                buffer_put(buffer_1, querystr.s as (*const u8), querystr.len);
-                                buffer_puts(buffer_1, (*b"NODATA\n\0").as_ptr());
+                                Buffer::put(buffer_1, querystr.s as (*const u8), querystr.len);
+                                Buffer::puts(buffer_1, (*b"NODATA\n\0").as_ptr());
                                 return;
                             } else {
                                 pos = posanswers;
@@ -1267,13 +1249,13 @@ pub unsafe extern "C" fn parsepacket(
                                         break;
                                     }
                                     if tmp.len != 0 {
-                                        buffer_put(
+                                        Buffer::put(
                                             buffer_1,
                                             querystr.s as (*const u8),
                                             querystr.len,
                                         );
-                                        buffer_puts(buffer_1, (*b"answer:\0").as_ptr());
-                                        buffer_put(buffer_1, tmp.s as (*const u8), tmp.len);
+                                        Buffer::puts(buffer_1, (*b"answer:\0").as_ptr());
+                                        Buffer::put(buffer_1, tmp.s as (*const u8), tmp.len);
                                     }
                                     j = j + 1;
                                 }
@@ -1283,10 +1265,10 @@ pub unsafe extern "C" fn parsepacket(
                                 }
                             }
                         } else if !(dns_domain_suffix(d, referral as (*const u8)) == 0) {
-                            buffer_put(buffer_1, querystr.s as (*const u8), querystr.len);
-                            buffer_puts(buffer_1, (*b"see:\0").as_ptr());
+                            Buffer::put(buffer_1, querystr.s as (*const u8), querystr.len);
+                            Buffer::puts(buffer_1, (*b"see:\0").as_ptr());
                             printdomain(referral as (*const u8));
-                            buffer_puts(buffer_1, (*b"\n\0").as_ptr());
+                            Buffer::puts(buffer_1, (*b"\n\0").as_ptr());
                             return;
                         }
                     }
@@ -1295,13 +1277,13 @@ pub unsafe extern "C" fn parsepacket(
         }
     }
     x = libc::strerror(errno::errno().0);
-    buffer_put(buffer_1, querystr.s as (*const u8), querystr.len);
-    buffer_puts(
+    Buffer::put(buffer_1, querystr.s as (*const u8), querystr.len);
+    Buffer::puts(
         buffer_1,
         (*b"ALERT:unable to parse response packet; \0").as_ptr(),
     );
-    buffer_puts(buffer_1, x);
-    buffer_puts(buffer_1, (*b"\n\0").as_ptr());
+    Buffer::puts(buffer_1, x);
+    Buffer::puts(buffer_1, (*b"\n\0").as_ptr());
 }
 
 fn main() {
@@ -1480,15 +1462,15 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
             if stralloc_cats(&mut querystr as (*mut stralloc), (*b":\0").as_ptr()) == 0 {
                 nomem();
             }
-            buffer_put(buffer_1, querystr.s as (*const u8), querystr.len);
-            buffer_puts(buffer_1, (*b"tx\n\0").as_ptr());
-            buffer_flush(buffer_1);
+            Buffer::put(buffer_1, querystr.s as (*const u8), querystr.len);
+            Buffer::puts(buffer_1, (*b"tx\n\0").as_ptr());
+            Buffer::flush(buffer_1);
             if resolve(q, type_.as_mut_ptr(), ip.as_mut_ptr()) == -1i32 {
                 let mut x = libc::strerror(errno::errno().0);
-                buffer_put(buffer_1, querystr.s as (*const u8), querystr.len);
-                buffer_puts(buffer_1, (*b"ALERT:query failed; \0").as_ptr());
-                buffer_puts(buffer_1, x);
-                buffer_puts(buffer_1, (*b"\n\0").as_ptr());
+                Buffer::put(buffer_1, querystr.s as (*const u8), querystr.len);
+                Buffer::puts(buffer_1, (*b"ALERT:query failed; \0").as_ptr());
+                Buffer::puts(buffer_1, x);
+                Buffer::puts(buffer_1, (*b"\n\0").as_ptr());
             } else {
                 parsepacket(
                     tx.packet as (*const u8),
@@ -1499,22 +1481,22 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
                 );
             }
             if dns_domain_equal(q as (*const u8), (*b"\tlocalhost\0\0").as_ptr()) != 0 {
-                buffer_put(buffer_1, querystr.s as (*const u8), querystr.len);
-                buffer_puts(
+                Buffer::put(buffer_1, querystr.s as (*const u8), querystr.len);
+                Buffer::puts(
                     buffer_1,
                     (*b"ALERT:some caches do not handle localhost internally\n\0").as_ptr(),
                 );
                 address_add(q as (*const u8), (*b"\x7F\0\0\x01\0").as_ptr());
             }
             if dd(q as (*const u8), (*b"\0").as_ptr(), ip.as_mut_ptr()) == 4i32 {
-                buffer_put(buffer_1, querystr.s as (*const u8), querystr.len);
-                buffer_puts(
+                Buffer::put(buffer_1, querystr.s as (*const u8), querystr.len);
+                Buffer::puts(
                     buffer_1,
                     (*b"ALERT:some caches do not handle IP addresses internally\n\0").as_ptr(),
                 );
                 address_add(q as (*const u8), ip.as_mut_ptr() as (*const u8));
             }
-            buffer_flush(buffer_1);
+            Buffer::flush(buffer_1);
         }
         i = i + 1;
     }

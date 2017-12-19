@@ -1,10 +1,8 @@
+use buffer::Buffer;
 use libc;
 
 extern "C" {
-    static mut buffer_1: *mut buffer;
-    fn buffer_flush(arg1: *mut buffer) -> i32;
-    fn buffer_put(arg1: *mut buffer, arg2: *const u8, arg3: u32) -> i32;
-    fn buffer_puts(arg1: *mut buffer, arg2: *const u8) -> i32;
+    static mut buffer_1: *mut Buffer;
     fn dns_random(arg1: u32) -> u32;
     fn dns_random_init(arg1: *const u8);
     fn fmt_ulong(arg1: *mut u8, arg2: usize) -> u32;
@@ -45,22 +43,6 @@ fn main() {
         .collect::<Vec<_>>();
     let ret = unsafe { _c_main(argv_storage.len() as (i32), argv.as_mut_ptr()) };
     ::std::process::exit(ret);
-}
-
-#[derive(Copy)]
-#[repr(C)]
-pub struct buffer {
-    pub x: *mut u8,
-    pub p: u32,
-    pub n: u32,
-    pub fd: i32,
-    pub op: unsafe extern "C" fn() -> i32,
-}
-
-impl Clone for buffer {
-    fn clone(&self) -> Self {
-        *self
-    }
 }
 
 #[no_mangle]
@@ -209,34 +191,34 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
             }
         }
         u = ip[0usize] as (usize);
-        buffer_put(
+        Buffer::put(
             buffer_1,
             strnum.as_mut_ptr() as (*const u8),
             fmt_ulong(strnum.as_mut_ptr(), u),
         );
-        buffer_puts(buffer_1, (*b".\0").as_ptr());
+        Buffer::puts(buffer_1, (*b".\0").as_ptr());
         u = ip[1usize] as (usize);
-        buffer_put(
+        Buffer::put(
             buffer_1,
             strnum.as_mut_ptr() as (*const u8),
             fmt_ulong(strnum.as_mut_ptr(), u),
         );
-        buffer_puts(buffer_1, (*b".\0").as_ptr());
+        Buffer::puts(buffer_1, (*b".\0").as_ptr());
         u = ip[2usize] as (usize);
-        buffer_put(
+        Buffer::put(
             buffer_1,
             strnum.as_mut_ptr() as (*const u8),
             fmt_ulong(strnum.as_mut_ptr(), u),
         );
-        buffer_puts(buffer_1, (*b".\0").as_ptr());
+        Buffer::puts(buffer_1, (*b".\0").as_ptr());
         u = ip[3usize] as (usize);
-        buffer_put(
+        Buffer::put(
             buffer_1,
             strnum.as_mut_ptr() as (*const u8),
             fmt_ulong(strnum.as_mut_ptr(), u),
         );
-        buffer_puts(buffer_1, (*b"\n\0").as_ptr());
+        Buffer::puts(buffer_1, (*b"\n\0").as_ptr());
     }
-    buffer_flush(buffer_1);
+    Buffer::flush(buffer_1);
     libc::_exit(0i32);
 }

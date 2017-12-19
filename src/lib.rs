@@ -1,5 +1,8 @@
 //! `lib.rs`: Placeholder to ensure code compiles
 
+#![deny(warnings)]
+#![allow(dead_code)]
+
 extern crate errno;
 extern crate libc;
 
@@ -7,4 +10,5 @@ extern crate libc;
 /// proper Rust modules. Any modules not listed below are not presently
 /// covered by CI to ensure the code compiles.
 mod alloc;
+mod buffer;
 mod byte;
