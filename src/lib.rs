@@ -7,4 +7,5 @@ extern crate libc;
 /// proper Rust modules. Any modules not listed below are not presently
 /// covered by CI to ensure the code compiles.
 mod alloc;
+mod buffer;
 mod byte;
