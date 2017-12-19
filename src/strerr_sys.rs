@@ -1,6 +1,7 @@
+use libc;
+
 extern "C" {
     static mut errno: i32;
-    fn error_str(arg1: i32) -> *const u8;
 }
 
 #[derive(Copy)]
@@ -29,7 +30,7 @@ pub static mut strerr_sys: strerr = strerr {
 #[no_mangle]
 pub unsafe extern "C" fn strerr_sysinit() {
     strerr_sys.who = 0i32 as (*mut strerr);
-    strerr_sys.x = error_str(errno);
+    strerr_sys.x = (*const u8)libc::strerror(errno);
     strerr_sys.y = (*b"\0").as_ptr();
     strerr_sys.z = (*b"\0").as_ptr();
 }

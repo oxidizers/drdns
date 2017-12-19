@@ -1,5 +1,6 @@
 use alloc;
 use byte;
+use libc;
 
 extern "C" {
     fn _exit(arg1: i32);
@@ -30,7 +31,6 @@ extern "C" {
     ) -> i32;
     static mut errno: i32;
     static mut error_proto: i32;
-    fn error_str(arg1: i32) -> *const u8;
     fn iopause(arg1: *mut pollfd, arg2: u32, arg3: *mut taia, arg4: *mut taia);
     fn ip4_fmt(arg1: *mut u8, arg2: *const u8) -> u32;
     fn parsetype(arg1: *mut u8, arg2: *mut u8) -> i32;
@@ -1297,7 +1297,7 @@ pub unsafe extern "C" fn parsepacket(
             }
         }
     }
-    x = error_str(errno);
+    x = libc::strerror(errno);
     buffer_put(buffer_1, querystr.s as (*const u8), querystr.len);
     buffer_puts(
         buffer_1,
@@ -1487,7 +1487,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
             buffer_puts(buffer_1, (*b"tx\n\0").as_ptr());
             buffer_flush(buffer_1);
             if resolve(q, type_.as_mut_ptr(), ip.as_mut_ptr()) == -1i32 {
-                let mut x: *const u8 = error_str(errno);
+                let mut x = libc::strerror(errno);
                 buffer_put(buffer_1, querystr.s as (*const u8), querystr.len);
                 buffer_puts(buffer_1, (*b"ALERT:query failed; \0").as_ptr());
                 buffer_puts(buffer_1, x);

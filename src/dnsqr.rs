@@ -1,3 +1,5 @@
+use libc;
+
 extern "C" {
     fn _exit(arg1: i32);
     static mut buffer_1: *mut buffer;
@@ -8,7 +10,6 @@ extern "C" {
     fn dns_resolve(arg1: *const u8, arg2: *const u8) -> i32;
     static mut dns_resolve_tx: dns_transmit;
     static mut errno: i32;
-    fn error_str(arg1: i32) -> *const u8;
     fn parsetype(arg1: *mut u8, arg2: *mut u8) -> i32;
     fn printpacket_cat(arg1: *mut stralloc, arg2: *mut u8, arg3: u32) -> u32;
     fn str_len(arg1: *const u8) -> u32;
@@ -239,7 +240,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
         oops();
     }
     if dns_resolve(q as (*const u8), type_.as_mut_ptr() as (*const u8)) == -1i32 {
-        if stralloc_cats(&mut out as (*mut stralloc), error_str(errno)) == 0 {
+        if stralloc_cats(&mut out as (*mut stralloc), libc::strerror(errno)) == 0 {
             oops();
         }
         if stralloc_cats(&mut out as (*mut stralloc), (*b"\n\0").as_ptr()) == 0 {
