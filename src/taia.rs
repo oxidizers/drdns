@@ -7,11 +7,8 @@
 //! 9192631770 periods of the radiation corresponding to the transition
 //! between the two hyperfine levels of the ground state of the cesium atom.
 
+use libc;
 use tai::Tai;
-
-extern "C" {
-    fn gettimeofday(arg1: *mut timeval, arg2: *mut ::std::os::raw::c_void) -> i32;
-}
 
 #[derive(Copy)]
 #[repr(C)]
@@ -22,32 +19,6 @@ pub struct TaiA {
 }
 
 impl Clone for TaiA {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
-#[derive(Copy)]
-#[repr(C)]
-pub struct timeval {
-    pub tv_sec: isize,
-    pub tv_usec: i32,
-}
-
-impl Clone for timeval {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
-#[derive(Copy)]
-#[repr(C)]
-pub struct timezone {
-    pub tz_minuteswest: i32,
-    pub tz_dsttime: i32,
-}
-
-impl Clone for timezone {
     fn clone(&self) -> Self {
         *self
     }
@@ -91,19 +62,19 @@ impl TaiA {
     }
 
     pub unsafe fn now(t: *mut TaiA) {
-        let mut now: timeval = timeval {
+        let mut now: libc::timeval = libc::timeval {
             tv_sec: 0,
             tv_usec: 0
         };
 
-        gettimeofday(
-            &mut now as (*mut timeval),
-            0i32 as (*mut timezone) as (*mut ::std::os::raw::c_void),
+        libc::gettimeofday(
+            &mut now as (*mut libc::timeval),
+            0i32 as (*mut libc::timezone) as (*mut libc::c_void),
         );
 
         (*(&mut (*t).sec as (*mut Tai))).x =
             4611686018427387914u64.wrapping_add(now.tv_sec as (usize) as (u64)) as (usize);
-        (*t).nano = (1000i32 * now.tv_usec + 500i32) as (usize);
+        (*t).nano = (1000i32 * (now.tv_usec as i32) + 500i32) as (usize);
         (*t).atto = 0usize;
     }
 

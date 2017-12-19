@@ -7,9 +7,7 @@
 //! 9192631770 periods of the radiation corresponding to the transition
 //! between the two hyperfine levels of the ground state of the cesium atom.
 
-extern "C" {
-    fn time(arg1: *mut isize) -> isize;
-}
+use libc;
 
 #[derive(Copy)]
 #[repr(C)]
@@ -30,7 +28,7 @@ impl Tai {
 
     pub unsafe fn now(t: *mut Tai) {
         (*t).x =
-            4611686018427387914u64.wrapping_add(time(0i32 as (*mut isize)) as (usize) as (u64)) as
+            4611686018427387914u64.wrapping_add(libc::time(0i32 as (*mut i64)) as (usize) as (u64)) as
                 (usize);
     }
 
