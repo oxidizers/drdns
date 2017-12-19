@@ -1,6 +1,8 @@
 use buffer::{self, Buffer};
 use errno::{errno, Errno};
 use libc;
+use tai::Tai;
+use taia::TaiA;
 
 extern "C" {
     static mut auto_home: *const u8;
@@ -31,28 +33,9 @@ extern "C" {
         arg8: *const strerr,
     );
     static mut strerr_sys: strerr;
-    fn taia_now(arg1: *mut TaiA);
-    fn taia_pack(arg1: *mut u8, arg2: *const TaiA);
 }
 
-static UUID_NULL: [u8; 16] = [
-    0u8,
-    0u8,
-    0u8,
-    0u8,
-    0u8,
-    0u8,
-    0u8,
-    0u8,
-    0u8,
-    0u8,
-    0u8,
-    0u8,
-    0u8,
-    0u8,
-    0u8,
-    0u8,
-];
+static UUID_NULL: [u8; 16] = [0u8; 16];
 
 #[derive(Copy)]
 #[repr(C)]
@@ -164,39 +147,13 @@ pub unsafe extern "C" fn seed_adduint32(mut u: u32) {
     }
 }
 
-#[derive(Copy)]
-#[repr(C)]
-pub struct tai {
-    pub x: usize,
-}
-
-impl Clone for tai {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
-#[derive(Copy)]
-#[repr(C)]
-pub struct taia {
-    pub sec: Tai,
-    pub nano: usize,
-    pub atto: usize,
-}
-
-impl Clone for taia {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
 #[no_mangle]
 pub unsafe extern "C" fn seed_addtime() {
     let mut t: TaiA;
     let mut tpack: [u8; 16];
     let mut i: i32;
-    taia_now(&mut t as (*mut TaiA));
-    taia_pack(tpack.as_mut_ptr(), &mut t as (*mut TaiA) as (*const TaiA));
+    TaiA::now(&mut t as (*mut TaiA));
+    TaiA::pack(tpack.as_mut_ptr(), &mut t as (*mut TaiA) as (*const TaiA));
     i = 0i32;
     'loop1: loop {
         if !(i < 16i32) {

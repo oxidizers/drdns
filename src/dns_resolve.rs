@@ -1,3 +1,6 @@
+use tai::Tai;
+use taia::TaiA;
+
 extern "C" {
     fn dns_resolvconfip(arg1: *mut u8) -> i32;
     fn dns_transmit_get(arg1: *mut dns_transmit, arg2: *const pollfd, arg3: *const TaiA) -> i32;
@@ -11,35 +14,6 @@ extern "C" {
         arg6: *const u8,
     ) -> i32;
     fn iopause(arg1: *mut pollfd, arg2: u32, arg3: *mut TaiA, arg4: *mut TaiA);
-    fn taia_add(arg1: *mut TaiA, arg2: *const TaiA, arg3: *const TaiA);
-    fn taia_now(arg1: *mut TaiA);
-    fn taia_uint(arg1: *mut TaiA, arg2: u32);
-}
-
-#[derive(Copy)]
-#[repr(C)]
-pub struct tai {
-    pub x: usize,
-}
-
-impl Clone for tai {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
-#[derive(Copy)]
-#[repr(C)]
-pub struct taia {
-    pub sec: Tai,
-    pub nano: usize,
-    pub atto: usize,
-}
-
-impl Clone for taia {
-    fn clone(&self) -> Self {
-        *self
-    }
 }
 
 #[derive(Copy)]
@@ -123,9 +97,9 @@ pub unsafe extern "C" fn dns_resolve(mut q: *const u8, mut qtype: *const u8) -> 
         -1i32
     } else {
         'loop2: loop {
-            taia_now(&mut stamp as (*mut TaiA));
-            taia_uint(&mut deadline as (*mut TaiA), 120u32);
-            taia_add(
+            TaiA::now(&mut stamp as (*mut TaiA));
+            TaiA::uint(&mut deadline as (*mut TaiA), 120u32);
+            TaiA::add(
                 &mut deadline as (*mut TaiA),
                 &mut deadline as (*mut TaiA) as (*const TaiA),
                 &mut stamp as (*mut TaiA) as (*const TaiA),

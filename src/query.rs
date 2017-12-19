@@ -2,6 +2,8 @@ use alloc;
 use byte;
 use errno::{self, Errno};
 use libc;
+use tai::Tai;
+use taia::TaiA;
 
 extern "C" {
     fn cache_get(arg1: *const u8, arg2: u32, arg3: *mut u32, arg4: *mut u32) -> *mut u8;
@@ -98,32 +100,6 @@ static mut cname: *mut u8 = 0i32 as (*mut u8);
 static mut referral: *mut u8 = 0i32 as (*mut u8);
 
 static mut records: *mut u32 = 0i32 as (*mut u32);
-
-#[derive(Copy)]
-#[repr(C)]
-pub struct tai {
-    pub x: usize,
-}
-
-impl Clone for tai {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
-#[derive(Copy)]
-#[repr(C)]
-pub struct taia {
-    pub sec: Tai,
-    pub nano: usize,
-    pub atto: usize,
-}
-
-impl Clone for taia {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
 
 #[derive(Copy)]
 #[repr(C)]

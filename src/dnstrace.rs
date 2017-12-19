@@ -3,6 +3,8 @@ use buffer::Buffer;
 use byte;
 use errno::{self, Errno};
 use libc;
+use tai::Tai;
+use taia::TaiA;
 
 extern "C" {
     static mut buffer_1: *mut Buffer;
@@ -52,11 +54,6 @@ extern "C" {
         arg7: *const u8,
         arg8: *const strerr,
     );
-    fn taia_add(arg1: *mut TaiA, arg2: *const TaiA, arg3: *const TaiA);
-    fn taia_less(arg1: *const TaiA, arg2: *const TaiA) -> i32;
-    fn taia_now(arg1: *mut TaiA);
-    fn taia_sub(arg1: *mut TaiA, arg2: *const TaiA, arg3: *const TaiA);
-    fn taia_uint(arg1: *mut TaiA, arg2: u32);
     fn uint16_unpack_big(arg1: *const u8, arg2: *mut u16);
 }
 
@@ -145,32 +142,6 @@ pub unsafe extern "C" fn printdomain(mut d: *const u8) {
 
 #[derive(Copy)]
 #[repr(C)]
-pub struct tai {
-    pub x: usize,
-}
-
-impl Clone for tai {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
-#[derive(Copy)]
-#[repr(C)]
-pub struct taia {
-    pub sec: Tai,
-    pub nano: usize,
-    pub atto: usize,
-}
-
-impl Clone for taia {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
-#[derive(Copy)]
-#[repr(C)]
 pub struct dns_transmit {
     pub query: *mut u8,
     pub querylen: u32,
@@ -236,7 +207,7 @@ pub unsafe extern "C" fn resolve(mut q: *mut u8, mut qtype: *mut u8, mut ip: *mu
     let mut servers: [u8; 64];
     let mut x: [pollfd; 1];
     let mut r: i32;
-    taia_now(&mut start as (*mut TaiA));
+    TaiA::now(&mut start as (*mut TaiA));
     byte::zero(servers.as_mut_ptr(), 64u32);
     byte::copy(servers.as_mut_ptr(), 4u32, ip);
     if dns_transmit_start(
@@ -251,9 +222,9 @@ pub unsafe extern "C" fn resolve(mut q: *mut u8, mut qtype: *mut u8, mut ip: *mu
         -1i32
     } else {
         'loop1: loop {
-            taia_now(&mut stamp as (*mut TaiA));
-            taia_uint(&mut deadline as (*mut TaiA), 120u32);
-            taia_add(
+            TaiA::now(&mut stamp as (*mut TaiA));
+            TaiA::uint(&mut deadline as (*mut TaiA), 120u32);
+            TaiA::add(
                 &mut deadline as (*mut TaiA),
                 &mut deadline as (*mut TaiA) as (*const TaiA),
                 &mut stamp as (*mut TaiA) as (*const TaiA),
@@ -284,14 +255,14 @@ pub unsafe extern "C" fn resolve(mut q: *mut u8, mut qtype: *mut u8, mut ip: *mu
             }
         }
         (if _currentBlock == 3 {
-             taia_now(&mut stamp as (*mut TaiA));
-             taia_sub(
+             TaiA::now(&mut stamp as (*mut TaiA));
+             TaiA::sub(
                 &mut stamp as (*mut TaiA),
                 &mut stamp as (*mut TaiA) as (*const TaiA),
                 &mut start as (*mut TaiA) as (*const TaiA),
             );
-             taia_uint(&mut deadline as (*mut TaiA), 1u32);
-             if taia_less(
+             TaiA::uint(&mut deadline as (*mut TaiA), 1u32);
+             if TaiA::less(
                 &mut deadline as (*mut TaiA) as (*const TaiA),
                 &mut stamp as (*mut TaiA) as (*const TaiA),
             ) != 0

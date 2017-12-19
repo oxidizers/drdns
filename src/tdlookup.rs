@@ -1,4 +1,5 @@
 use byte;
+use tai::Tai;
 
 extern "C" {
     fn case_lowerb(arg1: *mut u8, arg2: u32);
@@ -23,9 +24,6 @@ extern "C" {
     fn response_nxdomain();
     fn response_rfinish(arg1: i32);
     fn response_rstart(arg1: *const u8, arg2: *const u8, arg3: u32) -> i32;
-    fn tai_now(arg1: *mut Tai);
-    fn tai_sub(arg1: *mut Tai, arg2: *const Tai, arg3: *const Tai);
-    fn tai_unpack(arg1: *const u8, arg2: *mut Tai);
     fn uint16_unpack_big(arg1: *const u8, arg2: *mut u16);
     fn uint32_unpack_big(arg1: *const u8, arg2: *mut u32);
 }
@@ -33,18 +31,6 @@ extern "C" {
 static mut d1: *mut u8 = 0 as (*mut u8);
 
 static mut clientloc: [u8; 2] = [0u8; 2];
-
-#[derive(Copy)]
-#[repr(C)]
-pub struct tai {
-    pub x: usize,
-}
-
-impl Clone for tai {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
 
 static mut now: Tai = Tai { x: 0usize };
 
@@ -200,7 +186,7 @@ unsafe extern "C" fn find(mut d: *mut u8, mut flagwild: i32) -> i32 {
             _currentBlock = 21;
             break;
         }
-        tai_unpack(ttd.as_mut_ptr() as (*const u8), &mut cutoff as (*mut Tai));
+        Tai::unpack(ttd.as_mut_ptr() as (*const u8), &mut cutoff as (*mut Tai));
         if ttl == 0u32 {
             if !((*(&mut cutoff as (*mut Tai))).x < (*(&mut now as (*mut Tai))).x) {
                 _currentBlock = 16;
@@ -212,7 +198,7 @@ unsafe extern "C" fn find(mut d: *mut u8, mut flagwild: i32) -> i32 {
         }
     }
     if _currentBlock == 16 {
-        tai_sub(
+        Tai::sub(
             &mut cutoff as (*mut Tai),
             &mut cutoff as (*mut Tai) as (*const Tai),
             &mut now as (*mut Tai) as (*const Tai),
@@ -821,7 +807,7 @@ pub unsafe extern "C" fn respond(mut q: *mut u8, mut qtype: *mut u8, mut ip: *mu
     let mut fd: i32;
     let mut r: i32;
     let mut key: [u8; 6];
-    tai_now(&mut now as (*mut Tai));
+    Tai::now(&mut now as (*mut Tai));
     fd = open_read((*b"data.cdb\0").as_ptr());
     if fd == -1i32 {
         0i32

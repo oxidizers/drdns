@@ -1,8 +1,8 @@
+use tai::Tai;
+use taia::TaiA;
+
 extern "C" {
     fn poll(arg1: *mut pollfd, arg2: u32, arg3: i32) -> i32;
-    fn taia_approx(arg1: *const TaiA) -> f64;
-    fn taia_less(arg1: *const TaiA, arg2: *const TaiA) -> i32;
-    fn taia_sub(arg1: *mut TaiA, arg2: *const TaiA, arg3: *const TaiA);
 }
 
 #[derive(Copy)]
@@ -19,32 +19,6 @@ impl Clone for pollfd {
     }
 }
 
-#[derive(Copy)]
-#[repr(C)]
-pub struct tai {
-    pub x: usize,
-}
-
-impl Clone for tai {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
-#[derive(Copy)]
-#[repr(C)]
-pub struct taia {
-    pub sec: Tai,
-    pub nano: usize,
-    pub atto: usize,
-}
-
-impl Clone for taia {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
 #[no_mangle]
 pub unsafe extern "C" fn iopause(
     mut x: *mut pollfd,
@@ -56,16 +30,16 @@ pub unsafe extern "C" fn iopause(
     let mut millisecs: i32;
     let mut d: f64;
     let mut i: i32;
-    if taia_less(deadline as (*const TaiA), stamp as (*const TaiA)) != 0 {
+    if TaiA::less(deadline as (*const TaiA), stamp as (*const TaiA)) != 0 {
         millisecs = 0i32;
     } else {
         t = *stamp;
-        taia_sub(
+        TaiA::sub(
             &mut t as (*mut TaiA),
             deadline as (*const TaiA),
             &mut t as (*mut TaiA) as (*const TaiA),
         );
-        d = taia_approx(&mut t as (*mut TaiA) as (*const TaiA));
+        d = TaiA::approx(&mut t as (*mut TaiA) as (*const TaiA));
         if d > 1000.0f64 {
             d = 1000.0f64;
         }

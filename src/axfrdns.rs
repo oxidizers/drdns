@@ -1,6 +1,7 @@
 use buffer::{self, Buffer};
 use byte;
 use libc;
+use tai::Tai;
 
 extern "C" {
     fn case_lowerb(arg1: *mut u8, arg2: u32);
@@ -50,8 +51,6 @@ extern "C" {
         arg8: *const strerr,
     );
     static mut strerr_sys: strerr;
-    fn tai_now(arg1: *mut Tai);
-    fn tai_unpack(arg1: *const u8, arg2: *mut Tai);
     fn timeoutread(t: i32, fd: i32, buf: *mut u8, len: i32) -> i32;
     fn timeoutwrite(t: i32, fd: i32, buf: *mut u8, len: i32) -> i32;
     fn uint16_pack_big(arg1: *mut u8, arg2: u16);
@@ -316,18 +315,6 @@ pub static mut port: usize = 0usize;
 #[no_mangle]
 pub static mut clientloc: [u8; 2] = [0u8; 2];
 
-#[derive(Copy)]
-#[repr(C)]
-pub struct tai {
-    pub x: usize,
-}
-
-impl Clone for tai {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
 #[no_mangle]
 pub static mut now: Tai = Tai { x: 0usize };
 
@@ -454,7 +441,7 @@ pub unsafe extern "C" fn build(
         (*b"\0\0\0\0\0\0\0\0\0").as_ptr() as (*mut u8),
     ) != 0
     {
-        tai_unpack(ttd.as_mut_ptr() as (*const u8), &mut cutoff as (*mut Tai));
+        Tai::unpack(ttd.as_mut_ptr() as (*const u8), &mut cutoff as (*mut Tai));
         if byte::diff(
             ttl.as_mut_ptr(),
             4u32,
@@ -595,7 +582,7 @@ pub unsafe extern "C" fn doaxfr(mut id: *mut u8) {
     let mut pos: u32;
     let mut r: i32;
     axfrcheck(zone);
-    tai_now(&mut now as (*mut Tai));
+    Tai::now(&mut now as (*mut Tai));
     cdb_init(&mut c as (*mut cdb), fdcdb);
     byte::zero(clientloc.as_mut_ptr(), 2u32);
     key[0usize] = 0u8;

@@ -3,6 +3,8 @@ use buffer::Buffer;
 use byte;
 use errno::errno;
 use libc;
+use tai::Tai;
+use taia::TaiA;
 
 extern "C" {
     static mut buffer_1: *mut Buffer;
@@ -41,9 +43,6 @@ extern "C" {
     static mut strerr_sys: strerr;
     static mut subgetoptarg: *mut u8;
     static mut subgetoptdone: i32;
-    fn taia_add(arg1: *mut TaiA, arg2: *const TaiA, arg3: *const TaiA);
-    fn taia_now(arg1: *mut TaiA);
-    fn taia_uint(arg1: *mut TaiA, arg2: u32);
 }
 
 #[derive(Copy)]
@@ -84,32 +83,6 @@ pub struct stralloc {
 }
 
 impl Clone for stralloc {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
-#[derive(Copy)]
-#[repr(C)]
-pub struct tai {
-    pub x: usize,
-}
-
-impl Clone for tai {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
-#[derive(Copy)]
-#[repr(C)]
-pub struct taia {
-    pub sec: Tai,
-    pub nano: usize,
-    pub atto: usize,
-}
-
-impl Clone for taia {
     fn clone(&self) -> Self {
         *self
     }
@@ -376,9 +349,9 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
         if !(flag0 != 0 || inbuflen != 0 || partial.len != 0 || xnum != 0) {
             break;
         }
-        taia_now(&mut stamp as (*mut TaiA));
-        taia_uint(&mut deadline as (*mut TaiA), 120u32);
-        taia_add(
+        TaiA::now(&mut stamp as (*mut TaiA));
+        TaiA::uint(&mut deadline as (*mut TaiA), 120u32);
+        TaiA::add(
             &mut deadline as (*mut TaiA),
             &mut deadline as (*mut TaiA) as (*const TaiA),
             &mut stamp as (*mut TaiA) as (*const TaiA),

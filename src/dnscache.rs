@@ -2,6 +2,8 @@ use alloc;
 use byte;
 use errno::{self, Errno};
 use libc;
+use tai::Tai;
+use taia::TaiA;
 
 extern "C" {
     fn cache_init(arg1: u32) -> i32;
@@ -64,10 +66,6 @@ extern "C" {
         arg8: *const strerr,
     );
     static mut strerr_sys: strerr;
-    fn taia_add(arg1: *mut TaiA, arg2: *const TaiA, arg3: *const TaiA);
-    fn taia_less(arg1: *const TaiA, arg2: *const TaiA) -> i32;
-    fn taia_now(arg1: *mut TaiA);
-    fn taia_uint(arg1: *mut TaiA, arg2: u32);
     fn uint16_pack_big(arg1: *mut u8, arg2: u16);
 }
 
@@ -81,32 +79,6 @@ static mut buf: [u8; 1024] = [0u8; 1024];
 pub static mut numqueries: usize = 0usize;
 
 static mut udp53: i32 = 0i32;
-
-#[derive(Copy)]
-#[repr(C)]
-pub struct tai {
-    pub x: usize,
-}
-
-impl Clone for tai {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
-#[derive(Copy)]
-#[repr(C)]
-pub struct taia {
-    pub sec: Tai,
-    pub nano: usize,
-    pub atto: usize,
-}
-
-impl Clone for taia {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
 
 #[derive(Copy)]
 #[repr(C)]
@@ -346,7 +318,7 @@ pub unsafe extern "C" fn u_new() {
             if !(i < 200i32) {
                 break;
             }
-            if taia_less(
+            if TaiA::less(
                 &mut u[i as (usize)].start as (*mut TaiA) as (*const TaiA),
                 &mut u[j as (usize)].start as (*mut TaiA) as (*const TaiA),
             ) != 0
@@ -359,7 +331,7 @@ pub unsafe extern "C" fn u_new() {
         u_drop(j);
     }
     x = u.as_mut_ptr().offset(j as (isize));
-    taia_now(&mut (*x).start as (*mut TaiA));
+    TaiA::now(&mut (*x).start as (*mut TaiA));
     len = socket_recv4(
         udp53,
         buf.as_mut_ptr(),
@@ -515,9 +487,9 @@ pub unsafe extern "C" fn t_timeout(mut j: i32) {
     let mut now: TaiA;
     if t[j as (usize)].active == 0 {
     } else {
-        taia_now(&mut now as (*mut TaiA));
-        taia_uint(&mut t[j as (usize)].timeout as (*mut TaiA), 10u32);
-        taia_add(
+        TaiA::now(&mut now as (*mut TaiA));
+        TaiA::uint(&mut t[j as (usize)].timeout as (*mut TaiA), 10u32);
+        TaiA::add(
             &mut t[j as (usize)].timeout as (*mut TaiA),
             &mut t[j as (usize)].timeout as (*mut TaiA) as (*const TaiA),
             &mut now as (*mut TaiA) as (*const TaiA),
@@ -693,7 +665,7 @@ pub unsafe extern "C" fn t_new() {
             if !(i < 20i32) {
                 break;
             }
-            if taia_less(
+            if TaiA::less(
                 &mut t[i as (usize)].start as (*mut TaiA) as (*const TaiA),
                 &mut t[j as (usize)].start as (*mut TaiA) as (*const TaiA),
             ) != 0
@@ -710,7 +682,7 @@ pub unsafe extern "C" fn t_new() {
         }
     }
     x = t.as_mut_ptr().offset(j as (isize));
-    taia_now(&mut (*x).start as (*mut TaiA));
+    TaiA::now(&mut (*x).start as (*mut TaiA));
     (*x).tcp = socket_accept4(tcp53, (*x).ip.as_mut_ptr(), &mut (*x).port as (*mut u16));
     if (*x).tcp == -1i32 {
     } else {
@@ -777,9 +749,9 @@ unsafe extern "C" fn doit() {
     let mut iolen: i32;
     let mut r: i32;
     'loop1: loop {
-        taia_now(&mut stamp as (*mut TaiA));
-        taia_uint(&mut deadline as (*mut TaiA), 120u32);
-        taia_add(
+        TaiA::now(&mut stamp as (*mut TaiA));
+        TaiA::uint(&mut deadline as (*mut TaiA), 120u32);
+        TaiA::add(
             &mut deadline as (*mut TaiA),
             &mut deadline as (*mut TaiA) as (*const TaiA),
             &mut stamp as (*mut TaiA) as (*const TaiA),
@@ -836,7 +808,7 @@ unsafe extern "C" fn doit() {
                         &mut deadline as (*mut TaiA),
                     );
                 } else {
-                    if taia_less(
+                    if TaiA::less(
                         &mut t[j as (usize)].timeout as (*mut TaiA) as (*const TaiA),
                         &mut deadline as (*mut TaiA) as (*const TaiA),
                     ) != 0
@@ -901,7 +873,7 @@ unsafe extern "C" fn doit() {
                         t_respond(j);
                     }
                 } else if (*t[j as (usize)].io).revents != 0 ||
-                           taia_less(
+                           TaiA::less(
                         &mut t[j as (usize)].timeout as (*mut TaiA) as (*const TaiA),
                         &mut stamp as (*mut TaiA) as (*const TaiA),
                     ) != 0

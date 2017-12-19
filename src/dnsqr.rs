@@ -1,6 +1,8 @@
 use buffer::Buffer;
 use errno::errno;
 use libc;
+use tai::Tai;
+use taia::TaiA;
 
 extern "C" {
     static mut buffer_1: *mut Buffer;
@@ -114,32 +116,6 @@ fn main() {
         .collect::<Vec<_>>();
     let ret = unsafe { _c_main(argv_storage.len() as (i32), argv.as_mut_ptr()) };
     ::std::process::exit(ret);
-}
-
-#[derive(Copy)]
-#[repr(C)]
-pub struct tai {
-    pub x: usize,
-}
-
-impl Clone for tai {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
-#[derive(Copy)]
-#[repr(C)]
-pub struct taia {
-    pub sec: Tai,
-    pub nano: usize,
-    pub atto: usize,
-}
-
-impl Clone for taia {
-    fn clone(&self) -> Self {
-        *self
-    }
 }
 
 #[derive(Copy)]

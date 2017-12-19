@@ -1,4 +1,6 @@
 use byte;
+use tai::Tai;
+use taia::TaiA;
 
 extern "C" {
     fn env_get(arg1: *const u8) -> *mut u8;
@@ -10,10 +12,6 @@ extern "C" {
     fn stralloc_cats(arg1: *mut stralloc, arg2: *const u8) -> i32;
     fn stralloc_copy(arg1: *mut stralloc, arg2: *const stralloc) -> i32;
     fn stralloc_copys(arg1: *mut stralloc, arg2: *const u8) -> i32;
-    fn taia_add(arg1: *mut TaiA, arg2: *const TaiA, arg3: *const TaiA);
-    fn taia_less(arg1: *const TaiA, arg2: *const TaiA) -> i32;
-    fn taia_now(arg1: *mut TaiA);
-    fn taia_uint(arg1: *mut TaiA, arg2: u32);
 }
 
 #[derive(Copy)]
@@ -39,32 +37,6 @@ static mut data: stralloc = stralloc {
 static mut ok: i32 = 0i32;
 
 static mut uses: u32 = 0u32;
-
-#[derive(Copy)]
-#[repr(C)]
-pub struct tai {
-    pub x: usize,
-}
-
-impl Clone for tai {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
-#[derive(Copy)]
-#[repr(C)]
-pub struct taia {
-    pub sec: Tai,
-    pub nano: usize,
-    pub atto: usize,
-}
-
-impl Clone for taia {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
 
 static mut deadline: TaiA = TaiA {
     sec: Tai { x: 0usize },
@@ -358,8 +330,8 @@ unsafe extern "C" fn init(mut rules: *mut stralloc) -> i32 {
 #[no_mangle]
 pub unsafe extern "C" fn dns_resolvconfrewrite(mut out: *mut stralloc) -> i32 {
     let mut now: TaiA;
-    taia_now(&mut now as (*mut TaiA));
-    if taia_less(
+    TaiA::now(&mut now as (*mut TaiA));
+    if TaiA::less(
         &mut deadline as (*mut TaiA) as (*const TaiA),
         &mut now as (*mut TaiA) as (*const TaiA),
     ) != 0
@@ -373,8 +345,8 @@ pub unsafe extern "C" fn dns_resolvconfrewrite(mut out: *mut stralloc) -> i32 {
         if init(&mut rules as (*mut stralloc)) == -1i32 {
             return -1i32;
         } else {
-            taia_uint(&mut deadline as (*mut TaiA), 600u32);
-            taia_add(
+            TaiA::uint(&mut deadline as (*mut TaiA), 600u32);
+            TaiA::add(
                 &mut deadline as (*mut TaiA),
                 &mut now as (*mut TaiA) as (*const TaiA),
                 &mut deadline as (*mut TaiA) as (*const TaiA),

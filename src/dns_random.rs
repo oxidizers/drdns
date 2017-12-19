@@ -1,8 +1,9 @@
+use tai::Tai;
+use taia::TaiA;
+
 extern "C" {
     fn getpid() -> i32;
     fn getppid() -> i32;
-    fn taia_now(arg1: *mut TaiA);
-    fn taia_pack(arg1: *mut u8, arg2: *const TaiA);
     fn uint32_unpack(arg1: *const u8, arg2: *mut u32);
 }
 
@@ -13,32 +14,6 @@ static mut in_: [u32; 12] = [0u32; 12];
 static mut out: [u32; 8] = [0u32; 8];
 
 static mut outleft: i32 = 0i32;
-
-#[derive(Copy)]
-#[repr(C)]
-pub struct tai {
-    pub x: usize,
-}
-
-impl Clone for tai {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
-#[derive(Copy)]
-#[repr(C)]
-pub struct taia {
-    pub sec: Tai,
-    pub nano: usize,
-    pub atto: usize,
-}
-
-impl Clone for taia {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
 
 #[no_mangle]
 pub unsafe extern "C" fn dns_random_init(mut data: *const u8) {
@@ -56,8 +31,8 @@ pub unsafe extern "C" fn dns_random_init(mut data: *const u8) {
         );
         i = i + 1;
     }
-    taia_now(&mut t as (*mut TaiA));
-    taia_pack(tpack.as_mut_ptr(), &mut t as (*mut TaiA) as (*const TaiA));
+    TaiA::now(&mut t as (*mut TaiA));
+    TaiA::pack(tpack.as_mut_ptr(), &mut t as (*mut TaiA) as (*const TaiA));
     i = 0i32;
     'loop3: loop {
         if !(i < 4i32) {

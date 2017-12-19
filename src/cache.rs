@@ -1,14 +1,9 @@
 use alloc;
 use byte;
 use libc;
+use tai::Tai;
 
 extern "C" {
-    fn tai_add(arg1: *mut Tai, arg2: *const Tai, arg3: *const Tai);
-    fn tai_now(arg1: *mut Tai);
-    fn tai_pack(arg1: *mut u8, arg2: *const Tai);
-    fn tai_sub(arg1: *mut Tai, arg2: *const Tai, arg3: *const Tai);
-    fn tai_uint(arg1: *mut Tai, arg2: u32);
-    fn tai_unpack(arg1: *const u8, arg2: *mut Tai);
     fn uint32_pack(arg1: *mut u8, arg2: u32);
     fn uint32_unpack(arg1: *const u8, arg2: *mut u32);
 }
@@ -27,18 +22,6 @@ static mut writer: u32 = 0u32;
 static mut oldest: u32 = 0u32;
 
 static mut unused: u32 = 0u32;
-
-#[derive(Copy)]
-#[repr(C)]
-pub struct tai {
-    pub x: usize,
-}
-
-impl Clone for tai {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
 
 unsafe extern "C" fn hash(mut key: *const u8, mut keylen: u32) -> u32 {
     let mut result: u32 = 5381u32;
@@ -132,15 +115,15 @@ pub unsafe extern "C" fn cache_get(
          } else if _currentBlock == 10 {
              0i32 as (*mut u8)
          } else {
-             tai_unpack(
+             Tai::unpack(
                 x.offset(pos as (isize)).offset(12isize) as (*const u8),
                 &mut expire as (*mut Tai),
             );
-             tai_now(&mut now as (*mut Tai));
+             Tai::now(&mut now as (*mut Tai));
              (if (*(&mut expire as (*mut Tai))).x < (*(&mut now as (*mut Tai))).x {
                   0i32 as (*mut u8)
               } else {
-                  tai_sub(
+                  Tai::sub(
                     &mut expire as (*mut Tai),
                     &mut expire as (*mut Tai) as (*const Tai),
                     &mut now as (*mut Tai) as (*const Tai),
@@ -229,9 +212,9 @@ pub unsafe extern "C" fn cache_set(
         }
         (if _currentBlock == 8 {
              keyhash = hash(key, keylen);
-             tai_now(&mut now as (*mut Tai));
-             tai_uint(&mut expire as (*mut Tai), ttl);
-             tai_add(
+             Tai::now(&mut now as (*mut Tai));
+             Tai::uint(&mut expire as (*mut Tai), ttl);
+             Tai::add(
                 &mut expire as (*mut Tai),
                 &mut expire as (*mut Tai) as (*const Tai),
                 &mut now as (*mut Tai) as (*const Tai),
@@ -243,7 +226,7 @@ pub unsafe extern "C" fn cache_set(
              set4(writer, pos ^ keyhash);
              set4(writer.wrapping_add(4u32), keylen);
              set4(writer.wrapping_add(8u32), datalen);
-             tai_pack(
+             Tai::pack(
                 x.offset(writer as (isize)).offset(12isize),
                 &mut expire as (*mut Tai) as (*const Tai),
             );
