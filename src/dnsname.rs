@@ -2,22 +2,12 @@ use buffer::Buffer;
 use buffer_1::BUFFER_1;
 use libc;
 use stralloc::StrAlloc;
+use strerr::{StrErr, STRERR_SYS};
 
 extern "C" {
     fn dns_name4(arg1: *mut StrAlloc, arg2: *const u8) -> i32;
     fn dns_random_init(arg1: *const u8);
     fn ip4_scan(arg1: *const u8, arg2: *mut u8) -> u32;
-    fn strerr_die(
-        arg1: i32,
-        arg2: *const u8,
-        arg3: *const u8,
-        arg4: *const u8,
-        arg5: *const u8,
-        arg6: *const u8,
-        arg7: *const u8,
-        arg8: *const strerr,
-    );
-    static mut strerr_sys: strerr;
 }
 
 static mut seed: [u8; 128] = [0u8; 128];
@@ -49,21 +39,6 @@ fn main() {
     ::std::process::exit(ret);
 }
 
-#[derive(Copy)]
-#[repr(C)]
-pub struct strerr {
-    pub who: *mut strerr,
-    pub x: *const u8,
-    pub y: *const u8,
-    pub z: *const u8,
-}
-
-impl Clone for strerr {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
 #[no_mangle]
 pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     dns_random_init(seed.as_mut_ptr() as (*const u8));
@@ -75,7 +50,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
             break;
         }
         if ip4_scan(*argv as (*const u8), ip.as_mut_ptr()) == 0 {
-            strerr_die(
+            StrErr::die(
                 111i32,
                 (*b"dnsname: fatal: \0").as_ptr(),
                 (*b"unable to parse IP address \0").as_ptr(),
@@ -83,11 +58,11 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
                 0i32 as (*const u8),
                 0i32 as (*const u8),
                 0i32 as (*const u8),
-                0i32 as (*const strerr),
+                0i32 as (*const StrErr),
             );
         }
         if dns_name4(&mut out as (*mut StrAlloc), ip.as_mut_ptr() as (*const u8)) == -1i32 {
-            strerr_die(
+            StrErr::die(
                 111i32,
                 (*b"dnsname: fatal: \0").as_ptr(),
                 (*b"unable to find host name for \0").as_ptr(),
@@ -95,7 +70,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
                 (*b": \0").as_ptr(),
                 0i32 as (*const u8),
                 0i32 as (*const u8),
-                &mut strerr_sys as (*mut strerr) as (*const strerr),
+                &mut STRERR_SYS as (*mut StrErr) as (*const StrErr),
             );
         }
         Buffer::put(BUFFER_1.as_mut_ptr(), out.s as (*const u8), out.len);

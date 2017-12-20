@@ -3,6 +3,7 @@ use buffer::{self, Buffer};
 use errno::{self, Errno};
 use libc;
 use stralloc::StrAlloc;
+use strerr::{StrErr, STRERR_SYS};
 use uint16;
 use uint32;
 
@@ -24,17 +25,6 @@ extern "C" {
     fn open_trunc(arg1: *const u8) -> i32;
     fn rename(__old: *const u8, __new: *const u8) -> i32;
     fn scan_ulong(arg1: *const u8, arg2: *mut usize) -> u32;
-    fn strerr_die(
-        arg1: i32,
-        arg2: *const u8,
-        arg3: *const u8,
-        arg4: *const u8,
-        arg5: *const u8,
-        arg6: *const u8,
-        arg7: *const u8,
-        arg8: *const strerr,
-    );
-    static mut strerr_sys: strerr;
     fn timeoutread(t: i32, fd: i32, buf: *mut u8, len: i32) -> i32;
     fn timeoutwrite(t: i32, fd: i32, buf: *mut u8, len: i32) -> i32;
 }
@@ -108,24 +98,9 @@ pub unsafe extern "C" fn __sputc(mut _c: i32, mut _p: *mut __sFILE) -> i32 {
     }
 }
 
-#[derive(Copy)]
-#[repr(C)]
-pub struct strerr {
-    pub who: *mut strerr,
-    pub x: *const u8,
-    pub y: *const u8,
-    pub z: *const u8,
-}
-
-impl Clone for strerr {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
 #[no_mangle]
 pub unsafe extern "C" fn die_usage() {
-    strerr_die(
+    StrErr::die(
         100i32,
         (*b"axfr-get: usage: axfr-get zone fn fn.tmp\0").as_ptr(),
         0i32 as (*const u8),
@@ -133,13 +108,13 @@ pub unsafe extern "C" fn die_usage() {
         0i32 as (*const u8),
         0i32 as (*const u8),
         0i32 as (*const u8),
-        0i32 as (*const strerr),
+        0i32 as (*const StrErr),
     );
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn die_generate() {
-    strerr_die(
+    StrErr::die(
         111i32,
         (*b"axfr-get: fatal: \0").as_ptr(),
         (*b"unable to generate AXFR query: \0").as_ptr(),
@@ -147,13 +122,13 @@ pub unsafe extern "C" fn die_generate() {
         0i32 as (*const u8),
         0i32 as (*const u8),
         0i32 as (*const u8),
-        &mut strerr_sys as (*mut strerr) as (*const strerr),
+        &mut STRERR_SYS as (*mut StrErr) as (*const StrErr),
     );
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn die_parse() {
-    strerr_die(
+    StrErr::die(
         111i32,
         (*b"axfr-get: fatal: \0").as_ptr(),
         (*b"unable to parse AXFR results: \0").as_ptr(),
@@ -161,7 +136,7 @@ pub unsafe extern "C" fn die_parse() {
         0i32 as (*const u8),
         0i32 as (*const u8),
         0i32 as (*const u8),
-        &mut strerr_sys as (*mut strerr) as (*const strerr),
+        &mut STRERR_SYS as (*mut StrErr) as (*const StrErr),
     );
 }
 
@@ -216,7 +191,7 @@ pub static mut fntmp: *mut u8 = 0 as (*mut u8);
 
 #[no_mangle]
 pub unsafe extern "C" fn die_netread() {
-    strerr_die(
+    StrErr::die(
         111i32,
         (*b"axfr-get: fatal: \0").as_ptr(),
         (*b"unable to read from network: \0").as_ptr(),
@@ -224,13 +199,13 @@ pub unsafe extern "C" fn die_netread() {
         0i32 as (*const u8),
         0i32 as (*const u8),
         0i32 as (*const u8),
-        &mut strerr_sys as (*mut strerr) as (*const strerr),
+        &mut STRERR_SYS as (*mut StrErr) as (*const StrErr),
     );
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn die_netwrite() {
-    strerr_die(
+    StrErr::die(
         111i32,
         (*b"axfr-get: fatal: \0").as_ptr(),
         (*b"unable to write to network: \0").as_ptr(),
@@ -238,13 +213,13 @@ pub unsafe extern "C" fn die_netwrite() {
         0i32 as (*const u8),
         0i32 as (*const u8),
         0i32 as (*const u8),
-        &mut strerr_sys as (*mut strerr) as (*const strerr),
+        &mut STRERR_SYS as (*mut StrErr) as (*const StrErr),
     );
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn die_read() {
-    strerr_die(
+    StrErr::die(
         111i32,
         (*b"axfr-get: fatal: \0").as_ptr(),
         (*b"unable to read \0").as_ptr(),
@@ -252,13 +227,13 @@ pub unsafe extern "C" fn die_read() {
         (*b": \0").as_ptr(),
         0i32 as (*const u8),
         0i32 as (*const u8),
-        &mut strerr_sys as (*mut strerr) as (*const strerr),
+        &mut STRERR_SYS as (*mut StrErr) as (*const StrErr),
     );
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn die_write() {
-    strerr_die(
+    StrErr::die(
         111i32,
         (*b"axfr-get: fatal: \0").as_ptr(),
         (*b"unable to write \0").as_ptr(),
@@ -266,7 +241,7 @@ pub unsafe extern "C" fn die_write() {
         (*b": \0").as_ptr(),
         0i32 as (*const u8),
         0i32 as (*const u8),
-        &mut strerr_sys as (*mut strerr) as (*const strerr),
+        &mut STRERR_SYS as (*mut StrErr) as (*const StrErr),
     );
 }
 
@@ -1065,7 +1040,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
         die_write();
     }
     if rename(fntmp as (*const u8), fn_ as (*const u8)) == -1i32 {
-        strerr_die(
+        StrErr::die(
             111i32,
             (*b"axfr-get: fatal: \0").as_ptr(),
             (*b"unable to move \0").as_ptr(),
@@ -1073,7 +1048,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
             (*b" to \0").as_ptr(),
             fn_ as (*const u8),
             (*b": \0").as_ptr(),
-            &mut strerr_sys as (*mut strerr) as (*const strerr),
+            &mut STRERR_SYS as (*mut StrErr) as (*const StrErr),
         );
     }
     libc::_exit(0i32);

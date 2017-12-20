@@ -2,6 +2,7 @@ use buffer::{self, Buffer};
 use byte;
 use libc;
 use stralloc::StrAlloc;
+use strerr::{StrErr, STRERR_SYS};
 
 extern "C" {
     fn __swbuf(arg1: i32, arg2: *mut __sFILE) -> i32;
@@ -21,17 +22,6 @@ extern "C" {
     fn rename(__old: *const u8, __new: *const u8) -> i32;
     fn scan_ulong(arg1: *const u8, arg2: *mut usize) -> u32;
     fn str_diff(arg1: *const u8, arg2: *const u8) -> i32;
-    fn strerr_die(
-        arg1: i32,
-        arg2: *const u8,
-        arg3: *const u8,
-        arg4: *const u8,
-        arg5: *const u8,
-        arg6: *const u8,
-        arg7: *const u8,
-        arg8: *const strerr,
-    );
-    static mut strerr_sys: strerr;
     fn umask(arg1: u16) -> u16;
 }
 
@@ -110,24 +100,9 @@ pub static mut fn_: *mut u8 = 0 as (*mut u8);
 #[no_mangle]
 pub static mut fnnew: *mut u8 = 0 as (*mut u8);
 
-#[derive(Copy)]
-#[repr(C)]
-pub struct strerr {
-    pub who: *mut strerr,
-    pub x: *const u8,
-    pub y: *const u8,
-    pub z: *const u8,
-}
-
-impl Clone for strerr {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
 #[no_mangle]
 pub unsafe extern "C" fn die_usage() {
-    strerr_die(
+    StrErr::die(
         100i32,
         (*b"tinydns-edit: usage: tinydns-edit data data.new add [ns|childns|host|alias|mx] domain a.b.c.d\0").as_ptr(
         ),
@@ -136,13 +111,13 @@ pub unsafe extern "C" fn die_usage() {
         0i32 as (*const u8),
         0i32 as (*const u8),
         0i32 as (*const u8),
-        0i32 as (*const strerr)
+        0i32 as (*const StrErr)
     );
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn nomem() {
-    strerr_die(
+    StrErr::die(
         111i32,
         (*b"tinydns-edit: fatal: \0").as_ptr(),
         (*b"out of memory\0").as_ptr(),
@@ -150,13 +125,13 @@ pub unsafe extern "C" fn nomem() {
         0i32 as (*const u8),
         0i32 as (*const u8),
         0i32 as (*const u8),
-        0i32 as (*const strerr),
+        0i32 as (*const StrErr),
     );
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn die_read() {
-    strerr_die(
+    StrErr::die(
         100i32,
         (*b"tinydns-edit: fatal: \0").as_ptr(),
         (*b"tinydns-edit: fatal: unable to read \0").as_ptr(),
@@ -164,13 +139,13 @@ pub unsafe extern "C" fn die_read() {
         (*b": \0").as_ptr(),
         0i32 as (*const u8),
         0i32 as (*const u8),
-        &mut strerr_sys as (*mut strerr) as (*const strerr),
+        &mut STRERR_SYS as (*mut StrErr) as (*const StrErr),
     );
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn die_write() {
-    strerr_die(
+    StrErr::die(
         100i32,
         (*b"tinydns-edit: fatal: \0").as_ptr(),
         (*b"tinydns-edit: fatal: unable to write \0").as_ptr(),
@@ -178,7 +153,7 @@ pub unsafe extern "C" fn die_write() {
         (*b": \0").as_ptr(),
         0i32 as (*const u8),
         0i32 as (*const u8),
-        &mut strerr_sys as (*mut strerr) as (*const strerr),
+        &mut STRERR_SYS as (*mut StrErr) as (*const StrErr),
     );
 }
 
@@ -626,7 +601,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
                 nomem();
             }
             if dns_domain_equal(d1 as (*const u8), target as (*const u8)) != 0 {
-                strerr_die(
+                StrErr::die(
                     100i32,
                     (*b"tinydns-edit: fatal: \0").as_ptr(),
                     (*b"host name already used\0").as_ptr(),
@@ -634,7 +609,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
                     0i32 as (*const u8),
                     0i32 as (*const u8),
                     0i32 as (*const u8),
-                    0i32 as (*const strerr),
+                    0i32 as (*const StrErr),
                 );
             }
             if StrAlloc::append(&mut f[1usize] as (*mut StrAlloc), (*b"\0").as_ptr()) == 0 {
@@ -646,7 +621,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
             if !(byte::diff(ip.as_mut_ptr(), 4u32, targetip.as_mut_ptr()) == 0) {
                 continue;
             }
-            strerr_die(
+            StrErr::die(
                 100i32,
                 (*b"tinydns-edit: fatal: \0").as_ptr(),
                 (*b"IP address already used\0").as_ptr(),
@@ -654,7 +629,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
                 0i32 as (*const u8),
                 0i32 as (*const u8),
                 0i32 as (*const u8),
-                0i32 as (*const strerr),
+                0i32 as (*const StrErr),
             );
         } else {
             if !(mode as (i32) == b'&' as (i32) || mode as (i32) == b'.' as (i32)) {
@@ -750,7 +725,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
             i = i + 1;
         }
         if i >= 26i32 {
-            strerr_die(
+            StrErr::die(
                 100i32,
                 (*b"tinydns-edit: fatal: \0").as_ptr(),
                 (*b"too many records for that domain\0").as_ptr(),
@@ -758,7 +733,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
                 0i32 as (*const u8),
                 0i32 as (*const u8),
                 0i32 as (*const u8),
-                0i32 as (*const strerr),
+                0i32 as (*const StrErr),
             );
         }
         ch = (b'a' as (i32) + i) as (u8);
@@ -804,7 +779,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
         die_write();
     }
     if rename(fnnew as (*const u8), fn_ as (*const u8)) == -1i32 {
-        strerr_die(
+        StrErr::die(
             111i32,
             (*b"tinydns-edit: fatal: \0").as_ptr(),
             (*b"unable to move \0").as_ptr(),
@@ -812,7 +787,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
             (*b" to \0").as_ptr(),
             fn_ as (*const u8),
             (*b": \0").as_ptr(),
-            &mut strerr_sys as (*mut strerr) as (*const strerr),
+            &mut STRERR_SYS as (*mut StrErr) as (*const StrErr),
         );
     }
     libc::_exit(0i32);

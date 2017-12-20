@@ -1,6 +1,7 @@
 use byte;
 use libc;
 use uint32;
+use strerr::StrErr;
 
 extern "C" {
     fn cdb_find(arg1: *mut cdb, arg2: *const u8, arg3: u32) -> i32;
@@ -18,16 +19,6 @@ extern "C" {
     fn response_nxdomain();
     fn response_rfinish(arg1: i32);
     fn response_rstart(arg1: *const u8, arg2: *const u8, arg3: u32) -> i32;
-    fn strerr_die(
-        arg1: i32,
-        arg2: *const u8,
-        arg3: *const u8,
-        arg4: *const u8,
-        arg5: *const u8,
-        arg6: *const u8,
-        arg7: *const u8,
-        arg8: *const strerr,
-    );
 }
 
 static mut base: *mut u8 = 0 as (*mut u8);
@@ -253,27 +244,12 @@ pub static mut fatal: *const u8 = (*b"rbldns: fatal: \0").as_ptr();
 #[no_mangle]
 pub static mut starting: *const u8 = (*b"starting rbldns\n\0").as_ptr();
 
-#[derive(Copy)]
-#[repr(C)]
-pub struct strerr {
-    pub who: *mut strerr,
-    pub x: *const u8,
-    pub y: *const u8,
-    pub z: *const u8,
-}
-
-impl Clone for strerr {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
 #[no_mangle]
 pub unsafe extern "C" fn initialize() {
     let mut x: *mut u8;
     x = env_get((*b"BASE\0").as_ptr());
     if x.is_null() {
-        strerr_die(
+        StrErr::die(
             111i32,
             fatal,
             (*b"$BASE not set\0").as_ptr(),
@@ -281,7 +257,7 @@ pub unsafe extern "C" fn initialize() {
             0i32 as (*const u8),
             0i32 as (*const u8),
             0i32 as (*const u8),
-            0i32 as (*const strerr),
+            0i32 as (*const StrErr),
         );
     }
     if dns_domain_fromdot(
@@ -290,7 +266,7 @@ pub unsafe extern "C" fn initialize() {
         libc::strlen(x as *const i8) as u32,
     ) == 0
     {
-        strerr_die(
+        StrErr::die(
             111i32,
             fatal,
             (*b"unable to parse $BASE\0").as_ptr(),
@@ -298,7 +274,7 @@ pub unsafe extern "C" fn initialize() {
             0i32 as (*const u8),
             0i32 as (*const u8),
             0i32 as (*const u8),
-            0i32 as (*const strerr),
+            0i32 as (*const StrErr),
         );
     }
 }

@@ -2,6 +2,7 @@ use buffer::{self, Buffer};
 use byte;
 use libc;
 use stralloc::StrAlloc;
+use strerr::{StrErr, STRERR_SYS};
 use tai::Tai;
 use uint16;
 use uint32;
@@ -41,39 +42,13 @@ extern "C" {
     fn response_query(arg1: *const u8, arg2: *const u8, arg3: *const u8) -> i32;
     fn scan_ulong(arg1: *const u8, arg2: *mut usize) -> u32;
     fn seek_set(arg1: i32, arg2: usize) -> i32;
-    fn strerr_die(
-        arg1: i32,
-        arg2: *const u8,
-        arg3: *const u8,
-        arg4: *const u8,
-        arg5: *const u8,
-        arg6: *const u8,
-        arg7: *const u8,
-        arg8: *const strerr,
-    );
-    static mut strerr_sys: strerr;
     fn timeoutread(t: i32, fd: i32, buf: *mut u8, len: i32) -> i32;
     fn timeoutwrite(t: i32, fd: i32, buf: *mut u8, len: i32) -> i32;
 }
 
-#[derive(Copy)]
-#[repr(C)]
-pub struct strerr {
-    pub who: *mut strerr,
-    pub x: *const u8,
-    pub y: *const u8,
-    pub z: *const u8,
-}
-
-impl Clone for strerr {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
 #[no_mangle]
 pub unsafe extern "C" fn nomem() {
-    strerr_die(
+    StrErr::die(
         111i32,
         (*b"axfrdns: fatal: \0").as_ptr(),
         (*b"out of memory\0").as_ptr(),
@@ -81,13 +56,13 @@ pub unsafe extern "C" fn nomem() {
         0i32 as (*const u8),
         0i32 as (*const u8),
         0i32 as (*const u8),
-        0i32 as (*const strerr),
+        0i32 as (*const StrErr),
     );
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn die_truncated() {
-    strerr_die(
+    StrErr::die(
         111i32,
         (*b"axfrdns: fatal: \0").as_ptr(),
         (*b"truncated request\0").as_ptr(),
@@ -95,13 +70,13 @@ pub unsafe extern "C" fn die_truncated() {
         0i32 as (*const u8),
         0i32 as (*const u8),
         0i32 as (*const u8),
-        0i32 as (*const strerr),
+        0i32 as (*const StrErr),
     );
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn die_netwrite() {
-    strerr_die(
+    StrErr::die(
         111i32,
         (*b"axfrdns: fatal: \0").as_ptr(),
         (*b"unable to write to network: \0").as_ptr(),
@@ -109,13 +84,13 @@ pub unsafe extern "C" fn die_netwrite() {
         0i32 as (*const u8),
         0i32 as (*const u8),
         0i32 as (*const u8),
-        &mut strerr_sys as (*mut strerr) as (*const strerr),
+        &mut STRERR_SYS as (*mut StrErr) as (*const StrErr),
     );
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn die_netread() {
-    strerr_die(
+    StrErr::die(
         111i32,
         (*b"axfrdns: fatal: \0").as_ptr(),
         (*b"unable to read from network: \0").as_ptr(),
@@ -123,13 +98,13 @@ pub unsafe extern "C" fn die_netread() {
         0i32 as (*const u8),
         0i32 as (*const u8),
         0i32 as (*const u8),
-        &mut strerr_sys as (*mut strerr) as (*const strerr),
+        &mut STRERR_SYS as (*mut StrErr) as (*const StrErr),
     );
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn die_outside() {
-    strerr_die(
+    StrErr::die(
         111i32,
         (*b"axfrdns: fatal: \0").as_ptr(),
         (*b"unable to locate information in data.cdb\0").as_ptr(),
@@ -137,13 +112,13 @@ pub unsafe extern "C" fn die_outside() {
         0i32 as (*const u8),
         0i32 as (*const u8),
         0i32 as (*const u8),
-        0i32 as (*const strerr),
+        0i32 as (*const StrErr),
     );
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn die_cdbread() {
-    strerr_die(
+    StrErr::die(
         111i32,
         (*b"axfrdns: fatal: \0").as_ptr(),
         (*b"unable to read data.cdb: \0").as_ptr(),
@@ -151,13 +126,13 @@ pub unsafe extern "C" fn die_cdbread() {
         0i32 as (*const u8),
         0i32 as (*const u8),
         0i32 as (*const u8),
-        &mut strerr_sys as (*mut strerr) as (*const strerr),
+        &mut STRERR_SYS as (*mut StrErr) as (*const StrErr),
     );
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn die_cdbformat() {
-    strerr_die(
+    StrErr::die(
         111i32,
         (*b"axfrdns: fatal: \0").as_ptr(),
         (*b"unable to read data.cdb: \0").as_ptr(),
@@ -165,7 +140,7 @@ pub unsafe extern "C" fn die_cdbformat() {
         0i32 as (*const u8),
         0i32 as (*const u8),
         0i32 as (*const u8),
-        0i32 as (*const strerr),
+        0i32 as (*const StrErr),
     );
 }
 
@@ -247,7 +222,7 @@ pub unsafe extern "C" fn axfrcheck(mut q: *mut u8) {
             i = i + 1;
         }
         (if _currentBlock == 10 {
-             strerr_die(
+             StrErr::die(
                 111i32,
                 (*b"axfrdns: fatal: \0").as_ptr(),
                 (*b"disallowed zone transfer request\0").as_ptr(),
@@ -255,7 +230,7 @@ pub unsafe extern "C" fn axfrcheck(mut q: *mut u8) {
                 0i32 as (*const u8),
                 0i32 as (*const u8),
                 0i32 as (*const u8),
-                0i32 as (*const strerr),
+                0i32 as (*const StrErr),
             );
          })
     }
@@ -761,7 +736,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             &mut len as (*mut u16),
         );
         if len as (i32) > 512i32 {
-            strerr_die(
+            StrErr::die(
                 111i32,
                 (*b"axfrdns: fatal: \0").as_ptr(),
                 (*b"excessively large request\0").as_ptr(),
@@ -769,7 +744,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
                 0i32 as (*const u8),
                 0i32 as (*const u8),
                 0i32 as (*const u8),
-                0i32 as (*const strerr),
+                0i32 as (*const StrErr),
             );
         }
         netread(buf.as_mut_ptr(), len as (u32));
@@ -784,7 +759,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             die_truncated();
         }
         if header[2usize] as (i32) & 254i32 != 0 {
-            strerr_die(
+            StrErr::die(
                 111i32,
                 (*b"axfrdns: fatal: \0").as_ptr(),
                 (*b"bogus query\0").as_ptr(),
@@ -792,11 +767,11 @@ pub unsafe extern "C" fn _c_main() -> i32 {
                 0i32 as (*const u8),
                 0i32 as (*const u8),
                 0i32 as (*const u8),
-                0i32 as (*const strerr),
+                0i32 as (*const StrErr),
             );
         }
         if header[4usize] != 0 || header[5usize] as (i32) != 1i32 {
-            strerr_die(
+            StrErr::die(
                 111i32,
                 (*b"axfrdns: fatal: \0").as_ptr(),
                 (*b"bogus query\0").as_ptr(),
@@ -804,7 +779,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
                 0i32 as (*const u8),
                 0i32 as (*const u8),
                 0i32 as (*const u8),
-                0i32 as (*const strerr),
+                0i32 as (*const StrErr),
             );
         }
         pos = dns_packet_getname(
@@ -848,7 +823,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
                 (*b"\0\xFF\0").as_ptr() as (*mut u8),
             ) != 0)
         {
-            strerr_die(
+            StrErr::die(
                 111i32,
                 (*b"axfrdns: fatal: \0").as_ptr(),
                 (*b"bogus query: bad class\0").as_ptr(),
@@ -856,7 +831,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
                 0i32 as (*const u8),
                 0i32 as (*const u8),
                 0i32 as (*const u8),
-                0i32 as (*const strerr),
+                0i32 as (*const StrErr),
             );
         }
         qlog(

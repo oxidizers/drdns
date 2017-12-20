@@ -3,6 +3,7 @@ use buffer_1::BUFFER_1;
 use byte;
 use libc;
 use stralloc::StrAlloc;
+use strerr::{StrErr, STRERR_SYS};
 use uint16;
 
 extern "C" {
@@ -11,37 +12,11 @@ extern "C" {
     fn dns_mx(arg1: *mut StrAlloc, arg2: *const StrAlloc) -> i32;
     fn dns_random_init(arg1: *const u8);
     fn fmt_ulong(arg1: *mut u8, arg2: usize) -> u32;
-    fn strerr_die(
-        arg1: i32,
-        arg2: *const u8,
-        arg3: *const u8,
-        arg4: *const u8,
-        arg5: *const u8,
-        arg6: *const u8,
-        arg7: *const u8,
-        arg8: *const strerr,
-    );
-    static mut strerr_sys: strerr;
-}
-
-#[derive(Copy)]
-#[repr(C)]
-pub struct strerr {
-    pub who: *mut strerr,
-    pub x: *const u8,
-    pub y: *const u8,
-    pub z: *const u8,
-}
-
-impl Clone for strerr {
-    fn clone(&self) -> Self {
-        *self
-    }
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn nomem() {
-    strerr_die(
+    StrErr::die(
         111i32,
         (*b"dnsmx: fatal: \0").as_ptr(),
         (*b"out of memory\0").as_ptr(),
@@ -49,7 +24,7 @@ pub unsafe extern "C" fn nomem() {
         0i32 as (*const u8),
         0i32 as (*const u8),
         0i32 as (*const u8),
-        0i32 as (*const strerr),
+        0i32 as (*const StrErr),
     );
 }
 
@@ -111,7 +86,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
             &mut fqdn as (*mut StrAlloc) as (*const StrAlloc),
         ) == -1i32
         {
-            strerr_die(
+            StrErr::die(
                 111i32,
                 (*b"dnsmx: fatal: \0").as_ptr(),
                 (*b"unable to find MX records for \0").as_ptr(),
@@ -119,7 +94,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
                 (*b": \0").as_ptr(),
                 0i32 as (*const u8),
                 0i32 as (*const u8),
-                &mut strerr_sys as (*mut strerr) as (*const strerr),
+                &mut STRERR_SYS as (*mut StrErr) as (*const StrErr),
             );
         }
         if out.len == 0 {
