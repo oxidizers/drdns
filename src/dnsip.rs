@@ -1,12 +1,12 @@
 use buffer::Buffer;
 use libc;
+use stralloc::StrAlloc;
 
 extern "C" {
     static mut buffer_1: *mut Buffer;
-    fn dns_ip4(arg1: *mut stralloc, arg2: *const stralloc) -> i32;
+    fn dns_ip4(arg1: *mut StrAlloc, arg2: *const StrAlloc) -> i32;
     fn dns_random_init(arg1: *const u8);
     fn ip4_fmt(arg1: *mut u8, arg2: *const u8) -> u32;
-    fn stralloc_copys(arg1: *mut stralloc, arg2: *const u8) -> i32;
     fn strerr_die(
         arg1: i32,
         arg2: *const u8,
@@ -22,27 +22,13 @@ extern "C" {
 
 static mut seed: [u8; 128] = [0u8; 128];
 
-#[derive(Copy)]
-#[repr(C)]
-pub struct stralloc {
-    pub s: *mut u8,
-    pub len: u32,
-    pub a: u32,
-}
-
-impl Clone for stralloc {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
-static mut fqdn: stralloc = stralloc {
+static mut fqdn: StrAlloc = StrAlloc {
     s: 0 as (*mut u8),
     len: 0u32,
     a: 0u32,
 };
 
-static mut out: stralloc = stralloc {
+static mut out: StrAlloc = StrAlloc {
     s: 0 as (*mut u8),
     len: 0u32,
     a: 0u32,
@@ -95,7 +81,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
         if (*argv).is_null() {
             break;
         }
-        if stralloc_copys(&mut fqdn as (*mut stralloc), *argv as (*const u8)) == 0 {
+        if StrAlloc::copys(&mut fqdn as (*mut StrAlloc), *argv as (*const u8)) == 0 {
             strerr_die(
                 111i32,
                 (*b"dnsip: fatal: \0").as_ptr(),
@@ -108,8 +94,8 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
             );
         }
         if dns_ip4(
-            &mut out as (*mut stralloc),
-            &mut fqdn as (*mut stralloc) as (*const stralloc),
+            &mut out as (*mut StrAlloc),
+            &mut fqdn as (*mut StrAlloc) as (*const StrAlloc),
         ) == -1i32
         {
             strerr_die(

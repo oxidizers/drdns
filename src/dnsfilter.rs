@@ -3,13 +3,14 @@ use buffer::Buffer;
 use byte;
 use errno::errno;
 use libc;
+use stralloc::StrAlloc;
 use tai::Tai;
 use taia::TaiA;
 
 extern "C" {
     static mut buffer_1: *mut Buffer;
     fn dns_name4_domain(arg1: *mut u8, arg2: *const u8);
-    fn dns_name_packet(arg1: *mut stralloc, arg2: *const u8, arg3: u32) -> i32;
+    fn dns_name_packet(arg1: *mut StrAlloc, arg2: *const u8, arg3: u32) -> i32;
     fn dns_resolvconfip(arg1: *mut u8) -> i32;
     fn dns_transmit_get(arg1: *mut dns_transmit, arg2: *const pollfd, arg3: *const TaiA) -> i32;
     fn dns_transmit_io(arg1: *mut dns_transmit, arg2: *mut pollfd, arg3: *mut TaiA);
@@ -25,11 +26,11 @@ extern "C" {
     fn ip4_scan(arg1: *const u8, arg2: *mut u8) -> u32;
     fn scan_ulong(arg1: *const u8, arg2: *mut usize) -> u32;
     fn sgetoptmine(arg1: i32, arg2: *mut *mut u8, arg3: *const u8) -> i32;
-    fn stralloc_append(arg1: *mut stralloc, arg2: *const u8) -> i32;
-    fn stralloc_catb(arg1: *mut stralloc, arg2: *const u8, arg3: u32) -> i32;
-    fn stralloc_cats(arg1: *mut stralloc, arg2: *const u8) -> i32;
-    fn stralloc_copyb(arg1: *mut stralloc, arg2: *const u8, arg3: u32) -> i32;
-    fn stralloc_copys(arg1: *mut stralloc, arg2: *const u8) -> i32;
+    fn StrAlloc::append(arg1: *mut StrAlloc, arg2: *const u8) -> i32;
+    fn StrAlloc::catb(arg1: *mut StrAlloc, arg2: *const u8, arg3: u32) -> i32;
+    fn StrAlloc::cats(arg1: *mut StrAlloc, arg2: *const u8) -> i32;
+    fn StrAlloc::copyb(arg1: *mut StrAlloc, arg2: *const u8, arg3: u32) -> i32;
+    fn StrAlloc::copys(arg1: *mut StrAlloc, arg2: *const u8) -> i32;
     fn strerr_die(
         arg1: i32,
         arg2: *const u8,
@@ -76,20 +77,6 @@ pub unsafe extern "C" fn nomem() {
 
 #[derive(Copy)]
 #[repr(C)]
-pub struct stralloc {
-    pub s: *mut u8,
-    pub len: u32,
-    pub a: u32,
-}
-
-impl Clone for stralloc {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
-#[derive(Copy)]
-#[repr(C)]
 pub struct dns_transmit {
     pub query: *mut u8,
     pub querylen: u32,
@@ -129,9 +116,9 @@ impl Clone for pollfd {
 #[derive(Copy)]
 #[repr(C)]
 pub struct line {
-    pub left: stralloc,
-    pub middle: stralloc,
-    pub right: stralloc,
+    pub left: StrAlloc,
+    pub middle: StrAlloc,
+    pub right: StrAlloc,
     pub dt: dns_transmit,
     pub flagactive: i32,
     pub io: *mut pollfd,
@@ -148,17 +135,17 @@ pub static mut x: *mut line = 0 as (*mut line);
 
 #[no_mangle]
 pub static mut tmp: line = line {
-    left: stralloc {
+    left: StrAlloc {
         s: 0 as (*mut u8),
         len: 0u32,
         a: 0u32,
     },
-    middle: stralloc {
+    middle: StrAlloc {
         s: 0 as (*mut u8),
         len: 0u32,
         a: 0u32,
     },
-    right: stralloc {
+    right: StrAlloc {
         s: 0 as (*mut u8),
         len: 0u32,
         a: 0u32,
@@ -198,7 +185,7 @@ pub static mut numactive: u32 = 0u32;
 #[no_mangle]
 pub static mut maxactive: u32 = 10u32;
 
-static mut partial: stralloc = stralloc {
+static mut partial: StrAlloc = StrAlloc {
     s: 0 as (*mut u8),
     len: 0u32,
     a: 0u32,
@@ -234,15 +221,15 @@ pub static mut name: [u8; 31] = [0u8; 31];
 #[no_mangle]
 pub unsafe extern "C" fn errout(mut i: i32) {
     let mut j: i32;
-    if stralloc_copys(
-        &mut (*x.offset(i as (isize))).middle as (*mut stralloc),
+    if StrAlloc::copys(
+        &mut (*x.offset(i as (isize))).middle as (*mut StrAlloc),
         (*b":\0").as_ptr(),
     ) == 0
     {
         nomem();
     }
-    if stralloc_cats(
-        &mut (*x.offset(i as (isize))).middle as (*mut stralloc),
+    if StrAlloc::cats(
+        &mut (*x.offset(i as (isize))).middle as (*mut StrAlloc),
         libc::strerror(errno().0),
     ) == 0
     {
@@ -342,7 +329,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     if io.is_null() {
         nomem();
     }
-    if stralloc_copys(&mut partial as (*mut stralloc), (*b"\0").as_ptr()) == 0 {
+    if StrAlloc::copys(&mut partial as (*mut StrAlloc), (*b"\0").as_ptr()) == 0 {
         nomem();
     }
     'loop8: loop {
@@ -427,7 +414,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
                     numactive = numactive.wrapping_sub(1u32);
                 } else if r == 1i32 {
                     if dns_name_packet(
-                        &mut (*x.offset(i as (isize))).middle as (*mut stralloc),
+                        &mut (*x.offset(i as (isize))).middle as (*mut StrAlloc),
                         (*x.offset(i as (isize))).dt.packet as (*const u8),
                         (*x.offset(i as (isize))).dt.packetlen,
                     ) == -1i32
@@ -435,8 +422,8 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
                         errout(i);
                     }
                     if (*x.offset(i as (isize))).middle.len != 0 {
-                        if stralloc_cats(
-                            &mut (*x.offset(i as (isize))).left as (*mut stralloc),
+                        if StrAlloc::cats(
+                            &mut (*x.offset(i as (isize))).left as (*mut StrAlloc),
                             (*b"=\0").as_ptr(),
                         ) == 0
                         {
@@ -484,8 +471,8 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
                 }
                 i = byte::chr(inbuf.as_mut_ptr(), inbuflen as (u32), b'\n' as (i32)) as (i32);
                 if inbuflen != 0 && (i == inbuflen) {
-                    if stralloc_catb(
-                        &mut partial as (*mut stralloc),
+                    if StrAlloc::catb(
+                        &mut partial as (*mut StrAlloc),
                         inbuf.as_mut_ptr() as (*const u8),
                         inbuflen as (u32),
                     ) == 0
@@ -500,8 +487,8 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
                     if i < inbuflen {
                         i = i + 1;
                     }
-                    if stralloc_catb(
-                        &mut partial as (*mut stralloc),
+                    if StrAlloc::catb(
+                        &mut partial as (*mut StrAlloc),
                         inbuf.as_mut_ptr() as (*const u8),
                         i as (u32),
                     ) == 0
@@ -521,23 +508,23 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
                         i = byte::chr(partial.s, partial.len, b'\n' as (i32)) as (i32);
                         i = byte::chr(partial.s, i as (u32), b'\t' as (i32)) as (i32);
                         i = byte::chr(partial.s, i as (u32), b' ' as (i32)) as (i32);
-                        if stralloc_copyb(
-                            &mut (*x.offset(xnum as (isize))).left as (*mut stralloc),
+                        if StrAlloc::copyb(
+                            &mut (*x.offset(xnum as (isize))).left as (*mut StrAlloc),
                             partial.s as (*const u8),
                             i as (u32),
                         ) == 0
                         {
                             nomem();
                         }
-                        if stralloc_copys(
-                            &mut (*x.offset(xnum as (isize))).middle as (*mut stralloc),
+                        if StrAlloc::copys(
+                            &mut (*x.offset(xnum as (isize))).middle as (*mut StrAlloc),
                             (*b"\0").as_ptr(),
                         ) == 0
                         {
                             nomem();
                         }
-                        if stralloc_copyb(
-                            &mut (*x.offset(xnum as (isize))).right as (*mut stralloc),
+                        if StrAlloc::copyb(
+                            &mut (*x.offset(xnum as (isize))).right as (*mut StrAlloc),
                             partial.s.offset(i as (isize)) as (*const u8),
                             partial.len.wrapping_sub(i as (u32)),
                         ) == 0
@@ -546,7 +533,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
                         }
                         (*x.offset(xnum as (isize))).flagactive = 0i32;
                         partial.len = i as (u32);
-                        if stralloc_append(&mut partial as (*mut stralloc), (*b"\0").as_ptr()) ==
+                        if StrAlloc::append(&mut partial as (*mut StrAlloc), (*b"\0").as_ptr()) ==
                             0
                         {
                             nomem();

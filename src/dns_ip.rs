@@ -1,4 +1,5 @@
 use byte;
+use stralloc::StrAlloc;
 use tai::Tai;
 use taia::TaiA;
 use uint16;
@@ -12,28 +13,11 @@ extern "C" {
     static mut dns_resolve_tx: dns_transmit;
     fn dns_sortip(arg1: *mut u8, arg2: u32);
     fn dns_transmit_free(arg1: *mut dns_transmit);
-    fn stralloc_append(arg1: *mut stralloc, arg2: *const u8) -> i32;
-    fn stralloc_catb(arg1: *mut stralloc, arg2: *const u8, arg3: u32) -> i32;
-    fn stralloc_copys(arg1: *mut stralloc, arg2: *const u8) -> i32;
-}
-
-#[derive(Copy)]
-#[repr(C)]
-pub struct stralloc {
-    pub s: *mut u8,
-    pub len: u32,
-    pub a: u32,
-}
-
-impl Clone for stralloc {
-    fn clone(&self) -> Self {
-        *self
-    }
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn dns_ip4_packet(
-    mut out: *mut stralloc,
+    mut out: *mut StrAlloc,
     mut buf: *const u8,
     mut len: u32,
 ) -> i32 {
@@ -42,7 +26,7 @@ pub unsafe extern "C" fn dns_ip4_packet(
     let mut header: [u8; 12];
     let mut numanswers: u16;
     let mut datalen: u16;
-    if stralloc_copys(out, (*b"\0").as_ptr()) == 0 {
+    if StrAlloc::copys(out, (*b"\0").as_ptr()) == 0 {
         -1i32
     } else {
         pos = dns_packet_copy(buf, len, 0u32, header.as_mut_ptr(), 12u32);
@@ -101,7 +85,7 @@ pub unsafe extern "C" fn dns_ip4_packet(
                                       _currentBlock = 15;
                                       break;
                                   }
-                                  if stralloc_catb(
+                                  if StrAlloc::catb(
                                     out,
                                     header.as_mut_ptr() as (*const u8),
                                     4u32,
@@ -159,12 +143,12 @@ impl Clone for dns_transmit {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn dns_ip4(mut out: *mut stralloc, mut fqdn: *const stralloc) -> i32 {
+pub unsafe extern "C" fn dns_ip4(mut out: *mut StrAlloc, mut fqdn: *const StrAlloc) -> i32 {
     let mut _currentBlock;
     let mut i: u32;
     let mut code: u8;
     let mut ch: u8;
-    if stralloc_copys(out, (*b"\0").as_ptr()) == 0 {
+    if StrAlloc::copys(out, (*b"\0").as_ptr()) == 0 {
         -1i32
     } else {
         code = 0u8;
@@ -181,7 +165,7 @@ pub unsafe extern "C" fn dns_ip4(mut out: *mut stralloc, mut fqdn: *const strall
             }
             if !(ch as (i32) == b'[' as (i32) || ch as (i32) == b']' as (i32)) {
                 if ch as (i32) == b'.' as (i32) {
-                    if stralloc_append(out, &mut code as (*mut u8) as (*const u8)) == 0 {
+                    if StrAlloc::append(out, &mut code as (*mut u8) as (*const u8)) == 0 {
                         _currentBlock = 20;
                         break;
                     }

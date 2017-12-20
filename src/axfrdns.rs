@@ -1,6 +1,7 @@
 use buffer::{self, Buffer};
 use byte;
 use libc;
+use stralloc::StrAlloc;
 use tai::Tai;
 use uint16;
 use uint32;
@@ -40,8 +41,6 @@ extern "C" {
     fn response_query(arg1: *const u8, arg2: *const u8, arg3: *const u8) -> i32;
     fn scan_ulong(arg1: *const u8, arg2: *mut usize) -> u32;
     fn seek_set(arg1: i32, arg2: usize) -> i32;
-    fn stralloc_catb(arg1: *mut stralloc, arg2: *const u8, arg3: u32) -> i32;
-    fn stralloc_copyb(arg1: *mut stralloc, arg2: *const u8, arg3: u32) -> i32;
     fn strerr_die(
         arg1: i32,
         arg2: *const u8,
@@ -333,22 +332,8 @@ pub unsafe extern "C" fn copy(mut buf: *mut u8, mut len: u32) {
     }
 }
 
-#[derive(Copy)]
-#[repr(C)]
-pub struct stralloc {
-    pub s: *mut u8,
-    pub len: u32,
-    pub a: u32,
-}
-
-impl Clone for stralloc {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
 #[no_mangle]
-pub unsafe extern "C" fn doname(mut sa: *mut stralloc) {
+pub unsafe extern "C" fn doname(mut sa: *mut StrAlloc) {
     static mut d: *mut u8 = 0 as (*mut u8);
     dpos = dns_packet_getname(
         data.as_mut_ptr() as (*const u8),
@@ -359,14 +344,14 @@ pub unsafe extern "C" fn doname(mut sa: *mut stralloc) {
     if dpos == 0 {
         die_cdbread();
     }
-    if stralloc_catb(sa, d as (*const u8), dns_domain_length(d as (*const u8))) == 0 {
+    if StrAlloc::catb(sa, d as (*const u8), dns_domain_length(d as (*const u8))) == 0 {
         nomem();
     }
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn build(
-    mut sa: *mut stralloc,
+    mut sa: *mut StrAlloc,
     mut q: *mut u8,
     mut flagsoa: i32,
     mut id: *mut u8,
@@ -400,10 +385,10 @@ pub unsafe extern "C" fn build(
             return 0i32;
         }
     }
-    if stralloc_copyb(sa, id as (*const u8), 2u32) == 0 {
+    if StrAlloc::copyb(sa, id as (*const u8), 2u32) == 0 {
         nomem();
     }
-    if stralloc_catb(sa, (*b"\x84\0\0\0\0\x01\0\0\0\0\0").as_ptr(), 10u32) == 0 {
+    if StrAlloc::catb(sa, (*b"\x84\0\0\0\0\x01\0\0\0\0\0").as_ptr(), 10u32) == 0 {
         nomem();
     }
     copy(misc.as_mut_ptr(), 1u32);
@@ -421,14 +406,14 @@ pub unsafe extern "C" fn build(
     if misc[0usize] as (i32) == b'*' as (i32) {
         if flagsoa != 0 {
             return 0i32;
-        } else if stralloc_catb(sa, (*b"\x01*\0").as_ptr(), 2u32) == 0 {
+        } else if StrAlloc::catb(sa, (*b"\x01*\0").as_ptr(), 2u32) == 0 {
             nomem();
         }
     }
-    if stralloc_catb(sa, q as (*const u8), dns_domain_length(q as (*const u8))) == 0 {
+    if StrAlloc::catb(sa, q as (*const u8), dns_domain_length(q as (*const u8))) == 0 {
         nomem();
     }
-    if stralloc_catb(sa, type_.as_mut_ptr() as (*const u8), 2u32) == 0 {
+    if StrAlloc::catb(sa, type_.as_mut_ptr() as (*const u8), 2u32) == 0 {
         nomem();
     }
     copy(ttl.as_mut_ptr(), 4u32);
@@ -455,13 +440,13 @@ pub unsafe extern "C" fn build(
             return 0i32;
         }
     }
-    if stralloc_catb(sa, (*b"\0\x01\0").as_ptr(), 2u32) == 0 {
+    if StrAlloc::catb(sa, (*b"\0\x01\0").as_ptr(), 2u32) == 0 {
         nomem();
     }
-    if stralloc_catb(sa, ttl.as_mut_ptr() as (*const u8), 4u32) == 0 {
+    if StrAlloc::catb(sa, ttl.as_mut_ptr() as (*const u8), 4u32) == 0 {
         nomem();
     }
-    if stralloc_catb(sa, (*b"\0\0\0").as_ptr(), 2u32) == 0 {
+    if StrAlloc::catb(sa, (*b"\0\0\0").as_ptr(), 2u32) == 0 {
         nomem();
     }
     rdatapos = (*sa).len;
@@ -474,7 +459,7 @@ pub unsafe extern "C" fn build(
         doname(sa);
         doname(sa);
         copy(misc.as_mut_ptr(), 20u32);
-        if stralloc_catb(sa, misc.as_mut_ptr() as (*const u8), 20u32) == 0 {
+        if StrAlloc::catb(sa, misc.as_mut_ptr() as (*const u8), 20u32) == 0 {
             nomem();
         }
     } else if byte::diff(
@@ -501,11 +486,11 @@ pub unsafe extern "C" fn build(
     ) == 0
     {
         copy(misc.as_mut_ptr(), 2u32);
-        if stralloc_catb(sa, misc.as_mut_ptr() as (*const u8), 2u32) == 0 {
+        if StrAlloc::catb(sa, misc.as_mut_ptr() as (*const u8), 2u32) == 0 {
             nomem();
         }
         doname(sa);
-    } else if stralloc_catb(
+    } else if StrAlloc::catb(
         sa,
         data.as_mut_ptr().offset(dpos as (isize)) as (*const u8),
         dlen.wrapping_sub(dpos),
@@ -559,13 +544,13 @@ static mut c: cdb = cdb {
 
 static mut q: *mut u8 = 0 as (*mut u8);
 
-static mut soa: stralloc = stralloc {
+static mut soa: StrAlloc = StrAlloc {
     s: 0 as (*mut u8),
     len: 0u32,
     a: 0u32,
 };
 
-static mut message: stralloc = stralloc {
+static mut message: StrAlloc = StrAlloc {
     s: 0 as (*mut u8),
     len: 0u32,
     a: 0u32,
@@ -635,7 +620,7 @@ pub unsafe extern "C" fn doaxfr(mut id: *mut u8) {
         {
             die_cdbformat();
         }
-        if build(&mut soa as (*mut stralloc), zone, 1i32, id) != 0 {
+        if build(&mut soa as (*mut StrAlloc), zone, 1i32, id) != 0 {
             break;
         }
     }
@@ -707,7 +692,7 @@ pub unsafe extern "C" fn doaxfr(mut id: *mut u8) {
         if dns_domain_suffix(q as (*const u8), zone as (*const u8)) == 0 {
             continue;
         }
-        if build(&mut message as (*mut stralloc), q, 0i32, id) == 0 {
+        if build(&mut message as (*mut StrAlloc), q, 0i32, id) == 0 {
             continue;
         }
         print(message.s, message.len);

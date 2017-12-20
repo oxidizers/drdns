@@ -12,6 +12,7 @@ extern crate libc;
 mod alloc;
 mod buffer;
 mod byte;
+mod stralloc;
 mod tai;
 mod taia;
 mod uint16;

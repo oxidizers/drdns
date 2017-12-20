@@ -1,18 +1,19 @@
 use buffer::{self, Buffer};
 use byte;
 use libc;
+use stralloc::StrAlloc;
 
 extern "C" {
     fn __swbuf(arg1: i32, arg2: *mut __sFILE) -> i32;
     fn close(arg1: i32) -> i32;
     fn dns_domain_equal(arg1: *const u8, arg2: *const u8) -> i32;
     fn dns_domain_fromdot(arg1: *mut *mut u8, arg2: *const u8, arg3: u32) -> i32;
-    fn dns_domain_todot_cat(arg1: *mut stralloc, arg2: *const u8) -> i32;
+    fn dns_domain_todot_cat(arg1: *mut StrAlloc, arg2: *const u8) -> i32;
     fn fchmod(arg1: i32, arg2: u16) -> i32;
     fn fmt_ulong(arg1: *mut u8, arg2: usize) -> u32;
     fn fstat(arg1: i32, arg2: *mut stat) -> i32;
     fn fsync(arg1: i32) -> i32;
-    fn getln(arg1: *mut Buffer, arg2: *mut stralloc, arg3: *mut i32, arg4: i32) -> i32;
+    fn getln(arg1: *mut Buffer, arg2: *mut StrAlloc, arg3: *mut i32, arg4: i32) -> i32;
     fn ip4_fmt(arg1: *mut u8, arg2: *const u8) -> u32;
     fn ip4_scan(arg1: *const u8, arg2: *mut u8) -> u32;
     fn open_read(arg1: *const u8) -> i32;
@@ -20,11 +21,6 @@ extern "C" {
     fn rename(__old: *const u8, __new: *const u8) -> i32;
     fn scan_ulong(arg1: *const u8, arg2: *mut usize) -> u32;
     fn str_diff(arg1: *const u8, arg2: *const u8) -> i32;
-    fn stralloc_append(arg1: *mut stralloc, arg2: *const u8) -> i32;
-    fn stralloc_catb(arg1: *mut stralloc, arg2: *const u8, arg3: u32) -> i32;
-    fn stralloc_cats(arg1: *mut stralloc, arg2: *const u8) -> i32;
-    fn stralloc_copyb(arg1: *mut stralloc, arg2: *const u8, arg3: u32) -> i32;
-    fn stralloc_copys(arg1: *mut stralloc, arg2: *const u8) -> i32;
     fn strerr_die(
         arg1: i32,
         arg2: *const u8,
@@ -224,21 +220,7 @@ pub static mut bnew: Buffer = Buffer {
 #[no_mangle]
 pub static mut bnewspace: [u8; 1024] = [0u8; 1024];
 
-#[derive(Copy)]
-#[repr(C)]
-pub struct stralloc {
-    pub s: *mut u8,
-    pub len: u32,
-    pub a: u32,
-}
-
-impl Clone for stralloc {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
-static mut line: stralloc = stralloc {
+static mut line: StrAlloc = StrAlloc {
     s: 0 as (*mut u8),
     len: 0u32,
     a: 0u32,
@@ -247,7 +229,7 @@ static mut line: stralloc = stralloc {
 #[no_mangle]
 pub static mut match_: i32 = 1i32;
 
-static mut f: [stralloc; 10] = [stralloc {
+static mut f: [StrAlloc; 10] = [StrAlloc {
     s: 0 as (*mut u8),
     len: 0u32,
     a: 0u32,
@@ -456,18 +438,18 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
                 break;
             }
             ch = (b'a' as (i32) + i) as (u8);
-            if stralloc_copyb(
-                &mut f[0usize] as (*mut stralloc),
+            if StrAlloc::copyb(
+                &mut f[0usize] as (*mut StrAlloc),
                 &mut ch as (*mut u8) as (*const u8),
                 1u32,
             ) == 0
             {
                 nomem();
             }
-            if stralloc_cats(&mut f[0usize] as (*mut stralloc), (*b".mx.\0").as_ptr()) == 0 {
+            if StrAlloc::cats(&mut f[0usize] as (*mut StrAlloc), (*b".mx.\0").as_ptr()) == 0 {
                 nomem();
             }
-            if dns_domain_todot_cat(&mut f[0usize] as (*mut stralloc), target as (*const u8)) == 0 {
+            if dns_domain_todot_cat(&mut f[0usize] as (*mut StrAlloc), target as (*const u8)) == 0 {
                 nomem();
             }
             if dns_domain_fromdot(
@@ -490,18 +472,18 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
                 break;
             }
             ch = (b'a' as (i32) + i) as (u8);
-            if stralloc_copyb(
-                &mut f[0usize] as (*mut stralloc),
+            if StrAlloc::copyb(
+                &mut f[0usize] as (*mut StrAlloc),
                 &mut ch as (*mut u8) as (*const u8),
                 1u32,
             ) == 0
             {
                 nomem();
             }
-            if stralloc_cats(&mut f[0usize] as (*mut stralloc), (*b".ns.\0").as_ptr()) == 0 {
+            if StrAlloc::cats(&mut f[0usize] as (*mut StrAlloc), (*b".ns.\0").as_ptr()) == 0 {
                 nomem();
             }
-            if dns_domain_todot_cat(&mut f[0usize] as (*mut stralloc), target as (*const u8)) == 0 {
+            if dns_domain_todot_cat(&mut f[0usize] as (*mut StrAlloc), target as (*const u8)) == 0 {
                 nomem();
             }
             if dns_domain_fromdot(
@@ -521,7 +503,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
         }
         if getln(
             &mut b as (*mut Buffer),
-            &mut line as (*mut stralloc),
+            &mut line as (*mut StrAlloc),
             &mut match_ as (*mut i32),
             b'\n' as (i32),
         ) == -1i32
@@ -557,7 +539,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
                 break;
             }
             if j as (u32) >= line.len {
-                if stralloc_copys(&mut f[i as (usize)] as (*mut stralloc), (*b"\0").as_ptr()) == 0 {
+                if StrAlloc::copys(&mut f[i as (usize)] as (*mut StrAlloc), (*b"\0").as_ptr()) == 0 {
                     nomem();
                 }
             } else {
@@ -566,8 +548,8 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
                     line.len.wrapping_sub(j as (u32)),
                     b':' as (i32),
                 ) as (i32);
-                if stralloc_copyb(
-                    &mut f[i as (usize)] as (*mut stralloc),
+                if StrAlloc::copyb(
+                    &mut f[i as (usize)] as (*mut StrAlloc),
                     line.s.offset(j as (isize)) as (*const u8),
                     k as (u32),
                 ) == 0
@@ -594,11 +576,11 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
                 continue;
             }
             if byte::chr(f[2usize].s, f[2usize].len, b'.' as (i32)) >= f[2usize].len {
-                if stralloc_cats(&mut f[2usize] as (*mut stralloc), (*b".mx.\0").as_ptr()) == 0 {
+                if StrAlloc::cats(&mut f[2usize] as (*mut StrAlloc), (*b".mx.\0").as_ptr()) == 0 {
                     nomem();
                 }
-                if stralloc_catb(
-                    &mut f[2usize] as (*mut stralloc),
+                if StrAlloc::catb(
+                    &mut f[2usize] as (*mut StrAlloc),
                     f[0usize].s as (*const u8),
                     f[0usize].len,
                 ) == 0
@@ -614,7 +596,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
             {
                 nomem();
             }
-            if stralloc_append(&mut f[4usize] as (*mut stralloc), (*b"\0").as_ptr()) == 0 {
+            if StrAlloc::append(&mut f[4usize] as (*mut StrAlloc), (*b"\0").as_ptr()) == 0 {
                 nomem();
             }
             if scan_ulong(f[4usize].s as (*const u8), &mut ttl as (*mut usize)) == 0 {
@@ -655,7 +637,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
                     0i32 as (*const strerr),
                 );
             }
-            if stralloc_append(&mut f[1usize] as (*mut stralloc), (*b"\0").as_ptr()) == 0 {
+            if StrAlloc::append(&mut f[1usize] as (*mut StrAlloc), (*b"\0").as_ptr()) == 0 {
                 nomem();
             }
             if ip4_scan(f[1usize].s as (*const u8), ip.as_mut_ptr()) == 0 {
@@ -693,11 +675,11 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
                 continue;
             }
             if byte::chr(f[2usize].s, f[2usize].len, b'.' as (i32)) >= f[2usize].len {
-                if stralloc_cats(&mut f[2usize] as (*mut stralloc), (*b".ns.\0").as_ptr()) == 0 {
+                if StrAlloc::cats(&mut f[2usize] as (*mut StrAlloc), (*b".ns.\0").as_ptr()) == 0 {
                     nomem();
                 }
-                if stralloc_catb(
-                    &mut f[2usize] as (*mut stralloc),
+                if StrAlloc::catb(
+                    &mut f[2usize] as (*mut StrAlloc),
                     f[0usize].s as (*const u8),
                     f[0usize].len,
                 ) == 0
@@ -713,7 +695,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
             {
                 nomem();
             }
-            if stralloc_append(&mut f[3usize] as (*mut stralloc), (*b"\0").as_ptr()) == 0 {
+            if StrAlloc::append(&mut f[3usize] as (*mut StrAlloc), (*b"\0").as_ptr()) == 0 {
                 nomem();
             }
             if scan_ulong(f[3usize].s as (*const u8), &mut ttl as (*mut usize)) == 0 {
@@ -732,22 +714,22 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
             used[i as (usize)] = 1i32;
         }
     }
-    if stralloc_copyb(
-        &mut f[0usize] as (*mut stralloc),
+    if StrAlloc::copyb(
+        &mut f[0usize] as (*mut StrAlloc),
         &mut mode as (*mut u8) as (*const u8),
         1u32,
     ) == 0
     {
         nomem();
     }
-    if dns_domain_todot_cat(&mut f[0usize] as (*mut stralloc), target as (*const u8)) == 0 {
+    if dns_domain_todot_cat(&mut f[0usize] as (*mut StrAlloc), target as (*const u8)) == 0 {
         nomem();
     }
-    if stralloc_cats(&mut f[0usize] as (*mut stralloc), (*b":\0").as_ptr()) == 0 {
+    if StrAlloc::cats(&mut f[0usize] as (*mut StrAlloc), (*b":\0").as_ptr()) == 0 {
         nomem();
     }
-    if stralloc_catb(
-        &mut f[0usize] as (*mut stralloc),
+    if StrAlloc::catb(
+        &mut f[0usize] as (*mut StrAlloc),
         ipstr.as_mut_ptr() as (*const u8),
         ip4_fmt(ipstr.as_mut_ptr(), targetip.as_mut_ptr() as (*const u8)),
     ) == 0
@@ -780,11 +762,11 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
             );
         }
         ch = (b'a' as (i32) + i) as (u8);
-        if stralloc_cats(&mut f[0usize] as (*mut stralloc), (*b":\0").as_ptr()) == 0 {
+        if StrAlloc::cats(&mut f[0usize] as (*mut StrAlloc), (*b":\0").as_ptr()) == 0 {
             nomem();
         }
-        if stralloc_catb(
-            &mut f[0usize] as (*mut stralloc),
+        if StrAlloc::catb(
+            &mut f[0usize] as (*mut StrAlloc),
             &mut ch as (*mut u8) as (*const u8),
             1u32,
         ) == 0
@@ -792,23 +774,23 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
             nomem();
         }
         if mode as (i32) == b'@' as (i32) {
-            if stralloc_cats(&mut f[0usize] as (*mut stralloc), (*b":\0").as_ptr()) == 0 {
+            if StrAlloc::cats(&mut f[0usize] as (*mut StrAlloc), (*b":\0").as_ptr()) == 0 {
                 nomem();
             }
         }
     }
-    if stralloc_cats(&mut f[0usize] as (*mut stralloc), (*b":\0").as_ptr()) == 0 {
+    if StrAlloc::cats(&mut f[0usize] as (*mut StrAlloc), (*b":\0").as_ptr()) == 0 {
         nomem();
     }
-    if stralloc_catb(
-        &mut f[0usize] as (*mut stralloc),
+    if StrAlloc::catb(
+        &mut f[0usize] as (*mut StrAlloc),
         strnum.as_mut_ptr() as (*const u8),
         fmt_ulong(strnum.as_mut_ptr(), ttl),
     ) == 0
     {
         nomem();
     }
-    if stralloc_cats(&mut f[0usize] as (*mut stralloc), (*b"\n\0").as_ptr()) == 0 {
+    if StrAlloc::cats(&mut f[0usize] as (*mut StrAlloc), (*b"\n\0").as_ptr()) == 0 {
         nomem();
     }
     put(f[0usize].s as (*const u8), f[0usize].len);

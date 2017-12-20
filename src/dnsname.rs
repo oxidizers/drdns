@@ -1,9 +1,10 @@
 use buffer::Buffer;
 use libc;
+use stralloc::StrAlloc;
 
 extern "C" {
     static mut buffer_1: *mut Buffer;
-    fn dns_name4(arg1: *mut stralloc, arg2: *const u8) -> i32;
+    fn dns_name4(arg1: *mut StrAlloc, arg2: *const u8) -> i32;
     fn dns_random_init(arg1: *const u8);
     fn ip4_scan(arg1: *const u8, arg2: *mut u8) -> u32;
     fn strerr_die(
@@ -24,21 +25,7 @@ static mut seed: [u8; 128] = [0u8; 128];
 #[no_mangle]
 pub static mut ip: [u8; 4] = [0u8; 4];
 
-#[derive(Copy)]
-#[repr(C)]
-pub struct stralloc {
-    pub s: *mut u8,
-    pub len: u32,
-    pub a: u32,
-}
-
-impl Clone for stralloc {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
-static mut out: stralloc = stralloc {
+static mut out: StrAlloc = StrAlloc {
     s: 0 as (*mut u8),
     len: 0u32,
     a: 0u32,
@@ -99,7 +86,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
                 0i32 as (*const strerr),
             );
         }
-        if dns_name4(&mut out as (*mut stralloc), ip.as_mut_ptr() as (*const u8)) == -1i32 {
+        if dns_name4(&mut out as (*mut StrAlloc), ip.as_mut_ptr() as (*const u8)) == -1i32 {
             strerr_die(
                 111i32,
                 (*b"dnsname: fatal: \0").as_ptr(),

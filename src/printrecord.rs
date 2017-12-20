@@ -6,34 +6,16 @@ use uint32;
 
 extern "C" {
     fn dns_domain_equal(arg1: *const u8, arg2: *const u8) -> i32;
-    fn dns_domain_todot_cat(arg1: *mut stralloc, arg2: *const u8) -> i32;
+    fn dns_domain_todot_cat(arg1: *mut StrAlloc, arg2: *const u8) -> i32;
     fn dns_packet_copy(arg1: *const u8, arg2: u32, arg3: u32, arg4: *mut u8, arg5: u32) -> u32;
     fn dns_packet_getname(arg1: *const u8, arg2: u32, arg3: u32, arg4: *mut *mut u8) -> u32;
-    fn stralloc_catb(arg1: *mut stralloc, arg2: *const u8, arg3: u32) -> i32;
-    fn stralloc_cats(arg1: *mut stralloc, arg2: *const u8) -> i32;
-    fn stralloc_catulong0(arg1: *mut stralloc, arg2: usize, arg3: u32) -> i32;
-    fn stralloc_copys(arg1: *mut stralloc, arg2: *const u8) -> i32;
 }
 
 static mut d: *mut u8 = 0 as (*mut u8);
 
-#[derive(Copy)]
-#[repr(C)]
-pub struct stralloc {
-    pub s: *mut u8,
-    pub len: u32,
-    pub a: u32,
-}
-
-impl Clone for stralloc {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
 #[no_mangle]
 pub unsafe extern "C" fn printrecord_cat(
-    mut out: *mut stralloc,
+    mut out: *mut StrAlloc,
     mut buf: *const u8,
     mut len: u32,
     mut pos: u32,
@@ -77,14 +59,14 @@ pub unsafe extern "C" fn printrecord_cat(
              }
              (if dns_domain_todot_cat(out, d as (*const u8)) == 0 {
                   0u32
-              } else if stralloc_cats(out, (*b" \0").as_ptr()) == 0 {
+              } else if StrAlloc::cats(out, (*b" \0").as_ptr()) == 0 {
                   0u32
               } else {
                   uint32::unpack_big(
                     misc.as_mut_ptr().offset(4isize) as (*const u8),
                     &mut u32 as (*mut u32),
                 );
-                  (if stralloc_catulong0(out, u32 as (usize), 0u32) == 0 {
+                  (if StrAlloc::catulong0(out, u32 as (usize), 0u32) == 0 {
                        0u32
                    } else if byte::diff(
                     misc.as_mut_ptr().offset(2isize),
@@ -92,7 +74,7 @@ pub unsafe extern "C" fn printrecord_cat(
                     (*b"\0\x01\0").as_ptr() as (*mut u8),
                 ) != 0
                 {
-                       (if stralloc_cats(out, (*b" weird class\n\0").as_ptr()) == 0 {
+                       (if StrAlloc::cats(out, (*b" weird class\n\0").as_ptr()) == 0 {
                             0u32
                         } else {
                             newpos
@@ -127,7 +109,7 @@ pub unsafe extern "C" fn printrecord_cat(
                            pos = dns_packet_getname(buf, len, pos, &mut d as (*mut *mut u8));
                            if pos == 0 {
                                return 0u32;
-                           } else if stralloc_cats(out, x) == 0 {
+                           } else if StrAlloc::cats(out, x) == 0 {
                                return 0u32;
                            } else if dns_domain_todot_cat(out, d as (*const u8)) == 0 {
                                return 0u32;
@@ -138,7 +120,7 @@ pub unsafe extern "C" fn printrecord_cat(
                         (*b"\0\x0F\0").as_ptr() as (*mut u8),
                     ) == 0
                     {
-                           if stralloc_cats(out, (*b" MX \0").as_ptr()) == 0 {
+                           if StrAlloc::cats(out, (*b" MX \0").as_ptr()) == 0 {
                                return 0u32;
                            } else {
                                pos = dns_packet_copy(buf, len, pos, misc.as_mut_ptr(), 2u32);
@@ -154,9 +136,9 @@ pub unsafe extern "C" fn printrecord_cat(
                                         misc.as_mut_ptr() as (*const u8),
                                         &mut u16 as (*mut u16),
                                     );
-                                       if stralloc_catulong0(out, u16 as (usize), 0u32) == 0 {
+                                       if StrAlloc::catulong0(out, u16 as (usize), 0u32) == 0 {
                                            return 0u32;
-                                       } else if stralloc_cats(out, (*b" \0").as_ptr()) == 0 {
+                                       } else if StrAlloc::cats(out, (*b" \0").as_ptr()) == 0 {
                                            return 0u32;
                                        } else if dns_domain_todot_cat(out, d as (*const u8)) == 0 {
                                            return 0u32;
@@ -170,7 +152,7 @@ pub unsafe extern "C" fn printrecord_cat(
                         (*b"\0\x06\0").as_ptr() as (*mut u8),
                     ) == 0
                     {
-                           if stralloc_cats(out, (*b" SOA \0").as_ptr()) == 0 {
+                           if StrAlloc::cats(out, (*b" SOA \0").as_ptr()) == 0 {
                                return 0u32;
                            } else {
                                pos = dns_packet_getname(buf, len, pos, &mut d as (*mut *mut u8));
@@ -178,7 +160,7 @@ pub unsafe extern "C" fn printrecord_cat(
                                    return 0u32;
                                } else if dns_domain_todot_cat(out, d as (*const u8)) == 0 {
                                    return 0u32;
-                               } else if stralloc_cats(out, (*b" \0").as_ptr()) == 0 {
+                               } else if StrAlloc::cats(out, (*b" \0").as_ptr()) == 0 {
                                    return 0u32;
                                } else {
                                    pos =
@@ -199,7 +181,7 @@ pub unsafe extern "C" fn printrecord_cat(
                                                    _currentBlock = 83;
                                                    break;
                                                }
-                                               if stralloc_cats(out, (*b" \0").as_ptr()) == 0 {
+                                               if StrAlloc::cats(out, (*b" \0").as_ptr()) == 0 {
                                                    _currentBlock = 60;
                                                    break;
                                                }
@@ -208,7 +190,7 @@ pub unsafe extern "C" fn printrecord_cat(
                                                     (*const u8),
                                                 &mut u32 as (*mut u32),
                                             );
-                                               if stralloc_catulong0(out, u32 as (usize), 0u32) ==
+                                               if StrAlloc::catulong0(out, u32 as (usize), 0u32) ==
                                                    0
                                             {
                                                    _currentBlock = 59;
@@ -235,7 +217,7 @@ pub unsafe extern "C" fn printrecord_cat(
                            if datalen as (i32) != 4i32 {
                                errno::set_errno(Errno(libc::EPROTO));
                                return 0u32;
-                           } else if stralloc_cats(out, (*b" A \0").as_ptr()) == 0 {
+                           } else if StrAlloc::cats(out, (*b" A \0").as_ptr()) == 0 {
                                return 0u32;
                            } else {
                                pos = dns_packet_copy(buf, len, pos, misc.as_mut_ptr(), 4u32);
@@ -250,12 +232,12 @@ pub unsafe extern "C" fn printrecord_cat(
                                        }
                                        ch = misc[i as (usize)];
                                        if i != 0 {
-                                           if stralloc_cats(out, (*b".\0").as_ptr()) == 0 {
+                                           if StrAlloc::cats(out, (*b".\0").as_ptr()) == 0 {
                                                _currentBlock = 43;
                                                break;
                                            }
                                        }
-                                       if stralloc_catulong0(out, ch as (usize), 0u32) == 0 {
+                                       if StrAlloc::catulong0(out, ch as (usize), 0u32) == 0 {
                                            _currentBlock = 42;
                                            break;
                                        }
@@ -269,16 +251,16 @@ pub unsafe extern "C" fn printrecord_cat(
                                    }
                                }
                            }
-                       } else if stralloc_cats(out, (*b" \0").as_ptr()) == 0 {
+                       } else if StrAlloc::cats(out, (*b" \0").as_ptr()) == 0 {
                            return 0u32;
                        } else {
                            uint16::unpack_big(
                             misc.as_mut_ptr() as (*const u8),
                             &mut u16 as (*mut u16),
                         );
-                           if stralloc_catulong0(out, u16 as (usize), 0u32) == 0 {
+                           if StrAlloc::catulong0(out, u16 as (usize), 0u32) == 0 {
                                return 0u32;
-                           } else if stralloc_cats(out, (*b" \0").as_ptr()) == 0 {
+                           } else if StrAlloc::cats(out, (*b" \0").as_ptr()) == 0 {
                                return 0u32;
                            } else {
                                'loop22: loop {
@@ -300,7 +282,7 @@ pub unsafe extern "C" fn printrecord_cat(
                                        (misc[0usize] as (i32) <= 126i32) &&
                                        (misc[0usize] as (i32) != b'\\' as (i32))
                                 {
-                                       if stralloc_catb(
+                                       if StrAlloc::catb(
                                         out,
                                         misc.as_mut_ptr() as (*const u8),
                                         1u32,
@@ -320,7 +302,7 @@ pub unsafe extern "C" fn printrecord_cat(
                                        misc[1usize] = (b'0' as (i32) + (7i32 & ch as (i32))) as
                                            (u8);
                                        misc[0usize] = b'\\';
-                                       if stralloc_catb(
+                                       if StrAlloc::catb(
                                         out,
                                         misc.as_mut_ptr() as (*const u8),
                                         4u32,
@@ -341,7 +323,7 @@ pub unsafe extern "C" fn printrecord_cat(
                                }
                            }
                        }
-                       (if stralloc_cats(out, (*b"\n\0").as_ptr()) == 0 {
+                       (if StrAlloc::cats(out, (*b"\n\0").as_ptr()) == 0 {
                             0u32
                         } else if pos != newpos {
                             errno::set_errno(Errno(libc::EPROTO));
@@ -357,14 +339,14 @@ pub unsafe extern "C" fn printrecord_cat(
 
 #[no_mangle]
 pub unsafe extern "C" fn printrecord(
-    mut out: *mut stralloc,
+    mut out: *mut StrAlloc,
     mut buf: *const u8,
     mut len: u32,
     mut pos: u32,
     mut q: *const u8,
     mut qtype: *const u8,
 ) -> u32 {
-    if stralloc_copys(out, (*b"\0").as_ptr()) == 0 {
+    if StrAlloc::copys(out, (*b"\0").as_ptr()) == 0 {
         0u32
     } else {
         printrecord_cat(out, buf, len, pos, q, qtype)

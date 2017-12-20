@@ -1,6 +1,7 @@
 use buffer::{self, Buffer};
 use byte;
 use libc;
+use stralloc::StrAlloc;
 
 extern "C" {
     fn __swbuf(arg1: i32, arg2: *mut __sFILE) -> i32;
@@ -16,16 +17,12 @@ extern "C" {
     fn close(arg1: i32) -> i32;
     fn fmt_ulong(arg1: *mut u8, arg2: usize) -> u32;
     fn fsync(arg1: i32) -> i32;
-    fn getln(arg1: *mut Buffer, arg2: *mut stralloc, arg3: *mut i32, arg4: i32) -> i32;
+    fn getln(arg1: *mut Buffer, arg2: *mut StrAlloc, arg3: *mut i32, arg4: i32) -> i32;
     fn ip4_scan(arg1: *const u8, arg2: *mut u8) -> u32;
     fn open_read(arg1: *const u8) -> i32;
     fn open_trunc(arg1: *const u8) -> i32;
     fn rename(__old: *const u8, __new: *const u8) -> i32;
     fn scan_ulong(arg1: *const u8, arg2: *mut usize) -> u32;
-    fn stralloc_append(arg1: *mut stralloc, arg2: *const u8) -> i32;
-    fn stralloc_catb(arg1: *mut stralloc, arg2: *const u8, arg3: u32) -> i32;
-    fn stralloc_copyb(arg1: *mut stralloc, arg2: *const u8, arg3: u32) -> i32;
-    fn stralloc_copys(arg1: *mut stralloc, arg2: *const u8) -> i32;
     fn strerr_die(
         arg1: i32,
         arg2: *const u8,
@@ -226,27 +223,13 @@ pub static mut cdb: cdb_make = cdb_make {
     fd: 0i32,
 };
 
-#[derive(Copy)]
-#[repr(C)]
-pub struct stralloc {
-    pub s: *mut u8,
-    pub len: u32,
-    pub a: u32,
-}
-
-impl Clone for stralloc {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
-static mut tmp: stralloc = stralloc {
+static mut tmp: StrAlloc = StrAlloc {
     s: 0 as (*mut u8),
     len: 0u32,
     a: 0u32,
 };
 
-static mut line: stralloc = stralloc {
+static mut line: StrAlloc = StrAlloc {
     s: 0 as (*mut u8),
     len: 0u32,
     a: 0u32,
@@ -337,7 +320,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
         linenum = linenum.wrapping_add(1usize);
         if getln(
             &mut b as (*mut Buffer),
-            &mut line as (*mut stralloc),
+            &mut line as (*mut StrAlloc),
             &mut match_ as (*mut i32),
             b'\n' as (i32),
         ) == -1i32
@@ -381,11 +364,11 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             switch1 as (i32) == b'1' as (i32) ||
             switch1 as (i32) == b'0' as (i32)
         {
-            if stralloc_append(&mut line as (*mut stralloc), (*b"\0").as_ptr()) == 0 {
+            if StrAlloc::append(&mut line as (*mut StrAlloc), (*b"\0").as_ptr()) == 0 {
                 nomem();
             }
             j = 0u32;
-            if stralloc_copys(&mut tmp as (*mut stralloc), (*b"\0").as_ptr()) == 0 {
+            if StrAlloc::copys(&mut tmp as (*mut StrAlloc), (*b"\0").as_ptr()) == 0 {
                 nomem();
             }
             'loop41: loop {
@@ -397,8 +380,8 @@ pub unsafe extern "C" fn _c_main() -> i32 {
                     break;
                 }
                 ch = u as (u8);
-                if stralloc_catb(
-                    &mut tmp as (*mut stralloc),
+                if StrAlloc::catb(
+                    &mut tmp as (*mut StrAlloc),
                     &mut ch as (*mut u8) as (*const u8),
                     1u32,
                 ) == 0
@@ -411,7 +394,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
                 }
                 j = j.wrapping_add(1u32);
             }
-            if stralloc_catb(&mut tmp as (*mut stralloc), (*b"\0\0\0\0\0").as_ptr(), 4u32) == 0 {
+            if StrAlloc::catb(&mut tmp as (*mut StrAlloc), (*b"\0\0\0\0\0").as_ptr(), 4u32) == 0 {
                 nomem();
             }
             tmp.len = 4u32;
@@ -427,8 +410,8 @@ pub unsafe extern "C" fn _c_main() -> i32 {
                 u = 32usize;
             }
             ch = u as (u8);
-            if stralloc_catb(
-                &mut tmp as (*mut stralloc),
+            if StrAlloc::catb(
+                &mut tmp as (*mut StrAlloc),
                 &mut ch as (*mut u8) as (*const u8),
                 1u32,
             ) == 0
@@ -458,16 +441,16 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             if ip4_scan(line.s.offset(1isize) as (*const u8), ip.as_mut_ptr()) != j {
                 syntaxerror((*b": malformed IP address\0").as_ptr());
             }
-            if stralloc_copyb(
-                &mut tmp as (*mut stralloc),
+            if StrAlloc::copyb(
+                &mut tmp as (*mut StrAlloc),
                 ip.as_mut_ptr() as (*const u8),
                 4u32,
             ) == 0
             {
                 nomem();
             }
-            if stralloc_catb(
-                &mut tmp as (*mut stralloc),
+            if StrAlloc::catb(
+                &mut tmp as (*mut StrAlloc),
                 line.s.offset(j as (isize)).offset(2isize) as (*const u8),
                 line.len.wrapping_sub(j).wrapping_sub(2u32),
             ) == 0
