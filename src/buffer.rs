@@ -6,7 +6,7 @@ use byte;
 use errno::{errno, Errno};
 use libc;
 
-type Op = unsafe fn(i32, *const u8, u32) -> i32;
+pub type Op = unsafe fn(i32, *const u8, u32) -> i32;
 
 #[derive(Copy)]
 #[repr(C)]
@@ -37,6 +37,10 @@ impl Buffer {
         (*s).op = Some(op);
         (*s).p = 0u32;
         (*s).n = len;
+    }
+
+    pub unsafe fn as_mut_ptr(&mut self) -> *mut Self {
+        self as *mut Self
     }
 
     pub unsafe fn copy(bout: *mut Buffer, bin: *mut Buffer) -> i32 {

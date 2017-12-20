@@ -1,11 +1,11 @@
 use byte;
 use buffer::Buffer;
+use buffer_1::BUFFER_1;
 use libc;
 use stralloc::StrAlloc;
 use uint16;
 
 extern "C" {
-    static mut buffer_1: *mut Buffer;
     fn case_lowerb(arg1: *mut u8, arg2: u32);
     fn dns_domain_fromdot(arg1: *mut *mut u8, arg2: *const u8, arg3: u32) -> i32;
     fn dns_domain_length(arg1: *const u8) -> u32;
@@ -201,6 +201,6 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
             oops();
         }
     }
-    Buffer::putflush(buffer_1, out.s as (*const u8), out.len);
+    Buffer::putflush(BUFFER_1.as_mut_ptr(), out.s as (*const u8), out.len);
     libc::_exit(0i32);
 }

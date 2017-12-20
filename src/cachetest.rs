@@ -1,8 +1,8 @@
 use buffer::Buffer;
+use buffer_1::BUFFER_1;
 use libc;
 
 extern "C" {
-    static mut buffer_1: *mut Buffer;
     fn cache_get(arg1: *const u8, arg2: u32, arg3: *mut u32, arg4: *mut u32) -> *mut u8;
     fn cache_init(arg1: u32) -> i32;
     fn cache_set(arg1: *const u8, arg2: u32, arg3: *const u8, arg4: u32, arg5: u32);
@@ -71,11 +71,11 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
                 &mut ttl as (*mut u32),
             );
             if !y.is_null() {
-                Buffer::put(buffer_1, y as (*const u8), u);
+                Buffer::put(BUFFER_1.as_mut_ptr(), y as (*const u8), u);
             }
-            Buffer::puts(buffer_1, (*b"\n\0").as_ptr());
+            Buffer::puts(BUFFER_1.as_mut_ptr(), (*b"\n\0").as_ptr());
         }
     }
-    Buffer::flush(buffer_1);
+    Buffer::flush(BUFFER_1.as_mut_ptr());
     libc::_exit(0i32);
 }

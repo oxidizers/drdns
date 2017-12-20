@@ -1,5 +1,6 @@
 use alloc;
 use buffer::Buffer;
+use buffer_1::BUFFER_1;
 use byte;
 use errno::errno;
 use libc;
@@ -8,7 +9,6 @@ use tai::Tai;
 use taia::TaiA;
 
 extern "C" {
-    static mut buffer_1: *mut Buffer;
     fn dns_name4_domain(arg1: *mut u8, arg2: *const u8);
     fn dns_name_packet(arg1: *mut StrAlloc, arg2: *const u8, arg3: u32) -> i32;
     fn dns_resolvconfip(arg1: *mut u8) -> i32;
@@ -439,21 +439,21 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
         'loop23: loop {
             if xnum != 0 && ((*x.offset(0isize)).flagactive == 0) {
                 Buffer::put(
-                    buffer_1,
+                    BUFFER_1.as_mut_ptr(),
                     (*x.offset(0isize)).left.s as (*const u8),
                     (*x.offset(0isize)).left.len,
                 );
                 Buffer::put(
-                    buffer_1,
+                    BUFFER_1.as_mut_ptr(),
                     (*x.offset(0isize)).middle.s as (*const u8),
                     (*x.offset(0isize)).middle.len,
                 );
                 Buffer::put(
-                    buffer_1,
+                    BUFFER_1.as_mut_ptr(),
                     (*x.offset(0isize)).right.s as (*const u8),
                     (*x.offset(0isize)).right.len,
                 );
-                Buffer::flush(buffer_1);
+                Buffer::flush(BUFFER_1.as_mut_ptr());
                 xnum = xnum.wrapping_sub(1u32);
                 tmp = *x.offset(0isize);
                 i = 0i32;

@@ -1,15 +1,17 @@
+//! `buffer_1.rs`: an 8kB thread-unsafe static buffer used for STDOUT(?)
+//!
+//! TODO: document those things and find a better way to handle them
+
 use buffer::{self, Buffer};
 
-#[no_mangle]
-pub static mut buffer_1_space: [u8; 8192] = [0u8; 8192];
+const BUFFER_1_SIZE: usize = 8192;
 
-static mut it: Buffer = Buffer {
-    x: buffer_1_space.as_mut_ptr(),
+static mut BUFFER_1_SPACE: [u8; BUFFER_1_SIZE] = [0u8; BUFFER_1_SIZE];
+
+pub static mut BUFFER_1: Buffer = Buffer {
+    x: unsafe { &mut BUFFER_1_SPACE as *mut [u8] as *mut u8 },
     p: 0u32,
-    n: ::std::mem::size_of::<[u8; 8192]>() as (u32),
-    fd: 1i32,
+    n: BUFFER_1_SIZE as u32,
+    fd: 1i32, // STDOUT?
     op: Some(buffer::unixwrite as buffer::Op),
 };
-
-#[no_mangle]
-pub static mut buffer_1: *mut Buffer = &mut it as (*mut Buffer);

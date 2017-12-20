@@ -1,8 +1,8 @@
 use buffer::Buffer;
+use buffer_2::BUFFER_2;
 use libc;
 
 extern "C" {
-    static mut buffer_2: *mut Buffer;
     fn strerr_sysinit();
 }
 
@@ -33,40 +33,40 @@ pub unsafe extern "C" fn strerr_warn(
 ) {
     strerr_sysinit();
     if !x1.is_null() {
-        Buffer::puts(buffer_2, x1);
+        Buffer::puts(BUFFER_2.as_mut_ptr(), x1);
     }
     if !x2.is_null() {
-        Buffer::puts(buffer_2, x2);
+        Buffer::puts(BUFFER_2.as_mut_ptr(), x2);
     }
     if !x3.is_null() {
-        Buffer::puts(buffer_2, x3);
+        Buffer::puts(BUFFER_2.as_mut_ptr(), x3);
     }
     if !x4.is_null() {
-        Buffer::puts(buffer_2, x4);
+        Buffer::puts(BUFFER_2.as_mut_ptr(), x4);
     }
     if !x5.is_null() {
-        Buffer::puts(buffer_2, x5);
+        Buffer::puts(BUFFER_2.as_mut_ptr(), x5);
     }
     if !x6.is_null() {
-        Buffer::puts(buffer_2, x6);
+        Buffer::puts(BUFFER_2.as_mut_ptr(), x6);
     }
     'loop12: loop {
         if se.is_null() {
             break;
         }
         if !(*se).x.is_null() {
-            Buffer::puts(buffer_2, (*se).x);
+            Buffer::puts(BUFFER_2.as_mut_ptr(), (*se).x);
         }
         if !(*se).y.is_null() {
-            Buffer::puts(buffer_2, (*se).y);
+            Buffer::puts(BUFFER_2.as_mut_ptr(), (*se).y);
         }
         if !(*se).z.is_null() {
-            Buffer::puts(buffer_2, (*se).z);
+            Buffer::puts(BUFFER_2.as_mut_ptr(), (*se).z);
         }
         se = (*se).who as (*const strerr);
     }
-    Buffer::puts(buffer_2, (*b"\n\0").as_ptr());
-    Buffer::flush(buffer_2);
+    Buffer::puts(BUFFER_2.as_mut_ptr(), (*b"\n\0").as_ptr());
+    Buffer::flush(BUFFER_2.as_mut_ptr());
 }
 
 #[no_mangle]

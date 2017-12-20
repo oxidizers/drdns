@@ -11,6 +11,8 @@ extern crate libc;
 /// covered by CI to ensure the code compiles.
 mod alloc;
 mod buffer;
+mod buffer_1;
+mod buffer_2;
 mod byte;
 mod stralloc;
 mod tai;

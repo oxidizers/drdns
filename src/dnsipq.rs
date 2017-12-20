@@ -1,9 +1,9 @@
 use buffer::Buffer;
+use buffer_1::BUFFER_1;
 use libc;
 use stralloc::StrAlloc;
 
 extern "C" {
-    static mut buffer_1: *mut Buffer;
     fn dns_ip4_qualify(arg1: *mut StrAlloc, arg2: *mut StrAlloc, arg3: *const StrAlloc) -> i32;
     fn dns_random_init(arg1: *const u8);
     fn ip4_fmt(arg1: *mut u8, arg2: *const u8) -> u32;
@@ -116,24 +116,24 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
                 &mut strerr_sys as (*mut strerr) as (*const strerr),
             );
         }
-        Buffer::put(buffer_1, fqdn.s as (*const u8), fqdn.len);
-        Buffer::puts(buffer_1, (*b" \0").as_ptr());
+        Buffer::put(BUFFER_1.as_mut_ptr(), fqdn.s as (*const u8), fqdn.len);
+        Buffer::puts(BUFFER_1.as_mut_ptr(), (*b" \0").as_ptr());
         i = 0i32;
         'loop9: loop {
             if !((i + 4i32) as (u32) <= out.len) {
                 break;
             }
             Buffer::put(
-                buffer_1,
+                BUFFER_1.as_mut_ptr(),
                 str.as_mut_ptr() as (*const u8),
                 ip4_fmt(str.as_mut_ptr(), out.s.offset(i as (isize)) as (*const u8)),
             );
-            Buffer::puts(buffer_1, (*b" \0").as_ptr());
+            Buffer::puts(BUFFER_1.as_mut_ptr(), (*b" \0").as_ptr());
             i = i + 4i32;
         }
-        Buffer::puts(buffer_1, (*b"\n\0").as_ptr());
+        Buffer::puts(BUFFER_1.as_mut_ptr(), (*b"\n\0").as_ptr());
         argv = argv.offset(1isize);
     }
-    Buffer::flush(buffer_1);
+    Buffer::flush(BUFFER_1.as_mut_ptr());
     libc::_exit(0i32);
 }

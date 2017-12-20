@@ -1,11 +1,8 @@
 use buffer::Buffer;
-
-extern "C" {
-    static mut buffer_2: *mut Buffer;
-}
+use buffer_2::BUFFER_2;
 
 unsafe extern "C" fn put(mut c: u8) {
-    Buffer::put(buffer_2, &mut c as (*mut u8) as (*const u8), 1u32);
+    Buffer::put(BUFFER_2.as_mut_ptr(), &mut c as (*mut u8) as (*const u8), 1u32);
 }
 
 unsafe extern "C" fn hex(mut c: u8) {
@@ -43,7 +40,7 @@ pub unsafe extern "C" fn qlog(
     put(b':');
     hex(*id.offset(0isize));
     hex(*id.offset(1isize));
-    Buffer::puts(buffer_2, result);
+    Buffer::puts(BUFFER_2.as_mut_ptr(), result);
     hex(*qtype.offset(0isize));
     hex(*qtype.offset(1isize));
     put(b' ');
@@ -90,5 +87,5 @@ pub unsafe extern "C" fn qlog(
         }
     }
     put(b'\n');
-    Buffer::flush(buffer_2);
+    Buffer::flush(BUFFER_2.as_mut_ptr());
 }
