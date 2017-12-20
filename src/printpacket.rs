@@ -1,6 +1,7 @@
 use byte;
 use errno::{self, Errno};
 use libc;
+use uint16;
 
 extern "C" {
     fn dns_domain_todot_cat(arg1: *mut stralloc, arg2: *const u8) -> i32;
@@ -16,7 +17,6 @@ extern "C" {
     ) -> u32;
     fn stralloc_cats(arg1: *mut stralloc, arg2: *const u8) -> i32;
     fn stralloc_catulong0(arg1: *mut stralloc, arg2: usize, arg3: u32) -> i32;
-    fn uint16_unpack_big(arg1: *const u8, arg2: *mut u16);
 }
 
 static mut d: *mut u8 = 0 as (*mut u8);
@@ -53,19 +53,19 @@ pub unsafe extern "C" fn printpacket_cat(
     if pos == 0 {
         0u32
     } else {
-        uint16_unpack_big(
+        uint16::unpack_big(
             data.as_mut_ptr().offset(4isize) as (*const u8),
             &mut numqueries as (*mut u16),
         );
-        uint16_unpack_big(
+        uint16::unpack_big(
             data.as_mut_ptr().offset(6isize) as (*const u8),
             &mut numanswers as (*mut u16),
         );
-        uint16_unpack_big(
+        uint16::unpack_big(
             data.as_mut_ptr().offset(8isize) as (*const u8),
             &mut numauthority as (*mut u16),
         );
-        uint16_unpack_big(
+        uint16::unpack_big(
             data.as_mut_ptr().offset(10isize) as (*const u8),
             &mut numglue as (*mut u16),
         );
@@ -184,7 +184,7 @@ pub unsafe extern "C" fn printpacket_cat(
                               break;
                           }
                       } else {
-                          uint16_unpack_big(
+                          uint16::unpack_big(
                             data.as_mut_ptr() as (*const u8),
                             &mut type_ as (*mut u16),
                         );

@@ -1,5 +1,6 @@
 use byte;
 use libc;
+use uint32;
 
 extern "C" {
     fn cdb_find(arg1: *mut cdb, arg2: *const u8, arg3: u32) -> i32;
@@ -27,8 +28,6 @@ extern "C" {
         arg7: *const u8,
         arg8: *const strerr,
     );
-    fn uint32_pack_big(arg1: *mut u8, arg2: u32);
-    fn uint32_unpack(arg1: *const u8, arg2: *mut u32);
 }
 
 static mut base: *mut u8 = 0 as (*mut u8);
@@ -97,11 +96,11 @@ unsafe extern "C" fn doit(mut q: *mut u8, mut qtype: *mut u8) -> i32 {
             reverseip.as_mut_ptr(),
         ) != 4i32)
         {
-            uint32_unpack(
+            uint32::unpack(
                 reverseip.as_mut_ptr() as (*const u8),
                 &mut ipnum as (*mut u32),
             );
-            uint32_pack_big(ip.as_mut_ptr(), ipnum);
+            uint32::pack_big(ip.as_mut_ptr(), ipnum);
             i = 0i32;
             'loop5: loop {
                 if !(i <= 24i32) {
@@ -110,7 +109,7 @@ unsafe extern "C" fn doit(mut q: *mut u8, mut qtype: *mut u8) -> i32 {
                 }
                 ipnum = ipnum >> i;
                 ipnum = ipnum << i;
-                uint32_pack_big(key.as_mut_ptr(), ipnum);
+                uint32::pack_big(key.as_mut_ptr(), ipnum);
                 key[4usize] = (32i32 - i) as (u8);
                 r = cdb_find(&mut c as (*mut cdb), key.as_mut_ptr() as (*const u8), 5u32);
                 if r == -1i32 {

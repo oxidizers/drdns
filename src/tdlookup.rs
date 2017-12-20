@@ -1,5 +1,7 @@
 use byte;
 use tai::Tai;
+use uint16;
+use uint32;
 
 extern "C" {
     fn case_lowerb(arg1: *mut u8, arg2: u32);
@@ -24,8 +26,6 @@ extern "C" {
     fn response_nxdomain();
     fn response_rfinish(arg1: i32);
     fn response_rstart(arg1: *const u8, arg2: *const u8, arg3: u32) -> i32;
-    fn uint16_unpack_big(arg1: *const u8, arg2: *mut u16);
-    fn uint32_unpack_big(arg1: *const u8, arg2: *mut u32);
 }
 
 static mut d1: *mut u8 = 0 as (*mut u8);
@@ -165,7 +165,7 @@ unsafe extern "C" fn find(mut d: *mut u8, mut flagwild: i32) -> i32 {
             _currentBlock = 23;
             break;
         }
-        uint32_unpack_big(ttlstr.as_mut_ptr() as (*const u8), &mut ttl as (*mut u32));
+        uint32::unpack_big(ttlstr.as_mut_ptr() as (*const u8), &mut ttl as (*mut u32));
         dpos = dns_packet_copy(
             data.as_mut_ptr() as (*const u8),
             dlen,
@@ -308,7 +308,7 @@ unsafe extern "C" fn want(mut owner: *const u8, mut type_: *const u8) -> i32 {
                     break;
                 }
             }
-            uint16_unpack_big(
+            uint16::unpack_big(
                 x.as_mut_ptr().offset(8isize) as (*const u8),
                 &mut datalen as (*mut u16),
             );
@@ -766,7 +766,7 @@ unsafe extern "C" fn doit(mut q: *mut u8, mut qtype: *mut u8) -> i32 {
                     }
                 }
             }
-            uint16_unpack_big(
+            uint16::unpack_big(
                 x.as_mut_ptr().offset(8isize) as (*const u8),
                 &mut u16 as (*mut u16),
             );

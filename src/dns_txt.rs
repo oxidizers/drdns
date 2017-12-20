@@ -1,6 +1,7 @@
 use byte;
 use tai::Tai;
 use taia::TaiA;
+use uint16;
 
 extern "C" {
     fn dns_domain_free(arg1: *mut *mut u8);
@@ -12,7 +13,6 @@ extern "C" {
     fn dns_transmit_free(arg1: *mut dns_transmit);
     fn stralloc_append(arg1: *mut stralloc, arg2: *const u8) -> i32;
     fn stralloc_copys(arg1: *mut stralloc, arg2: *const u8) -> i32;
-    fn uint16_unpack_big(arg1: *const u8, arg2: *mut u16);
 }
 
 #[derive(Copy)]
@@ -50,7 +50,7 @@ pub unsafe extern "C" fn dns_txt_packet(
         (if pos == 0 {
              -1i32
          } else {
-             uint16_unpack_big(
+             uint16::unpack_big(
                 header.as_mut_ptr().offset(6isize) as (*const u8),
                 &mut numanswers as (*mut u16),
             );
@@ -79,7 +79,7 @@ pub unsafe extern "C" fn dns_txt_packet(
                           _currentBlock = 24;
                           break;
                       }
-                      uint16_unpack_big(
+                      uint16::unpack_big(
                         header.as_mut_ptr().offset(8isize) as (*const u8),
                         &mut datalen as (*mut u16),
                     );

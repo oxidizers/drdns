@@ -1,4 +1,5 @@
 use byte;
+use uint16;
 
 extern "C" {
     fn sendto(
@@ -9,7 +10,6 @@ extern "C" {
         arg5: *const sockaddr,
         arg6: u32,
     ) -> isize;
-    fn uint16_pack_big(arg1: *mut u8, arg2: u16);
 }
 
 #[derive(Copy)]
@@ -68,7 +68,7 @@ pub unsafe extern "C" fn socket_send4(
         ::std::mem::size_of::<sockaddr_in>() as (u32),
     );
     sa.sin_family = 2u8;
-    uint16_pack_big(&mut sa.sin_port as (*mut u16) as (*mut u8), port);
+    uint16::pack_big(&mut sa.sin_port as (*mut u16) as (*mut u8), port);
     byte::copy(
         &mut sa.sin_addr as (*mut in_addr) as (*mut u8),
         4u32,

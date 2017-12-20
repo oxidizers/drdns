@@ -2,6 +2,8 @@ use buffer::Buffer;
 use byte;
 use errno::{self, Errno};
 use libc;
+use uint16;
+use uint32;
 
 extern "C" {
     static mut buffer_2: *mut Buffer;
@@ -9,8 +11,6 @@ extern "C" {
     static mut numqueries: usize;
     static mut tactive: i32;
     static mut uactive: i32;
-    fn uint16_unpack_big(arg1: *const u8, arg2: *mut u16);
-    fn uint32_unpack_big(arg1: *const u8, arg2: *mut u32);
 }
 
 static mut u64: usize = 0usize;
@@ -91,7 +91,7 @@ unsafe extern "C" fn logid(mut id: *const u8) {
 
 unsafe extern "C" fn logtype(mut type_: *const u8) {
     let mut u: u16;
-    uint16_unpack_big(type_, &mut u as (*mut u16));
+    uint16::unpack_big(type_, &mut u as (*mut u16));
     u64 = u as (usize);
     u64_print();
 }
@@ -449,7 +449,7 @@ pub unsafe extern "C" fn log_rrmx(
     string((*b" mx \0").as_ptr());
     name(q);
     space();
-    uint16_unpack_big(pref, &mut u as (*mut u16));
+    uint16::unpack_big(pref, &mut u as (*mut u16));
     u64 = u as (usize);
     u64_print();
     space();
@@ -484,7 +484,7 @@ pub unsafe extern "C" fn log_rrsoa(
         if !(i < 20i32) {
             break;
         }
-        uint32_unpack_big(misc.offset(i as (isize)), &mut u as (*mut u32));
+        uint32::unpack_big(misc.offset(i as (isize)), &mut u as (*mut u32));
         space();
         u64 = u as (usize);
         u64_print();

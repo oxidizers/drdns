@@ -1,10 +1,10 @@
 use tai::Tai;
 use taia::TaiA;
+use uint32;
 
 extern "C" {
     fn getpid() -> i32;
     fn getppid() -> i32;
-    fn uint32_unpack(arg1: *const u8, arg2: *mut u32);
 }
 
 static mut seed: [u32; 32] = [0u32; 32];
@@ -25,7 +25,7 @@ pub unsafe extern "C" fn dns_random_init(mut data: *const u8) {
         if !(i < 32i32) {
             break;
         }
-        uint32_unpack(
+        uint32::unpack(
             data.offset((4i32 * i) as (isize)),
             seed.as_mut_ptr().offset(i as (isize)),
         );
@@ -38,7 +38,7 @@ pub unsafe extern "C" fn dns_random_init(mut data: *const u8) {
         if !(i < 4i32) {
             break;
         }
-        uint32_unpack(
+        uint32::unpack(
             tpack.as_mut_ptr().offset((4i32 * i) as (isize)) as (*const u8),
             in_.as_mut_ptr().offset(4isize).offset(i as (isize)),
         );

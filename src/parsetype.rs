@@ -1,9 +1,9 @@
 use byte;
+use uint16;
 
 extern "C" {
     fn case_diffs(arg1: *const u8, arg2: *const u8) -> i32;
     fn scan_ulong(arg1: *const u8, arg2: *mut usize) -> u32;
-    fn uint16_pack_big(arg1: *mut u8, arg2: u16);
 }
 
 #[no_mangle]
@@ -12,7 +12,7 @@ pub unsafe extern "C" fn parsetype(mut s: *mut u8, mut type_: *mut u8) -> i32 {
     if *s.offset(scan_ulong(s as (*const u8), &mut u as (*mut usize)) as
         (isize)) == 0
     {
-        uint16_pack_big(type_, u as (u16));
+        uint16::pack_big(type_, u as (u16));
     } else if case_diffs(s as (*const u8), (*b"any\0").as_ptr()) == 0 {
         byte::copy(type_, 2u32, (*b"\0\xFF\0").as_ptr() as (*mut u8));
     } else if case_diffs(s as (*const u8), (*b"a\0").as_ptr()) == 0 {

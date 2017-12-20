@@ -1,6 +1,7 @@
 use byte;
 use errno::{self, Errno};
 use libc;
+use uint32;
 
 extern "C" {
     fn cdb_hash(arg1: *const u8, arg2: u32) -> u32;
@@ -15,7 +16,6 @@ extern "C" {
     ) -> *mut ::std::os::raw::c_void;
     fn munmap(arg1: *mut ::std::os::raw::c_void, arg2: usize) -> i32;
     fn seek_set(arg1: i32, arg2: usize) -> i32;
-    fn uint32_unpack(arg1: *const u8, arg2: *mut u32);
 }
 
 #[derive(Copy)]
@@ -231,14 +231,14 @@ pub unsafe extern "C" fn cdb_findnext(mut c: *mut cdb, mut key: *const u8, mut l
         if cdb_read(c, buf.as_mut_ptr(), 8u32, u << 3i32 & 2047u32) == -1i32 {
             return -1i32;
         } else {
-            uint32_unpack(
+            uint32::unpack(
                 buf.as_mut_ptr().offset(4isize) as (*const u8),
                 &mut (*c).hslots as (*mut u32),
             );
             if (*c).hslots == 0 {
                 return 0i32;
             } else {
-                uint32_unpack(
+                uint32::unpack(
                     buf.as_mut_ptr() as (*const u8),
                     &mut (*c).hpos as (*mut u32),
                 );
@@ -259,7 +259,7 @@ pub unsafe extern "C" fn cdb_findnext(mut c: *mut cdb, mut key: *const u8, mut l
             _currentBlock = 20;
             break;
         }
-        uint32_unpack(
+        uint32::unpack(
             buf.as_mut_ptr().offset(4isize) as (*const u8),
             &mut pos as (*mut u32),
         );
@@ -272,7 +272,7 @@ pub unsafe extern "C" fn cdb_findnext(mut c: *mut cdb, mut key: *const u8, mut l
         if (*c).kpos == (*c).hpos.wrapping_add((*c).hslots << 3i32) {
             (*c).kpos = (*c).hpos;
         }
-        uint32_unpack(buf.as_mut_ptr() as (*const u8), &mut u as (*mut u32));
+        uint32::unpack(buf.as_mut_ptr() as (*const u8), &mut u as (*mut u32));
         if !(u == (*c).khash) {
             continue;
         }
@@ -280,7 +280,7 @@ pub unsafe extern "C" fn cdb_findnext(mut c: *mut cdb, mut key: *const u8, mut l
             _currentBlock = 18;
             break;
         }
-        uint32_unpack(buf.as_mut_ptr() as (*const u8), &mut u as (*mut u32));
+        uint32::unpack(buf.as_mut_ptr() as (*const u8), &mut u as (*mut u32));
         if !(u == len) {
             continue;
         }
@@ -299,7 +299,7 @@ pub unsafe extern "C" fn cdb_findnext(mut c: *mut cdb, mut key: *const u8, mut l
     } else if _currentBlock == 16 {
         -1i32
     } else if _currentBlock == 17 {
-        uint32_unpack(
+        uint32::unpack(
             buf.as_mut_ptr().offset(4isize) as (*const u8),
             &mut (*c).dlen as (*mut u32),
         );

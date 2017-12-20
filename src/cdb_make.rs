@@ -2,11 +2,11 @@ use alloc;
 use buffer::{self, Buffer};
 use errno::{self, Errno};
 use libc;
+use uint32;
 
 extern "C" {
     fn cdb_hash(arg1: *const u8, arg2: u32) -> u32;
     fn seek_set(arg1: i32, arg2: usize) -> i32;
-    fn uint32_pack(arg1: *mut u8, arg2: u32);
 }
 
 #[derive(Copy)]
@@ -135,8 +135,8 @@ pub unsafe extern "C" fn cdb_make_addbegin(
         errno::set_errno(Errno(libc::ENOMEM));
         -1i32
     } else {
-        uint32_pack(buf.as_mut_ptr(), keylen);
-        uint32_pack(buf.as_mut_ptr().offset(4isize), datalen);
+        uint32::pack(buf.as_mut_ptr(), keylen);
+        uint32::pack(buf.as_mut_ptr().offset(4isize), datalen);
         (if Buffer::putalign(
             &mut (*c).b as (*mut Buffer),
             buf.as_mut_ptr() as (*const u8),
@@ -278,11 +278,11 @@ pub unsafe extern "C" fn cdb_make_finish(mut c: *mut cdb_make) -> i32 {
                  }
                  count = (*c).count[i as (usize)];
                  len = count.wrapping_add(count);
-                 uint32_pack(
+                 uint32::pack(
                     (*c).final_.as_mut_ptr().offset((8i32 * i) as (isize)),
                     (*c).pos,
                 );
-                 uint32_pack(
+                 uint32::pack(
                     (*c)
                         .final_
                         .as_mut_ptr()
@@ -335,8 +335,8 @@ pub unsafe extern "C" fn cdb_make_finish(mut c: *mut cdb_make) -> i32 {
                      if !(u < len) {
                          break;
                      }
-                     uint32_pack(buf.as_mut_ptr(), (*(*c).hash.offset(u as (isize))).h);
-                     uint32_pack(
+                     uint32::pack(buf.as_mut_ptr(), (*(*c).hash.offset(u as (isize))).h);
+                     uint32::pack(
                         buf.as_mut_ptr().offset(4isize),
                         (*(*c).hash.offset(u as (isize))).p,
                     );

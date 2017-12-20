@@ -2,6 +2,8 @@ use byte;
 use buffer::{self, Buffer};
 use errno::{self, Errno};
 use libc;
+use uint16;
+use uint32;
 
 extern "C" {
     fn __swbuf(arg1: i32, arg2: *mut __sFILE) -> i32;
@@ -41,9 +43,6 @@ extern "C" {
     static mut strerr_sys: strerr;
     fn timeoutread(t: i32, fd: i32, buf: *mut u8, len: i32) -> i32;
     fn timeoutwrite(t: i32, fd: i32, buf: *mut u8, len: i32) -> i32;
-    fn uint16_pack_big(arg1: *mut u8, arg2: u16);
-    fn uint16_unpack_big(arg1: *const u8, arg2: *mut u16);
-    fn uint32_unpack_big(arg1: *const u8, arg2: *mut u32);
 }
 
 enum __sFILEX {
@@ -421,12 +420,12 @@ pub unsafe extern "C" fn doit(mut buf: *mut u8, mut len: u32, mut pos: u32) -> u
     let mut i: i32;
     pos = x_getname(buf, len, pos, &mut d1 as (*mut *mut u8));
     pos = x_copy(buf, len, pos, data.as_mut_ptr(), 10u32);
-    uint16_unpack_big(data.as_mut_ptr() as (*const u8), &mut typenum as (*mut u16));
-    uint32_unpack_big(
+    uint16::unpack_big(data.as_mut_ptr() as (*const u8), &mut typenum as (*mut u16));
+    uint32::unpack_big(
         data.as_mut_ptr().offset(4isize) as (*const u8),
         &mut ttl as (*mut u32),
     );
-    uint16_unpack_big(
+    uint16::unpack_big(
         data.as_mut_ptr().offset(8isize) as (*const u8),
         &mut dlen as (*mut u16),
     );
@@ -461,7 +460,7 @@ pub unsafe extern "C" fn doit(mut buf: *mut u8, mut len: u32, mut pos: u32) -> u
                      pos = x_getname(buf, len, pos, &mut d2 as (*mut *mut u8));
                      pos = x_getname(buf, len, pos, &mut d3 as (*mut *mut u8));
                      x_copy(buf, len, pos, data.as_mut_ptr(), 20u32);
-                     uint32_unpack_big(data.as_mut_ptr() as (*const u8), &mut u32 as (*mut u32));
+                     uint32::unpack_big(data.as_mut_ptr() as (*const u8), &mut u32 as (*mut u32));
                      if stralloc_copys(&mut line as (*mut stralloc), (*b"#\0").as_ptr()) == 0 {
                          return 0u32;
                      } else if stralloc_catulong0(
@@ -520,7 +519,7 @@ pub unsafe extern "C" fn doit(mut buf: *mut u8, mut len: u32, mut pos: u32) -> u
                                  _currentBlock = 98;
                                  break;
                              }
-                             uint32_unpack_big(
+                             uint32::unpack_big(
                                 data.as_mut_ptr().offset((4i32 * i) as (isize)) as (*const u8),
                                 &mut u32 as (*mut u32),
                             );
@@ -651,7 +650,7 @@ pub unsafe extern "C" fn doit(mut buf: *mut u8, mut len: u32, mut pos: u32) -> u
                      return 0u32;
                  } else {
                      pos = x_copy(buf, len, pos, data.as_mut_ptr(), 2u32);
-                     uint16_unpack_big(data.as_mut_ptr() as (*const u8), &mut dist as (*mut u16));
+                     uint16::unpack_big(data.as_mut_ptr() as (*const u8), &mut dist as (*mut u16));
                      x_getname(buf, len, pos, &mut d1 as (*mut *mut u8));
                      if dns_domain_todot_cat(&mut line as (*mut stralloc), d1 as (*const u8)) == 0 {
                          return 0u32;
@@ -931,7 +930,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     {
         die_generate();
     }
-    uint16_pack_big(out.as_mut_ptr(), packet.len as (u16));
+    uint16::pack_big(out.as_mut_ptr(), packet.len as (u16));
     Buffer::put(
         &mut netwrite as (*mut Buffer),
         out.as_mut_ptr() as (*const u8),
@@ -944,18 +943,18 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     );
     Buffer::flush(&mut netwrite as (*mut Buffer));
     netget(out.as_mut_ptr(), 2u32);
-    uint16_unpack_big(out.as_mut_ptr() as (*const u8), &mut dlen as (*mut u16));
+    uint16::unpack_big(out.as_mut_ptr() as (*const u8), &mut dlen as (*mut u16));
     if stralloc_ready(&mut packet as (*mut stralloc), dlen as (u32)) == 0 {
         die_parse();
     }
     netget(packet.s, dlen as (u32));
     packet.len = dlen as (u32);
     pos = x_copy(packet.s, packet.len, 0u32, out.as_mut_ptr(), 12u32);
-    uint16_unpack_big(
+    uint16::unpack_big(
         out.as_mut_ptr().offset(4isize) as (*const u8),
         &mut numqueries as (*mut u16),
     );
-    uint16_unpack_big(
+    uint16::unpack_big(
         out.as_mut_ptr().offset(6isize) as (*const u8),
         &mut numanswers as (*mut u16),
     );
@@ -989,7 +988,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     pos = x_skipname(packet.s, packet.len, pos);
     pos = x_skipname(packet.s, packet.len, pos);
     pos = x_copy(packet.s, packet.len, pos, out.as_mut_ptr(), 4u32);
-    uint32_unpack_big(
+    uint32::unpack_big(
         out.as_mut_ptr() as (*const u8),
         &mut newserial as (*mut u32),
     );
@@ -1028,7 +1027,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     {
         die_generate();
     }
-    uint16_pack_big(out.as_mut_ptr(), packet.len as (u16));
+    uint16::pack_big(out.as_mut_ptr(), packet.len as (u16));
     Buffer::put(
         &mut netwrite as (*mut Buffer),
         out.as_mut_ptr() as (*const u8),
@@ -1046,14 +1045,14 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
             break;
         }
         netget(out.as_mut_ptr(), 2u32);
-        uint16_unpack_big(out.as_mut_ptr() as (*const u8), &mut dlen as (*mut u16));
+        uint16::unpack_big(out.as_mut_ptr() as (*const u8), &mut dlen as (*mut u16));
         if stralloc_ready(&mut packet as (*mut stralloc), dlen as (u32)) == 0 {
             die_parse();
         }
         netget(packet.s, dlen as (u32));
         packet.len = dlen as (u32);
         pos = x_copy(packet.s, packet.len, 0u32, out.as_mut_ptr(), 12u32);
-        uint16_unpack_big(
+        uint16::unpack_big(
             out.as_mut_ptr().offset(4isize) as (*const u8),
             &mut numqueries as (*mut u16),
         );
