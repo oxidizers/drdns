@@ -22,15 +22,15 @@ impl Clone for stralloc {
 
 impl stralloc {
     #[no_mangle]
-    pub unsafe extern "C" fn stralloc_cat(mut sato: *mut stralloc, mut safrom: *const stralloc) -> i32 {
-        stralloc_catb(sato, (*safrom).s as (*const u8), (*safrom).len)
+    pub unsafe extern "C" fn stralloc_cat(sato: *mut stralloc, safrom: *const stralloc) -> i32 {
+        Self::stralloc_catb(sato, (*safrom).s as (*const u8), (*safrom).len)
     }
 
     #[no_mangle]
-    pub unsafe extern "C" fn stralloc_catb(mut sa: *mut stralloc, mut s: *const u8, mut n: u32) -> i32 {
+    pub unsafe extern "C" fn stralloc_catb(sa: *mut stralloc, s: *const u8, n: u32) -> i32 {
         if (*sa).s.is_null() {
-            stralloc_copyb(sa, s, n)
-        } else if stralloc_readyplus(sa, n.wrapping_add(1u32)) == 0 {
+            Self::stralloc_copyb(sa, s, n)
+        } else if Self::stralloc_readyplus(sa, n.wrapping_add(1u32)) == 0 {
             0i32
         } else {
             byte::copy((*sa).s.offset((*sa).len as (isize)), n, s as (*mut u8));
@@ -41,21 +41,21 @@ impl stralloc {
     }
 
     #[no_mangle]
-    pub unsafe extern "C" fn stralloc_cats(mut sa: *mut stralloc, mut s: *const u8) -> i32 {
-        stralloc_catb(sa, s, libc::strlen(s as *const i8) as u32)
+    pub unsafe extern "C" fn stralloc_cats(sa: *mut stralloc, s: *const u8) -> i32 {
+        Self::stralloc_catb(sa, s, libc::strlen(s as *const i8) as u32)
     }
 
     #[no_mangle]
     pub unsafe extern "C" fn stralloc_copy(
-        mut sato: *mut stralloc,
-        mut safrom: *const stralloc,
+        sato: *mut stralloc,
+        safrom: *const stralloc,
     ) -> i32 {
-        stralloc_copyb(sato, (*safrom).s as (*const u8), (*safrom).len)
+        Self::stralloc_copyb(sato, (*safrom).s as (*const u8), (*safrom).len)
     }
 
     #[no_mangle]
-    pub unsafe extern "C" fn stralloc_ready(mut x: *mut stralloc, mut n: u32) -> i32 {
-        let mut i: u32;
+    pub unsafe extern "C" fn stralloc_ready(x: *mut stralloc, n: u32) -> i32 {
+        let i: u32;
         if !(*x).s.is_null() {
             i = (*x).a;
             (if n > i {
@@ -89,8 +89,8 @@ impl stralloc {
     }
 
     #[no_mangle]
-    pub unsafe extern "C" fn stralloc_readyplus(mut x: *mut stralloc, mut n: u32) -> i32 {
-        let mut i: u32;
+    pub unsafe extern "C" fn stralloc_readyplus(x: *mut stralloc, mut n: u32) -> i32 {
+        let i: u32;
         if !(*x).s.is_null() {
             i = (*x).a;
             n = n.wrapping_add((*x).len);
@@ -126,13 +126,13 @@ impl stralloc {
 
     #[no_mangle]
     pub unsafe extern "C" fn stralloc_catulong0(
-        mut sa: *mut stralloc,
+        sa: *mut stralloc,
         mut u: usize,
-        mut n: u32,
+        n: u32,
     ) -> i32 {
         let mut len: u32;
         let mut q: usize;
-        let mut s: *mut u8;
+        let s: *mut u8;
         len = 1u32;
         q = u;
         'loop1: loop {
@@ -145,7 +145,7 @@ impl stralloc {
         if len < n {
             len = n;
         }
-        if stralloc_readyplus(sa, len) == 0 {
+        if Self::stralloc_readyplus(sa, len) == 0 {
             0i32
         } else {
             s = (*sa).s.offset((*sa).len as (isize));
@@ -165,24 +165,24 @@ impl stralloc {
     }
 
     #[no_mangle]
-    pub unsafe extern "C" fn stralloc_catlong0(mut sa: *mut stralloc, mut l: isize, mut n: u32) -> i32 {
+    pub unsafe extern "C" fn stralloc_catlong0(sa: *mut stralloc, mut l: isize, n: u32) -> i32 {
         if l < 0isize {
-            if stralloc_append(sa, (*b"-\0").as_ptr()) == 0 {
+            if Self::stralloc_append(sa, (*b"-\0").as_ptr()) == 0 {
                 return 0i32;
             } else {
                 l = -l;
             }
         }
-        stralloc_catulong0(sa, l as (usize), n)
+        Self::stralloc_catulong0(sa, l as (usize), n)
     }
 
     #[no_mangle]
     pub unsafe extern "C" fn stralloc_copyb(
-        mut sa: *mut stralloc,
-        mut s: *const u8,
-        mut n: u32,
+        sa: *mut stralloc,
+        s: *const u8,
+        n: u32,
     ) -> i32 {
-        if stralloc_ready(sa, n.wrapping_add(1u32)) == 0 {
+        if Self::stralloc_ready(sa, n.wrapping_add(1u32)) == 0 {
             0i32
         } else {
             byte::copy((*sa).s, n, s as (*mut u8));
@@ -193,13 +193,13 @@ impl stralloc {
     }
 
     #[no_mangle]
-    pub unsafe extern "C" fn stralloc_copys(mut sa: *mut stralloc, mut s: *const u8) -> i32 {
-        stralloc_copyb(sa, s, libc::strlen(s as *const i8) as u32)
+    pub unsafe extern "C" fn stralloc_copys(sa: *mut stralloc, s: *const u8) -> i32 {
+        Self::stralloc_copyb(sa, s, libc::strlen(s as *const i8) as u32)
     }
 
     #[no_mangle]
-    pub unsafe extern "C" fn stralloc_append(mut x: *mut stralloc, mut i: *const u8) -> i32 {
-        if stralloc_readyplus(x, 1u32) == 0 {
+    pub unsafe extern "C" fn stralloc_append(x: *mut stralloc, i: *const u8) -> i32 {
+        if Self::stralloc_readyplus(x, 1u32) == 0 {
             0i32
         } else {
             *(*x).s.offset({
