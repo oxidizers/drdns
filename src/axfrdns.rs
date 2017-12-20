@@ -2,6 +2,8 @@ use buffer::{self, Buffer};
 use byte;
 use libc;
 use tai::Tai;
+use uint16;
+use uint32;
 
 extern "C" {
     fn case_lowerb(arg1: *mut u8, arg2: u32);
@@ -53,10 +55,6 @@ extern "C" {
     static mut strerr_sys: strerr;
     fn timeoutread(t: i32, fd: i32, buf: *mut u8, len: i32) -> i32;
     fn timeoutwrite(t: i32, fd: i32, buf: *mut u8, len: i32) -> i32;
-    fn uint16_pack_big(arg1: *mut u8, arg2: u16);
-    fn uint16_unpack_big(arg1: *const u8, arg2: *mut u16);
-    fn uint32_pack_big(arg1: *mut u8, arg2: u32);
-    fn uint32_unpack(arg1: *const u8, arg2: *mut u32);
 }
 
 #[derive(Copy)]
@@ -197,7 +195,7 @@ pub static mut netwrite: Buffer = Buffer {
 #[no_mangle]
 pub unsafe extern "C" fn print(mut buf: *mut u8, mut len: u32) {
     let mut tcpheader: [u8; 2];
-    uint16_pack_big(tcpheader.as_mut_ptr(), len as (u16));
+    uint16::pack_big(tcpheader.as_mut_ptr(), len as (u16));
     Buffer::put(
         &mut netwrite as (*mut Buffer),
         tcpheader.as_mut_ptr() as (*const u8),
@@ -451,7 +449,7 @@ pub unsafe extern "C" fn build(
             if (*(&mut cutoff as (*mut Tai))).x < (*(&mut now as (*mut Tai))).x {
                 return 0i32;
             } else {
-                uint32_pack_big(ttl.as_mut_ptr(), 2u32);
+                uint32::pack_big(ttl.as_mut_ptr(), 2u32);
             }
         } else if !((*(&mut cutoff as (*mut Tai))).x < (*(&mut now as (*mut Tai))).x) {
             return 0i32;
@@ -518,7 +516,7 @@ pub unsafe extern "C" fn build(
     if (*sa).len > 65535u32 {
         die_cdbformat();
     }
-    uint16_pack_big(
+    uint16::pack_big(
         (*sa).s.offset(rdatapos as (isize)).offset(-2isize),
         (*sa).len.wrapping_sub(rdatapos) as (u16),
     );
@@ -654,7 +652,7 @@ pub unsafe extern "C" fn doaxfr(mut id: *mut u8) {
     pos = 0u32;
     get(num.as_mut_ptr(), 4u32);
     pos = pos.wrapping_add(4u32);
-    uint32_unpack(num.as_mut_ptr() as (*const u8), &mut eod as (*mut u32));
+    uint32::unpack(num.as_mut_ptr() as (*const u8), &mut eod as (*mut u32));
     'loop24: loop {
         if !(pos < 2048u32) {
             break;
@@ -671,10 +669,10 @@ pub unsafe extern "C" fn doaxfr(mut id: *mut u8) {
         }
         get(num.as_mut_ptr(), 4u32);
         pos = pos.wrapping_add(4u32);
-        uint32_unpack(num.as_mut_ptr() as (*const u8), &mut klen as (*mut u32));
+        uint32::unpack(num.as_mut_ptr() as (*const u8), &mut klen as (*mut u32));
         get(num.as_mut_ptr(), 4u32);
         pos = pos.wrapping_add(4u32);
-        uint32_unpack(num.as_mut_ptr() as (*const u8), &mut dlen as (*mut u32));
+        uint32::unpack(num.as_mut_ptr() as (*const u8), &mut dlen as (*mut u32));
         if eod.wrapping_sub(pos) < klen {
             die_cdbformat();
         }
@@ -773,7 +771,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
     scan_ulong(x, &mut port as (*mut usize));
     'loop5: loop {
         netread(tcpheader.as_mut_ptr(), 2u32);
-        uint16_unpack_big(
+        uint16::unpack_big(
             tcpheader.as_mut_ptr() as (*const u8),
             &mut len as (*mut u16),
         );

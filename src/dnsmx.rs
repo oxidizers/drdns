@@ -1,6 +1,7 @@
 use buffer::Buffer;
 use byte;
 use libc;
+use uint16;
 
 extern "C" {
     static mut buffer_1: *mut Buffer;
@@ -22,7 +23,6 @@ extern "C" {
         arg8: *const strerr,
     );
     static mut strerr_sys: strerr;
-    fn uint16_unpack_big(arg1: *const u8, arg2: *mut u16);
 }
 
 #[derive(Copy)]
@@ -167,7 +167,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
                     out.len.wrapping_sub(i as (u32)).wrapping_sub(2u32),
                     0i32,
                 ) as (i32);
-                uint16_unpack_big(
+                uint16::unpack_big(
                     out.s.offset(i as (isize)) as (*const u8),
                     &mut pref as (*mut u16),
                 );

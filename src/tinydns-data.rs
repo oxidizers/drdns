@@ -1,6 +1,8 @@
 use buffer::{self, Buffer};
 use byte;
 use libc;
+use uint16;
+use uint32;
 
 extern "C" {
     fn __swbuf(arg1: i32, arg2: *mut __sFILE) -> i32;
@@ -43,9 +45,6 @@ extern "C" {
         arg8: *const strerr,
     );
     static mut strerr_sys: strerr;
-    fn uint16_pack_big(arg1: *mut u8, arg2: u16);
-    fn uint32_pack_big(arg1: *mut u8, arg2: u32);
-    fn uint32_unpack_big(arg1: *const u8, arg2: *mut u32);
     fn umask(arg1: u16) -> u16;
 }
 
@@ -361,7 +360,7 @@ pub unsafe extern "C" fn defaultsoa_init(mut fd: i32) {
             &mut strerr_sys as (*mut strerr) as (*const strerr),
         );
     }
-    uint32_pack_big(defaultsoa.as_mut_ptr(), st.st_mtimespec.tv_sec as (u32));
+    uint32::pack_big(defaultsoa.as_mut_ptr(), st.st_mtimespec.tv_sec as (u32));
     if byte::diff(
         defaultsoa.as_mut_ptr(),
         4u32,
@@ -491,7 +490,7 @@ pub unsafe extern "C" fn rr_start(
         rr_add((*b">\0").as_ptr(), 1u32);
         rr_add(loc, 2u32);
     }
-    uint32_pack_big(buf.as_mut_ptr(), ttl as (u32));
+    uint32::pack_big(buf.as_mut_ptr(), ttl as (u32));
     rr_add(buf.as_mut_ptr() as (*const u8), 4u32);
     rr_add(ttd, 8u32);
 }
@@ -723,7 +722,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
                 nomem();
             }
             scan_ulong(f[1usize].s as (*const u8), &mut u as (*mut usize));
-            uint16_pack_big(type_.as_mut_ptr(), u as (u16));
+            uint16::pack_big(type_.as_mut_ptr(), u as (u16));
             if byte::diff(
                 type_.as_mut_ptr(),
                 2u32,
@@ -918,7 +917,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
                 ttd.as_mut_ptr() as (*const u8),
                 loc.as_mut_ptr() as (*const u8),
             );
-            uint16_pack_big(buf.as_mut_ptr(), u as (u16));
+            uint16::pack_big(buf.as_mut_ptr(), u as (u16));
             rr_add(buf.as_mut_ptr() as (*const u8), 2u32);
             rr_addname(d2 as (*const u8));
             rr_finish(d1 as (*const u8));
@@ -1062,52 +1061,52 @@ pub unsafe extern "C" fn _c_main() -> i32 {
                 nomem();
             }
             if scan_ulong(f[3usize].s as (*const u8), &mut u as (*mut usize)) == 0 {
-                uint32_unpack_big(
+                uint32::unpack_big(
                     defaultsoa.as_mut_ptr() as (*const u8),
                     &mut u as (*mut usize) as (*mut u32),
                 );
             }
-            uint32_pack_big(soa.as_mut_ptr(), u as (u32));
+            uint32::pack_big(soa.as_mut_ptr(), u as (u32));
             if stralloc_append(&mut f[4usize] as (*mut stralloc), (*b"\0").as_ptr()) == 0 {
                 nomem();
             }
             if scan_ulong(f[4usize].s as (*const u8), &mut u as (*mut usize)) == 0 {
-                uint32_unpack_big(
+                uint32::unpack_big(
                     defaultsoa.as_mut_ptr().offset(4isize) as (*const u8),
                     &mut u as (*mut usize) as (*mut u32),
                 );
             }
-            uint32_pack_big(soa.as_mut_ptr().offset(4isize), u as (u32));
+            uint32::pack_big(soa.as_mut_ptr().offset(4isize), u as (u32));
             if stralloc_append(&mut f[5usize] as (*mut stralloc), (*b"\0").as_ptr()) == 0 {
                 nomem();
             }
             if scan_ulong(f[5usize].s as (*const u8), &mut u as (*mut usize)) == 0 {
-                uint32_unpack_big(
+                uint32::unpack_big(
                     defaultsoa.as_mut_ptr().offset(8isize) as (*const u8),
                     &mut u as (*mut usize) as (*mut u32),
                 );
             }
-            uint32_pack_big(soa.as_mut_ptr().offset(8isize), u as (u32));
+            uint32::pack_big(soa.as_mut_ptr().offset(8isize), u as (u32));
             if stralloc_append(&mut f[6usize] as (*mut stralloc), (*b"\0").as_ptr()) == 0 {
                 nomem();
             }
             if scan_ulong(f[6usize].s as (*const u8), &mut u as (*mut usize)) == 0 {
-                uint32_unpack_big(
+                uint32::unpack_big(
                     defaultsoa.as_mut_ptr().offset(12isize) as (*const u8),
                     &mut u as (*mut usize) as (*mut u32),
                 );
             }
-            uint32_pack_big(soa.as_mut_ptr().offset(12isize), u as (u32));
+            uint32::pack_big(soa.as_mut_ptr().offset(12isize), u as (u32));
             if stralloc_append(&mut f[7usize] as (*mut stralloc), (*b"\0").as_ptr()) == 0 {
                 nomem();
             }
             if scan_ulong(f[7usize].s as (*const u8), &mut u as (*mut usize)) == 0 {
-                uint32_unpack_big(
+                uint32::unpack_big(
                     defaultsoa.as_mut_ptr().offset(16isize) as (*const u8),
                     &mut u as (*mut usize) as (*mut u32),
                 );
             }
-            uint32_pack_big(soa.as_mut_ptr().offset(16isize), u as (u32));
+            uint32::pack_big(soa.as_mut_ptr().offset(16isize), u as (u32));
             if stralloc_append(&mut f[8usize] as (*mut stralloc), (*b"\0").as_ptr()) == 0 {
                 nomem();
             }

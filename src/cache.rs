@@ -2,11 +2,7 @@ use alloc;
 use byte;
 use libc;
 use tai::Tai;
-
-extern "C" {
-    fn uint32_pack(arg1: *mut u8, arg2: u32);
-    fn uint32_unpack(arg1: *const u8, arg2: *mut u32);
-}
+use uint32;
 
 #[no_mangle]
 pub static mut cache_motion: usize = 0usize;
@@ -48,7 +44,7 @@ unsafe extern "C" fn get4(mut pos: u32) -> u32 {
     if pos > size.wrapping_sub(4u32) {
         cache_impossible();
     }
-    uint32_unpack(
+    uint32::unpack(
         x.offset(pos as (isize)) as (*const u8),
         &mut result as (*mut u32),
     );
@@ -154,7 +150,7 @@ unsafe extern "C" fn set4(mut pos: u32, mut u: u32) {
     if pos > size.wrapping_sub(4u32) {
         cache_impossible();
     }
-    uint32_pack(x.offset(pos as (isize)), u);
+    uint32::pack(x.offset(pos as (isize)), u);
 }
 
 #[no_mangle]

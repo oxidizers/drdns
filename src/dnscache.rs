@@ -4,6 +4,7 @@ use errno::{self, Errno};
 use libc;
 use tai::Tai;
 use taia::TaiA;
+use uint16;
 
 extern "C" {
     fn cache_init(arg1: u32) -> i32;
@@ -66,7 +67,6 @@ extern "C" {
         arg8: *const strerr,
     );
     static mut strerr_sys: strerr;
-    fn uint16_pack_big(arg1: *mut u8, arg2: u16);
 }
 
 static mut myipoutgoing: [u8; 4] = [0u8; 4];
@@ -531,7 +531,7 @@ pub unsafe extern "C" fn t_respond(mut j: i32) {
         (if t[j as (usize)].buf.is_null() {
              t_close(j);
          } else {
-             uint16_pack_big(t[j as (usize)].buf, response_len as (u16));
+             uint16::pack_big(t[j as (usize)].buf, response_len as (u16));
              byte::copy(t[j as (usize)].buf.offset(2isize), response_len, response);
              t[j as (usize)].pos = 0u32;
              t[j as (usize)].state = -1i32;

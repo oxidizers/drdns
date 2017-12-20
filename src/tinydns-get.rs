@@ -1,6 +1,7 @@
 use byte;
 use buffer::Buffer;
 use libc;
+use uint16;
 
 extern "C" {
     static mut buffer_1: *mut Buffer;
@@ -29,7 +30,6 @@ extern "C" {
         arg8: *const strerr,
     );
     static mut strerr_sys: strerr;
-    fn uint16_unpack_big(arg1: *const u8, arg2: *mut u16);
 }
 
 #[derive(Copy)]
@@ -163,7 +163,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     if stralloc_copys(&mut out as (*mut stralloc), (*b"\0").as_ptr()) == 0 {
         oops();
     }
-    uint16_unpack_big(type_.as_mut_ptr() as (*const u8), &mut u16 as (*mut u16));
+    uint16::unpack_big(type_.as_mut_ptr() as (*const u8), &mut u16 as (*mut u16));
     if stralloc_catulong0(&mut out as (*mut stralloc), u16 as (usize), 0u32) == 0 {
         oops();
     }

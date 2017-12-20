@@ -1,6 +1,8 @@
 use byte;
 use errno::{self, Errno};
 use libc;
+use uint16;
+use uint32;
 
 extern "C" {
     fn dns_domain_equal(arg1: *const u8, arg2: *const u8) -> i32;
@@ -11,8 +13,6 @@ extern "C" {
     fn stralloc_cats(arg1: *mut stralloc, arg2: *const u8) -> i32;
     fn stralloc_catulong0(arg1: *mut stralloc, arg2: usize, arg3: u32) -> i32;
     fn stralloc_copys(arg1: *mut stralloc, arg2: *const u8) -> i32;
-    fn uint16_unpack_big(arg1: *const u8, arg2: *mut u16);
-    fn uint32_unpack_big(arg1: *const u8, arg2: *mut u32);
 }
 
 static mut d: *mut u8 = 0 as (*mut u8);
@@ -57,7 +57,7 @@ pub unsafe extern "C" fn printrecord_cat(
         (if pos == 0 {
              0u32
          } else {
-             uint16_unpack_big(
+             uint16::unpack_big(
                 misc.as_mut_ptr().offset(8isize) as (*const u8),
                 &mut datalen as (*mut u16),
             );
@@ -80,7 +80,7 @@ pub unsafe extern "C" fn printrecord_cat(
               } else if stralloc_cats(out, (*b" \0").as_ptr()) == 0 {
                   0u32
               } else {
-                  uint32_unpack_big(
+                  uint32::unpack_big(
                     misc.as_mut_ptr().offset(4isize) as (*const u8),
                     &mut u32 as (*mut u32),
                 );
@@ -150,7 +150,7 @@ pub unsafe extern "C" fn printrecord_cat(
                                    if pos == 0 {
                                        return 0u32;
                                    } else {
-                                       uint16_unpack_big(
+                                       uint16::unpack_big(
                                         misc.as_mut_ptr() as (*const u8),
                                         &mut u16 as (*mut u16),
                                     );
@@ -203,7 +203,7 @@ pub unsafe extern "C" fn printrecord_cat(
                                                    _currentBlock = 60;
                                                    break;
                                                }
-                                               uint32_unpack_big(
+                                               uint32::unpack_big(
                                                 misc.as_mut_ptr().offset((4i32 * i) as (isize)) as
                                                     (*const u8),
                                                 &mut u32 as (*mut u32),
@@ -272,7 +272,7 @@ pub unsafe extern "C" fn printrecord_cat(
                        } else if stralloc_cats(out, (*b" \0").as_ptr()) == 0 {
                            return 0u32;
                        } else {
-                           uint16_unpack_big(
+                           uint16::unpack_big(
                             misc.as_mut_ptr() as (*const u8),
                             &mut u16 as (*mut u16),
                         );

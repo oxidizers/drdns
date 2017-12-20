@@ -5,6 +5,7 @@ use errno::{self, Errno};
 use libc;
 use tai::Tai;
 use taia::TaiA;
+use uint16;
 
 extern "C" {
     static mut buffer_1: *mut Buffer;
@@ -54,7 +55,6 @@ extern "C" {
         arg7: *const u8,
         arg8: *const strerr,
     );
-    fn uint16_unpack_big(arg1: *const u8, arg2: *mut u16);
 }
 
 #[derive(Copy)]
@@ -967,15 +967,15 @@ pub unsafe extern "C" fn parsepacket(
         pos = dns_packet_skipname(buf, len, pos);
         if !(pos == 0) {
             pos = pos.wrapping_add(4u32);
-            uint16_unpack_big(
+            uint16::unpack_big(
                 header.as_mut_ptr().offset(6isize) as (*const u8),
                 &mut numanswers as (*mut u16),
             );
-            uint16_unpack_big(
+            uint16::unpack_big(
                 header.as_mut_ptr().offset(8isize) as (*const u8),
                 &mut numauthority as (*mut u16),
             );
-            uint16_unpack_big(
+            uint16::unpack_big(
                 header.as_mut_ptr().offset(10isize) as (*const u8),
                 &mut numglue as (*mut u16),
             );
@@ -1032,7 +1032,7 @@ pub unsafe extern "C" fn parsepacket(
                             }
                         }
                     }
-                    uint16_unpack_big(
+                    uint16::unpack_big(
                         header.as_mut_ptr().offset(8isize) as (*const u8),
                         &mut datalen as (*mut u16),
                     );
@@ -1079,7 +1079,7 @@ pub unsafe extern "C" fn parsepacket(
                                 break;
                             }
                         }
-                        uint16_unpack_big(
+                        uint16::unpack_big(
                             header.as_mut_ptr().offset(8isize) as (*const u8),
                             &mut datalen as (*mut u16),
                         );
@@ -1125,7 +1125,7 @@ pub unsafe extern "C" fn parsepacket(
                                 _currentBlock = 60;
                                 break;
                             }
-                            uint16_unpack_big(
+                            uint16::unpack_big(
                                 header.as_mut_ptr().offset(8isize) as (*const u8),
                                 &mut datalen as (*mut u16),
                             );
@@ -1403,7 +1403,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
             if stralloc_copys(&mut querystr as (*mut stralloc), (*b"\0").as_ptr()) == 0 {
                 nomem();
             }
-            uint16_unpack_big(type_.as_mut_ptr() as (*const u8), &mut u16 as (*mut u16));
+            uint16::unpack_big(type_.as_mut_ptr() as (*const u8), &mut u16 as (*mut u16));
             if stralloc_catulong0(&mut querystr as (*mut stralloc), u16 as (usize), 0u32) == 0 {
                 nomem();
             }

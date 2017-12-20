@@ -4,6 +4,7 @@ use errno::{self, Errno};
 use libc;
 use tai::Tai;
 use taia::TaiA;
+use uint16;
 
 extern "C" {
     fn close(arg1: i32) -> i32;
@@ -19,7 +20,6 @@ extern "C" {
     fn socket_connected(arg1: i32) -> i32;
     fn socket_tcp() -> i32;
     fn socket_udp() -> i32;
-    fn uint16_pack_big(arg1: *mut u8, arg2: u16);
 }
 
 #[derive(Copy)]
@@ -285,7 +285,7 @@ pub unsafe extern "C" fn dns_transmit_start(
     if (*d).query.is_null() {
         -1i32
     } else {
-        uint16_pack_big((*d).query, len.wrapping_add(16u32) as (u16));
+        uint16::pack_big((*d).query, len.wrapping_add(16u32) as (u16));
         byte::copy(
             (*d).query.offset(2isize),
             12u32,

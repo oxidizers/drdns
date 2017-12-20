@@ -1,4 +1,5 @@
 use byte;
+use uint16;
 
 extern "C" {
     fn recvfrom(
@@ -9,7 +10,6 @@ extern "C" {
         arg5: *mut sockaddr,
         arg6: *mut u32,
     ) -> isize;
-    fn uint16_unpack_big(arg1: *const u8, arg2: *mut u16);
 }
 
 #[derive(Copy)]
@@ -77,7 +77,7 @@ pub unsafe extern "C" fn socket_recv4(
         -1i32
     } else {
         byte::copy(ip, 4u32, &mut sa.sin_addr as (*mut in_addr) as (*mut u8));
-        uint16_unpack_big(
+        uint16::unpack_big(
             &mut sa.sin_port as (*mut u16) as (*mut u8) as (*const u8),
             port,
         );

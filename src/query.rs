@@ -4,6 +4,8 @@ use errno::{self, Errno};
 use libc;
 use tai::Tai;
 use taia::TaiA;
+use uint16;
+use uint32;
 
 extern "C" {
     fn cache_get(arg1: *const u8, arg2: u32, arg3: *mut u32, arg4: *mut u32) -> *mut u8;
@@ -72,8 +74,6 @@ extern "C" {
     fn response_servfail();
     fn roots(arg1: *mut u8, arg2: *mut u8) -> i32;
     fn roots_same(arg1: *mut u8, arg2: *mut u8) -> i32;
-    fn uint16_unpack_big(arg1: *const u8, arg2: *mut u16);
-    fn uint32_unpack_big(arg1: *const u8, arg2: *mut u32);
 }
 
 static mut flagforwardonly: i32 = 0i32;
@@ -267,7 +267,7 @@ unsafe extern "C" fn typematch(mut rtype: *const u8, mut qtype: *const u8) -> i3
 
 unsafe extern "C" fn ttlget(mut buf: *mut u8) -> u32 {
     let mut ttl: u32;
-    uint32_unpack_big(buf as (*const u8), &mut ttl as (*mut u32));
+    uint32::unpack_big(buf as (*const u8), &mut ttl as (*mut u32));
     if ttl > 1000000000u32 {
         0u32
     } else if ttl > 604800u32 {
@@ -441,15 +441,15 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                 } else {
                     pos = pos.wrapping_add(4u32);
                     posanswers = pos;
-                    uint16_unpack_big(
+                    uint16::unpack_big(
                         header.as_mut_ptr().offset(6isize) as (*const u8),
                         &mut numanswers as (*mut u16),
                     );
-                    uint16_unpack_big(
+                    uint16::unpack_big(
                         header.as_mut_ptr().offset(8isize) as (*const u8),
                         &mut numauthority as (*mut u16),
                     );
-                    uint16_unpack_big(
+                    uint16::unpack_big(
                         header.as_mut_ptr().offset(10isize) as (*const u8),
                         &mut numglue as (*mut u16),
                     );
@@ -519,7 +519,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                     }
                                 }
                             }
-                            uint16_unpack_big(
+                            uint16::unpack_big(
                                 header.as_mut_ptr().offset(8isize) as (*const u8),
                                 &mut datalen as (*mut u16),
                             );
@@ -581,7 +581,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                         break;
                                     }
                                 }
-                                uint16_unpack_big(
+                                uint16::unpack_big(
                                     header.as_mut_ptr().offset(8isize) as (*const u8),
                                     &mut datalen as (*mut u16),
                                 );
@@ -661,7 +661,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                 _currentBlock = 348;
                                                 break;
                                             }
-                                            uint16_unpack_big(
+                                            uint16::unpack_big(
                                                 header.as_mut_ptr().offset(8isize) as (*const u8),
                                                 &mut datalen as (*mut u16),
                                             );
@@ -1281,7 +1281,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                                             _currentBlock = 348;
                                                                             break 'loop21;
                                                                         }
-                                                                        uint16_unpack_big(
+                                                                        uint16::unpack_big(
                                                                             header
                                                                                 .as_mut_ptr()
                                                                                 .offset(8isize) as
@@ -1430,7 +1430,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                                     _currentBlock = 348;
                                                                     break;
                                                                 }
-                                                                uint16_unpack_big(
+                                                                uint16::unpack_big(
                                                                     header.as_mut_ptr().offset(
                                                                         8isize,
                                                                     ) as
@@ -1553,7 +1553,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                                         4isize,
                                                                     ),
                                                                 );
-                                                                uint16_unpack_big(
+                                                                uint16::unpack_big(
                                                                     header.as_mut_ptr().offset(
                                                                         8isize,
                                                                     ) as
@@ -1819,7 +1819,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                                 _currentBlock = 348;
                                                                 break;
                                                             }
-                                                            uint16_unpack_big(
+                                                            uint16::unpack_big(
                                                                 header.as_mut_ptr().offset(
                                                                     8isize,
                                                                 ) as
@@ -2469,7 +2469,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                             _currentBlock = 240;
                                             break 'loop183;
                                         }
-                                        uint16_unpack_big(
+                                        uint16::unpack_big(
                                             cached as (*const u8),
                                             &mut datalen as (*mut u16),
                                         );

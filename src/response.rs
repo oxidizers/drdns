@@ -1,10 +1,10 @@
 use byte;
+use uint16;
+use uint32;
 
 extern "C" {
     fn dns_domain_equal(arg1: *const u8, arg2: *const u8) -> i32;
     fn dns_domain_length(arg1: *const u8) -> u32;
-    fn uint16_pack_big(arg1: *mut u8, arg2: u16);
-    fn uint32_pack_big(arg1: *mut u8, arg2: u32);
 }
 
 #[no_mangle]
@@ -80,7 +80,7 @@ pub unsafe extern "C" fn response_addname(mut d: *const u8) -> i32 {
     } else if _currentBlock == 10 {
         0i32
     } else {
-        uint16_pack_big(
+        uint16::pack_big(
             buf.as_mut_ptr(),
             49152u32.wrapping_add(name_ptr[i as (usize)]) as (u16),
         );
@@ -136,7 +136,7 @@ pub unsafe extern "C" fn response_rstart(
         if flaghidettl != 0 {
             ttl = 0u32;
         }
-        uint32_pack_big(ttlstr.as_mut_ptr(), ttl);
+        uint32::pack_big(ttlstr.as_mut_ptr(), ttl);
         (if response_addbytes(ttlstr.as_mut_ptr() as (*const u8), 4u32) == 0 {
              0i32
          } else if response_addbytes((*b"\0\0\0").as_ptr(), 2u32) == 0 {
@@ -150,7 +150,7 @@ pub unsafe extern "C" fn response_rstart(
 
 #[no_mangle]
 pub unsafe extern "C" fn response_rfinish(mut x: i32) {
-    uint16_pack_big(
+    uint16::pack_big(
         response.as_mut_ptr().offset(dpos as (isize)).offset(
             -2isize,
         ),
