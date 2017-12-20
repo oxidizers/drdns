@@ -1,11 +1,12 @@
 use byte;
+use stralloc::StrAlloc;
 use tai::Tai;
 use taia::TaiA;
 use uint16;
 
 extern "C" {
     fn dns_domain_free(arg1: *mut *mut u8);
-    fn dns_domain_todot_cat(arg1: *mut stralloc, arg2: *const u8) -> i32;
+    fn dns_domain_todot_cat(arg1: *mut StrAlloc, arg2: *const u8) -> i32;
     fn dns_name4_domain(arg1: *mut u8, arg2: *const u8);
     fn dns_packet_copy(arg1: *const u8, arg2: u32, arg3: u32, arg4: *mut u8, arg5: u32) -> u32;
     fn dns_packet_getname(arg1: *const u8, arg2: u32, arg3: u32, arg4: *mut *mut u8) -> u32;
@@ -13,28 +14,13 @@ extern "C" {
     fn dns_resolve(arg1: *const u8, arg2: *const u8) -> i32;
     static mut dns_resolve_tx: dns_transmit;
     fn dns_transmit_free(arg1: *mut dns_transmit);
-    fn stralloc_copys(arg1: *mut stralloc, arg2: *const u8) -> i32;
 }
 
 static mut q: *mut u8 = 0i32 as (*mut u8);
 
-#[derive(Copy)]
-#[repr(C)]
-pub struct stralloc {
-    pub s: *mut u8,
-    pub len: u32,
-    pub a: u32,
-}
-
-impl Clone for stralloc {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
 #[no_mangle]
 pub unsafe extern "C" fn dns_name_packet(
-    mut out: *mut stralloc,
+    mut out: *mut StrAlloc,
     mut buf: *const u8,
     mut len: u32,
 ) -> i32 {
@@ -43,7 +29,7 @@ pub unsafe extern "C" fn dns_name_packet(
     let mut header: [u8; 12];
     let mut numanswers: u16;
     let mut datalen: u16;
-    if stralloc_copys(out, (*b"\0").as_ptr()) == 0 {
+    if StrAlloc::copys(out, (*b"\0").as_ptr()) == 0 {
         -1i32
     } else {
         pos = dns_packet_copy(buf, len, 0u32, header.as_mut_ptr(), 12u32);
@@ -146,7 +132,7 @@ impl Clone for dns_transmit {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn dns_name4(mut out: *mut stralloc, mut ip: *const u8) -> i32 {
+pub unsafe extern "C" fn dns_name4(mut out: *mut StrAlloc, mut ip: *const u8) -> i32 {
     let mut name: [u8; 31];
     dns_name4_domain(name.as_mut_ptr(), ip);
     if dns_resolve(name.as_mut_ptr() as (*const u8), (*b"\0\x0C\0").as_ptr()) == -1i32 {

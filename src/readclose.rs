@@ -1,36 +1,21 @@
 use errno::{errno, Errno};
 use libc;
+use stralloc::StrAlloc;
 
 extern "C" {
     fn close(arg1: i32) -> i32;
-    fn stralloc_copys(arg1: *mut stralloc, arg2: *const u8) -> i32;
-    fn stralloc_readyplus(arg1: *mut stralloc, arg2: u32) -> i32;
-}
-
-#[derive(Copy)]
-#[repr(C)]
-pub struct stralloc {
-    pub s: *mut u8,
-    pub len: u32,
-    pub a: u32,
-}
-
-impl Clone for stralloc {
-    fn clone(&self) -> Self {
-        *self
-    }
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn readclose_append(
     mut fd: i32,
-    mut sa: *mut stralloc,
+    mut sa: *mut StrAlloc,
     mut bufsize: u32,
 ) -> i32 {
     let mut _currentBlock;
     let mut r: i32;
     'loop1: loop {
-        if stralloc_readyplus(sa, bufsize) == 0 {
+        if StrAlloc::readyplus(sa, bufsize) == 0 {
             _currentBlock = 7;
             break;
         }
@@ -60,8 +45,8 @@ pub unsafe extern "C" fn readclose_append(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn readclose(mut fd: i32, mut sa: *mut stralloc, mut bufsize: u32) -> i32 {
-    if stralloc_copys(sa, (*b"\0").as_ptr()) == 0 {
+pub unsafe extern "C" fn readclose(mut fd: i32, mut sa: *mut StrAlloc, mut bufsize: u32) -> i32 {
+    if StrAlloc::copys(sa, (*b"\0").as_ptr()) == 0 {
         close(fd);
         -1i32
     } else {

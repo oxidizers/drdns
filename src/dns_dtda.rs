@@ -1,31 +1,14 @@
-extern "C" {
-    fn stralloc_append(arg1: *mut stralloc, arg2: *const u8) -> i32;
-    fn stralloc_catb(arg1: *mut stralloc, arg2: *const u8, arg3: u32) -> i32;
-}
-
-#[derive(Copy)]
-#[repr(C)]
-pub struct stralloc {
-    pub s: *mut u8,
-    pub len: u32,
-    pub a: u32,
-}
-
-impl Clone for stralloc {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
+use stralloc::StrAlloc;
 
 #[no_mangle]
-pub unsafe extern "C" fn dns_domain_todot_cat(mut out: *mut stralloc, mut d: *const u8) -> i32 {
+pub unsafe extern "C" fn dns_domain_todot_cat(mut out: *mut StrAlloc, mut d: *const u8) -> i32 {
     let mut _currentBlock;
     let mut ch: u8;
     let mut ch2: u8;
     let mut ch3: u8;
     let mut buf: [u8; 4];
     if *d == 0 {
-        stralloc_append(out, (*b".\0").as_ptr())
+        StrAlloc::append(out, (*b".\0").as_ptr())
     } else {
         'loop1: loop {
             ch = *{
@@ -55,7 +38,7 @@ pub unsafe extern "C" fn dns_domain_todot_cat(mut out: *mut stralloc, mut d: *co
                     ch2 as (i32) == b'-' as (i32) ||
                     ch2 as (i32) == b'_' as (i32)
                 {
-                    if stralloc_append(out, &mut ch2 as (*mut u8) as (*const u8)) == 0 {
+                    if StrAlloc::append(out, &mut ch2 as (*mut u8) as (*const u8)) == 0 {
                         _currentBlock = 13;
                         break 'loop1;
                     }
@@ -67,7 +50,7 @@ pub unsafe extern "C" fn dns_domain_todot_cat(mut out: *mut stralloc, mut d: *co
                     ch3 = (ch3 as (i32) >> 3i32) as (u8);
                     buf[1usize] = (b'0' as (i32) + (ch3 as (i32) & 7i32)) as (u8);
                     buf[0usize] = b'\\';
-                    if stralloc_catb(out, buf.as_mut_ptr() as (*const u8), 4u32) == 0 {
+                    if StrAlloc::catb(out, buf.as_mut_ptr() as (*const u8), 4u32) == 0 {
                         _currentBlock = 11;
                         break 'loop1;
                     }
@@ -77,7 +60,7 @@ pub unsafe extern "C" fn dns_domain_todot_cat(mut out: *mut stralloc, mut d: *co
                 _currentBlock = 6;
                 break;
             }
-            if stralloc_append(out, (*b".\0").as_ptr()) == 0 {
+            if StrAlloc::append(out, (*b".\0").as_ptr()) == 0 {
                 _currentBlock = 5;
                 break;
             }

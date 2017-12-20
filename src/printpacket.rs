@@ -1,43 +1,28 @@
 use byte;
 use errno::{self, Errno};
 use libc;
+use stralloc::StrAlloc;
 use uint16;
 
 extern "C" {
-    fn dns_domain_todot_cat(arg1: *mut stralloc, arg2: *const u8) -> i32;
+    fn dns_domain_todot_cat(arg1: *mut StrAlloc, arg2: *const u8) -> i32;
     fn dns_packet_copy(arg1: *const u8, arg2: u32, arg3: u32, arg4: *mut u8, arg5: u32) -> u32;
     fn dns_packet_getname(arg1: *const u8, arg2: u32, arg3: u32, arg4: *mut *mut u8) -> u32;
     fn printrecord_cat(
-        arg1: *mut stralloc,
+        arg1: *mut StrAlloc,
         arg2: *const u8,
         arg3: u32,
         arg4: u32,
         arg5: *const u8,
         arg6: *const u8,
     ) -> u32;
-    fn stralloc_cats(arg1: *mut stralloc, arg2: *const u8) -> i32;
-    fn stralloc_catulong0(arg1: *mut stralloc, arg2: usize, arg3: u32) -> i32;
 }
 
 static mut d: *mut u8 = 0 as (*mut u8);
 
-#[derive(Copy)]
-#[repr(C)]
-pub struct stralloc {
-    pub s: *mut u8,
-    pub len: u32,
-    pub a: u32,
-}
-
-impl Clone for stralloc {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
 #[no_mangle]
 pub unsafe extern "C" fn printpacket_cat(
-    mut out: *mut stralloc,
+    mut out: *mut StrAlloc,
     mut buf: *mut u8,
     mut len: u32,
 ) -> u32 {
@@ -69,83 +54,83 @@ pub unsafe extern "C" fn printpacket_cat(
             data.as_mut_ptr().offset(10isize) as (*const u8),
             &mut numglue as (*mut u16),
         );
-        (if stralloc_catulong0(out, len as (usize), 0u32) == 0 {
+        (if StrAlloc::catulong0(out, len as (usize), 0u32) == 0 {
              0u32
-         } else if stralloc_cats(out, (*b" bytes, \0").as_ptr()) == 0 {
+         } else if StrAlloc::cats(out, (*b" bytes, \0").as_ptr()) == 0 {
              0u32
-         } else if stralloc_catulong0(out, numqueries as (usize), 0u32) == 0 {
+         } else if StrAlloc::catulong0(out, numqueries as (usize), 0u32) == 0 {
              0u32
-         } else if stralloc_cats(out, (*b"+\0").as_ptr()) == 0 {
+         } else if StrAlloc::cats(out, (*b"+\0").as_ptr()) == 0 {
              0u32
-         } else if stralloc_catulong0(out, numanswers as (usize), 0u32) == 0 {
+         } else if StrAlloc::catulong0(out, numanswers as (usize), 0u32) == 0 {
              0u32
-         } else if stralloc_cats(out, (*b"+\0").as_ptr()) == 0 {
+         } else if StrAlloc::cats(out, (*b"+\0").as_ptr()) == 0 {
              0u32
-         } else if stralloc_catulong0(out, numauthority as (usize), 0u32) == 0 {
+         } else if StrAlloc::catulong0(out, numauthority as (usize), 0u32) == 0 {
              0u32
-         } else if stralloc_cats(out, (*b"+\0").as_ptr()) == 0 {
+         } else if StrAlloc::cats(out, (*b"+\0").as_ptr()) == 0 {
              0u32
-         } else if stralloc_catulong0(out, numglue as (usize), 0u32) == 0 {
+         } else if StrAlloc::catulong0(out, numglue as (usize), 0u32) == 0 {
              0u32
-         } else if stralloc_cats(out, (*b" records\0").as_ptr()) == 0 {
+         } else if StrAlloc::cats(out, (*b" records\0").as_ptr()) == 0 {
              0u32
          } else {
              if data[2usize] as (i32) & 128i32 != 0 {
-                 if stralloc_cats(out, (*b", response\0").as_ptr()) == 0 {
+                 if StrAlloc::cats(out, (*b", response\0").as_ptr()) == 0 {
                      return 0u32;
                  }
              }
              if data[2usize] as (i32) & 120i32 != 0 {
-                 if stralloc_cats(out, (*b", weird op\0").as_ptr()) == 0 {
+                 if StrAlloc::cats(out, (*b", weird op\0").as_ptr()) == 0 {
                      return 0u32;
                  }
              }
              if data[2usize] as (i32) & 4i32 != 0 {
-                 if stralloc_cats(out, (*b", authoritative\0").as_ptr()) == 0 {
+                 if StrAlloc::cats(out, (*b", authoritative\0").as_ptr()) == 0 {
                      return 0u32;
                  }
              }
              if data[2usize] as (i32) & 2i32 != 0 {
-                 if stralloc_cats(out, (*b", truncated\0").as_ptr()) == 0 {
+                 if StrAlloc::cats(out, (*b", truncated\0").as_ptr()) == 0 {
                      return 0u32;
                  }
              }
              if data[2usize] as (i32) & 1i32 != 0 {
-                 if stralloc_cats(out, (*b", weird rd\0").as_ptr()) == 0 {
+                 if StrAlloc::cats(out, (*b", weird rd\0").as_ptr()) == 0 {
                      return 0u32;
                  }
              }
              if data[3usize] as (i32) & 128i32 != 0 {
-                 if stralloc_cats(out, (*b", weird ra\0").as_ptr()) == 0 {
+                 if StrAlloc::cats(out, (*b", weird ra\0").as_ptr()) == 0 {
                      return 0u32;
                  }
              }
              let switch1 = data[3usize] as (i32) & 15i32;
              if switch1 == 5i32 {
-                 if stralloc_cats(out, (*b", refused\0").as_ptr()) == 0 {
+                 if StrAlloc::cats(out, (*b", refused\0").as_ptr()) == 0 {
                      return 0u32;
                  }
              } else if switch1 == 4i32 {
-                 if stralloc_cats(out, (*b", notimp\0").as_ptr()) == 0 {
+                 if StrAlloc::cats(out, (*b", notimp\0").as_ptr()) == 0 {
                      return 0u32;
                  }
              } else if switch1 == 3i32 {
-                 if stralloc_cats(out, (*b", nxdomain\0").as_ptr()) == 0 {
+                 if StrAlloc::cats(out, (*b", nxdomain\0").as_ptr()) == 0 {
                      return 0u32;
                  }
              } else if switch1 == 0i32 {
-                 if stralloc_cats(out, (*b", noerror\0").as_ptr()) == 0 {
+                 if StrAlloc::cats(out, (*b", noerror\0").as_ptr()) == 0 {
                      return 0u32;
                  }
-             } else if stralloc_cats(out, (*b", weird rcode\0").as_ptr()) == 0 {
+             } else if StrAlloc::cats(out, (*b", weird rcode\0").as_ptr()) == 0 {
                  return 0u32;
              }
              if data[3usize] as (i32) & 112i32 != 0 {
-                 if stralloc_cats(out, (*b", weird z\0").as_ptr()) == 0 {
+                 if StrAlloc::cats(out, (*b", weird z\0").as_ptr()) == 0 {
                      return 0u32;
                  }
              }
-             (if stralloc_cats(out, (*b"\n\0").as_ptr()) == 0 {
+             (if StrAlloc::cats(out, (*b"\n\0").as_ptr()) == 0 {
                   0u32
               } else {
                   'loop40: loop {
@@ -154,7 +139,7 @@ pub unsafe extern "C" fn printpacket_cat(
                           break;
                       }
                       numqueries = (numqueries as (i32) - 1) as (u16);
-                      if stralloc_cats(out, (*b"query: \0").as_ptr()) == 0 {
+                      if StrAlloc::cats(out, (*b"query: \0").as_ptr()) == 0 {
                           _currentBlock = 71;
                           break;
                       }
@@ -179,7 +164,7 @@ pub unsafe extern "C" fn printpacket_cat(
                         (*b"\0\x01\0").as_ptr() as (*mut u8),
                     ) != 0
                     {
-                          if stralloc_cats(out, (*b"weird class\0").as_ptr()) == 0 {
+                          if StrAlloc::cats(out, (*b"weird class\0").as_ptr()) == 0 {
                               _currentBlock = 68;
                               break;
                           }
@@ -188,11 +173,11 @@ pub unsafe extern "C" fn printpacket_cat(
                             data.as_mut_ptr() as (*const u8),
                             &mut type_ as (*mut u16),
                         );
-                          if stralloc_catulong0(out, type_ as (usize), 0u32) == 0 {
+                          if StrAlloc::catulong0(out, type_ as (usize), 0u32) == 0 {
                               _currentBlock = 64;
                               break;
                           }
-                          if stralloc_cats(out, (*b" \0").as_ptr()) == 0 {
+                          if StrAlloc::cats(out, (*b" \0").as_ptr()) == 0 {
                               _currentBlock = 63;
                               break;
                           }
@@ -201,7 +186,7 @@ pub unsafe extern "C" fn printpacket_cat(
                               break;
                           }
                       }
-                      if stralloc_cats(out, (*b"\n\0").as_ptr()) == 0 {
+                      if StrAlloc::cats(out, (*b"\n\0").as_ptr()) == 0 {
                           _currentBlock = 67;
                           break;
                       }
@@ -210,13 +195,13 @@ pub unsafe extern "C" fn printpacket_cat(
                        'loop41: loop {
                            if numanswers != 0 {
                                numanswers = (numanswers as (i32) - 1) as (u16);
-                               if stralloc_cats(out, (*b"answer: \0").as_ptr()) == 0 {
+                               if StrAlloc::cats(out, (*b"answer: \0").as_ptr()) == 0 {
                                    _currentBlock = 54;
                                    break;
                                }
                            } else if numauthority != 0 {
                                numauthority = (numauthority as (i32) - 1) as (u16);
-                               if stralloc_cats(out, (*b"authority: \0").as_ptr()) == 0 {
+                               if StrAlloc::cats(out, (*b"authority: \0").as_ptr()) == 0 {
                                    _currentBlock = 50;
                                    break;
                                }
@@ -226,7 +211,7 @@ pub unsafe extern "C" fn printpacket_cat(
                                    break;
                                }
                                numglue = (numglue as (i32) - 1) as (u16);
-                               if stralloc_cats(out, (*b"additional: \0").as_ptr()) == 0 {
+                               if StrAlloc::cats(out, (*b"additional: \0").as_ptr()) == 0 {
                                    _currentBlock = 48;
                                    break;
                                }

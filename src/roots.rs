@@ -1,6 +1,7 @@
 use byte;
 use errno::{self, Errno};
 use libc;
+use stralloc::StrAlloc;
 
 extern "C" {
     fn chdir(arg1: *const u8) -> i32;
@@ -13,32 +14,15 @@ extern "C" {
     fn ip4_scan(arg1: *const u8, arg2: *mut u8) -> u32;
     fn open_read(arg1: *const u8) -> i32;
     fn opendir(arg1: *const u8) -> *mut Struct1;
-    fn openreadclose(arg1: *const u8, arg2: *mut stralloc, arg3: u32) -> i32;
+    fn openreadclose(arg1: *const u8, arg2: *mut StrAlloc, arg3: u32) -> i32;
     fn readdir(arg1: *mut Struct1) -> *mut dirent;
     fn str_diff(arg1: *const u8, arg2: *const u8) -> i32;
-    fn stralloc_append(arg1: *mut stralloc, arg2: *const u8) -> i32;
-    fn stralloc_catb(arg1: *mut stralloc, arg2: *const u8, arg3: u32) -> i32;
-    fn stralloc_copys(arg1: *mut stralloc, arg2: *const u8) -> i32;
 }
 
 enum _telldir {
 }
 
-#[derive(Copy)]
-#[repr(C)]
-pub struct stralloc {
-    pub s: *mut u8,
-    pub len: u32,
-    pub a: u32,
-}
-
-impl Clone for stralloc {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
-static mut data: stralloc = stralloc {
+static mut data: StrAlloc = StrAlloc {
     s: 0 as (*mut u8),
     len: 0u32,
     a: 0u32,
@@ -157,7 +141,7 @@ unsafe extern "C" fn init2(mut dir: *mut Struct1) -> i32 {
     let mut d: *mut dirent;
     let mut fqdn: *const u8;
     static mut q: *mut u8 = 0 as (*mut u8);
-    static mut text: stralloc = stralloc {
+    static mut text: StrAlloc = StrAlloc {
         s: 0 as (*mut u8),
         len: 0u32,
         a: 0u32,
@@ -178,14 +162,14 @@ unsafe extern "C" fn init2(mut dir: *mut Struct1) -> i32 {
         }
         if openreadclose(
             (*d).d_name.as_mut_ptr() as (*const u8),
-            &mut text as (*mut stralloc),
+            &mut text as (*mut StrAlloc),
             32u32,
         ) != 1i32
         {
             _currentBlock = 22;
             break;
         }
-        if stralloc_append(&mut text as (*mut stralloc), (*b"\n\0").as_ptr()) == 0 {
+        if StrAlloc::append(&mut text as (*mut StrAlloc), (*b"\n\0").as_ptr()) == 0 {
             _currentBlock = 21;
             break;
         }
@@ -222,8 +206,8 @@ unsafe extern "C" fn init2(mut dir: *mut Struct1) -> i32 {
             servers.as_mut_ptr().offset(serverslen as (isize)),
             (64i32 - serverslen) as (u32),
         );
-        if stralloc_catb(
-            &mut data as (*mut stralloc),
+        if StrAlloc::catb(
+            &mut data as (*mut StrAlloc),
             q as (*const u8),
             dns_domain_length(q as (*const u8)),
         ) == 0
@@ -231,8 +215,8 @@ unsafe extern "C" fn init2(mut dir: *mut Struct1) -> i32 {
             _currentBlock = 13;
             break;
         }
-        if stralloc_catb(
-            &mut data as (*mut stralloc),
+        if StrAlloc::catb(
+            &mut data as (*mut StrAlloc),
             servers.as_mut_ptr() as (*const u8),
             64u32,
         ) == 0
@@ -279,7 +263,7 @@ unsafe extern "C" fn init1() -> i32 {
 pub unsafe extern "C" fn roots_init() -> i32 {
     let mut fddir: i32;
     let mut r: i32;
-    if stralloc_copys(&mut data as (*mut stralloc), (*b"\0").as_ptr()) == 0 {
+    if StrAlloc::copys(&mut data as (*mut StrAlloc), (*b"\0").as_ptr()) == 0 {
         0i32
     } else {
         fddir = open_read((*b".\0").as_ptr());

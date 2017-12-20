@@ -1,34 +1,16 @@
 use byte;
+use stralloc::StrAlloc;
 use tai::Tai;
 use taia::TaiA;
 
 extern "C" {
     fn env_get(arg1: *const u8) -> *mut u8;
     fn gethostname(arg1: *mut u8, arg2: usize) -> i32;
-    fn openreadclose(arg1: *const u8, arg2: *mut stralloc, arg3: u32) -> i32;
+    fn openreadclose(arg1: *const u8, arg2: *mut StrAlloc, arg3: u32) -> i32;
     fn str_chr(arg1: *const u8, arg2: i32) -> u32;
-    fn stralloc_append(arg1: *mut stralloc, arg2: *const u8) -> i32;
-    fn stralloc_catb(arg1: *mut stralloc, arg2: *const u8, arg3: u32) -> i32;
-    fn stralloc_cats(arg1: *mut stralloc, arg2: *const u8) -> i32;
-    fn stralloc_copy(arg1: *mut stralloc, arg2: *const stralloc) -> i32;
-    fn stralloc_copys(arg1: *mut stralloc, arg2: *const u8) -> i32;
 }
 
-#[derive(Copy)]
-#[repr(C)]
-pub struct stralloc {
-    pub s: *mut u8,
-    pub len: u32,
-    pub a: u32,
-}
-
-impl Clone for stralloc {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
-static mut data: stralloc = stralloc {
+static mut data: StrAlloc = StrAlloc {
     s: 0i32 as (*mut u8),
     len: 0u32,
     a: 0u32,
@@ -44,31 +26,31 @@ static mut deadline: TaiA = TaiA {
     atto: 0usize,
 };
 
-static mut rules: stralloc = stralloc {
+static mut rules: StrAlloc = StrAlloc {
     s: 0i32 as (*mut u8),
     len: 0u32,
     a: 0u32,
 };
 
-unsafe extern "C" fn init(mut rules: *mut stralloc) -> i32 {
+unsafe extern "C" fn init(mut rules: *mut StrAlloc) -> i32 {
     let mut _currentBlock;
     let mut host: [u8; 256];
     let mut x: *const u8;
     let mut i: i32;
     let mut j: i32;
     let mut k: i32;
-    if stralloc_copys(rules, (*b"\0").as_ptr()) == 0 {
+    if StrAlloc::copys(rules, (*b"\0").as_ptr()) == 0 {
         -1i32
     } else {
         x = env_get((*b"DNSREWRITEFILE\0").as_ptr()) as (*const u8);
         if x.is_null() {
             x = (*b"/etc/dnsrewrite\0").as_ptr();
         }
-        i = openreadclose(x, &mut data as (*mut stralloc), 64u32);
+        i = openreadclose(x, &mut data as (*mut StrAlloc), 64u32);
         (if i == -1i32 {
              -1i32
          } else if i != 0 {
-             (if stralloc_append(&mut data as (*mut stralloc), (*b"\n\0").as_ptr()) == 0 {
+             (if StrAlloc::append(&mut data as (*mut StrAlloc), (*b"\n\0").as_ptr()) == 0 {
                   -1i32
               } else {
                   i = 0i32;
@@ -79,7 +61,7 @@ unsafe extern "C" fn init(mut rules: *mut stralloc) -> i32 {
                           break;
                       }
                       if *data.s.offset(j as (isize)) as (i32) == b'\n' as (i32) {
-                          if stralloc_catb(
+                          if StrAlloc::catb(
                             rules,
                             data.s.offset(i as (isize)) as (*const u8),
                             (j - i) as (u32),
@@ -112,7 +94,7 @@ unsafe extern "C" fn init(mut rules: *mut stralloc) -> i32 {
                               }
                               (*rules).len = (*rules).len.wrapping_sub(1u32);
                           }
-                          if stralloc_append(rules, (*b"\0").as_ptr()) == 0 {
+                          if StrAlloc::append(rules, (*b"\0").as_ptr()) == 0 {
                               _currentBlock = 85;
                               break;
                           }
@@ -131,13 +113,13 @@ unsafe extern "C" fn init(mut rules: *mut stralloc) -> i32 {
          } else {
              x = env_get((*b"LOCALDOMAIN\0").as_ptr()) as (*const u8);
              (if !x.is_null() {
-                  (if stralloc_copys(&mut data as (*mut stralloc), x) == 0 {
+                  (if StrAlloc::copys(&mut data as (*mut StrAlloc), x) == 0 {
                        -1i32
-                   } else if stralloc_append(&mut data as (*mut stralloc), (*b" \0").as_ptr()) ==
+                   } else if StrAlloc::append(&mut data as (*mut StrAlloc), (*b" \0").as_ptr()) ==
                               0
                 {
                        -1i32
-                   } else if stralloc_copys(rules, (*b"?:\0").as_ptr()) == 0 {
+                   } else if StrAlloc::copys(rules, (*b"?:\0").as_ptr()) == 0 {
                        -1i32
                    } else {
                        i = 0i32;
@@ -148,11 +130,11 @@ unsafe extern "C" fn init(mut rules: *mut stralloc) -> i32 {
                                break;
                            }
                            if *data.s.offset(j as (isize)) as (i32) == b' ' as (i32) {
-                               if stralloc_cats(rules, (*b"+.\0").as_ptr()) == 0 {
+                               if StrAlloc::cats(rules, (*b"+.\0").as_ptr()) == 0 {
                                    _currentBlock = 67;
                                    break;
                                }
-                               if stralloc_catb(
+                               if StrAlloc::catb(
                                 rules,
                                 data.s.offset(i as (isize)) as (*const u8),
                                 (j - i) as (u32),
@@ -166,11 +148,11 @@ unsafe extern "C" fn init(mut rules: *mut stralloc) -> i32 {
                            j = j + 1;
                        }
                        (if _currentBlock == 54 {
-                            (if stralloc_append(rules, (*b"\0").as_ptr()) == 0 {
+                            (if StrAlloc::append(rules, (*b"\0").as_ptr()) == 0 {
                                  -1i32
-                             } else if stralloc_cats(rules, (*b"*.:\0").as_ptr()) == 0 {
+                             } else if StrAlloc::cats(rules, (*b"*.:\0").as_ptr()) == 0 {
                                  -1i32
-                             } else if stralloc_append(rules, (*b"\0").as_ptr()) == 0 {
+                             } else if StrAlloc::append(rules, (*b"\0").as_ptr()) == 0 {
                                  -1i32
                              } else {
                                  0i32
@@ -184,15 +166,15 @@ unsafe extern "C" fn init(mut rules: *mut stralloc) -> i32 {
               } else {
                   i = openreadclose(
                     (*b"/etc/resolv.conf\0").as_ptr(),
-                    &mut data as (*mut stralloc),
+                    &mut data as (*mut StrAlloc),
                     64u32,
                 );
                   (if i == -1i32 {
                        -1i32
                    } else {
                        if i != 0 {
-                           if stralloc_append(
-                            &mut data as (*mut stralloc),
+                           if StrAlloc::append(
+                            &mut data as (*mut StrAlloc),
                             (*b"\n\0").as_ptr(),
                         ) == 0
                         {
@@ -235,7 +217,7 @@ unsafe extern "C" fn init(mut rules: *mut stralloc) -> i32 {
                                    j = j + 1;
                                }
                                if _currentBlock == 11 {
-                               } else if stralloc_copys(rules, (*b"?:\0").as_ptr()) == 0 {
+                               } else if StrAlloc::copys(rules, (*b"?:\0").as_ptr()) == 0 {
                                    return -1i32;
                                } else {
                                    i = i + 7i32;
@@ -257,11 +239,11 @@ unsafe extern "C" fn init(mut rules: *mut stralloc) -> i32 {
                                        if k == 0 {
                                            i = i + 1;
                                        } else {
-                                           if stralloc_cats(rules, (*b"+.\0").as_ptr()) == 0 {
+                                           if StrAlloc::cats(rules, (*b"+.\0").as_ptr()) == 0 {
                                                _currentBlock = 44;
                                                break;
                                            }
-                                           if stralloc_catb(
+                                           if StrAlloc::catb(
                                             rules,
                                             data.s.offset(i as (isize)) as (*const u8),
                                             k as (u32),
@@ -274,11 +256,11 @@ unsafe extern "C" fn init(mut rules: *mut stralloc) -> i32 {
                                        }
                                    }
                                    if _currentBlock == 32 {
-                                       if stralloc_append(rules, (*b"\0").as_ptr()) == 0 {
+                                       if StrAlloc::append(rules, (*b"\0").as_ptr()) == 0 {
                                            return -1i32;
-                                       } else if stralloc_cats(rules, (*b"*.:\0").as_ptr()) == 0 {
+                                       } else if StrAlloc::cats(rules, (*b"*.:\0").as_ptr()) == 0 {
                                            return -1i32;
-                                       } else if stralloc_append(rules, (*b"\0").as_ptr()) == 0 {
+                                       } else if StrAlloc::append(rules, (*b"\0").as_ptr()) == 0 {
                                            return -1i32;
                                        } else {
                                            return 0i32;
@@ -300,22 +282,22 @@ unsafe extern "C" fn init(mut rules: *mut stralloc) -> i32 {
                             host[::std::mem::size_of::<[u8; 256]>().wrapping_sub(1usize)] = 0u8;
                             i = str_chr(host.as_mut_ptr() as (*const u8), b'.' as (i32)) as (i32);
                             if host[i as (usize)] != 0 {
-                                if stralloc_copys(rules, (*b"?:\0").as_ptr()) == 0 {
+                                if StrAlloc::copys(rules, (*b"?:\0").as_ptr()) == 0 {
                                     return -1i32;
-                                } else if stralloc_cats(
+                                } else if StrAlloc::cats(
                                 rules,
                                 host.as_mut_ptr().offset(i as (isize)) as
                                     (*const u8),
                             ) == 0
                             {
                                     return -1i32;
-                                } else if stralloc_append(rules, (*b"\0").as_ptr()) == 0 {
+                                } else if StrAlloc::append(rules, (*b"\0").as_ptr()) == 0 {
                                     return -1i32;
                                 }
                             }
-                            (if stralloc_cats(rules, (*b"*.:\0").as_ptr()) == 0 {
+                            (if StrAlloc::cats(rules, (*b"*.:\0").as_ptr()) == 0 {
                                  -1i32
-                             } else if stralloc_append(rules, (*b"\0").as_ptr()) == 0 {
+                             } else if StrAlloc::append(rules, (*b"\0").as_ptr()) == 0 {
                                  -1i32
                              } else {
                                  0i32
@@ -328,7 +310,7 @@ unsafe extern "C" fn init(mut rules: *mut stralloc) -> i32 {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn dns_resolvconfrewrite(mut out: *mut stralloc) -> i32 {
+pub unsafe extern "C" fn dns_resolvconfrewrite(mut out: *mut StrAlloc) -> i32 {
     let mut now: TaiA;
     TaiA::now(&mut now as (*mut TaiA));
     if TaiA::less(
@@ -342,7 +324,7 @@ pub unsafe extern "C" fn dns_resolvconfrewrite(mut out: *mut stralloc) -> i32 {
         ok = 0i32;
     }
     if ok == 0 {
-        if init(&mut rules as (*mut stralloc)) == -1i32 {
+        if init(&mut rules as (*mut StrAlloc)) == -1i32 {
             return -1i32;
         } else {
             TaiA::uint(&mut deadline as (*mut TaiA), 600u32);
@@ -356,7 +338,7 @@ pub unsafe extern "C" fn dns_resolvconfrewrite(mut out: *mut stralloc) -> i32 {
         }
     }
     uses = uses.wrapping_sub(1u32);
-    if stralloc_copy(out, &mut rules as (*mut stralloc) as (*const stralloc)) == 0 {
+    if StrAlloc::copy(out, &mut rules as (*mut StrAlloc) as (*const StrAlloc)) == 0 {
         -1i32
     } else {
         0i32

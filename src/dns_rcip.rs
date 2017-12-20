@@ -1,29 +1,15 @@
 use byte;
+use stralloc::StrAlloc;
 use tai::Tai;
 use taia::TaiA;
 
 extern "C" {
     fn env_get(arg1: *const u8) -> *mut u8;
     fn ip4_scan(arg1: *const u8, arg2: *mut u8) -> u32;
-    fn openreadclose(arg1: *const u8, arg2: *mut stralloc, arg3: u32) -> i32;
-    fn stralloc_append(arg1: *mut stralloc, arg2: *const u8) -> i32;
+    fn openreadclose(arg1: *const u8, arg2: *mut StrAlloc, arg3: u32) -> i32;
 }
 
-#[derive(Copy)]
-#[repr(C)]
-pub struct stralloc {
-    pub s: *mut u8,
-    pub len: u32,
-    pub a: u32,
-}
-
-impl Clone for stralloc {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
-static mut data: stralloc = stralloc {
+static mut data: StrAlloc = StrAlloc {
     s: 0i32 as (*mut u8),
     len: 0u32,
     a: 0u32,
@@ -83,13 +69,13 @@ unsafe extern "C" fn init(mut ip: *mut u8) -> i32 {
     if _currentBlock == 6 {
         i = openreadclose(
             (*b"/etc/resolv.conf\0").as_ptr(),
-            &mut data as (*mut stralloc),
+            &mut data as (*mut StrAlloc),
             64u32,
         );
         if i == -1i32 {
             return -1i32;
         } else if i != 0 {
-            if stralloc_append(&mut data as (*mut stralloc), (*b"\n\0").as_ptr()) == 0 {
+            if StrAlloc::append(&mut data as (*mut StrAlloc), (*b"\n\0").as_ptr()) == 0 {
                 return -1i32;
             } else {
                 i = 0i32;

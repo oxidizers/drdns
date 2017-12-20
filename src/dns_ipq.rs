@@ -1,29 +1,14 @@
 use byte;
+use stralloc::StrAlloc;
 
 extern "C" {
     fn case_diffb(arg1: *const u8, arg2: u32, arg3: *const u8) -> i32;
-    fn dns_ip4(arg1: *mut stralloc, arg2: *const stralloc) -> i32;
-    fn dns_resolvconfrewrite(arg1: *mut stralloc) -> i32;
+    fn dns_ip4(arg1: *mut StrAlloc, arg2: *const StrAlloc) -> i32;
+    fn dns_resolvconfrewrite(arg1: *mut StrAlloc) -> i32;
     fn str_chr(arg1: *const u8, arg2: i32) -> u32;
-    fn stralloc_cats(arg1: *mut stralloc, arg2: *const u8) -> i32;
-    fn stralloc_copy(arg1: *mut stralloc, arg2: *const stralloc) -> i32;
 }
 
-#[derive(Copy)]
-#[repr(C)]
-pub struct stralloc {
-    pub s: *mut u8,
-    pub len: u32,
-    pub a: u32,
-}
-
-impl Clone for stralloc {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
-unsafe extern "C" fn doit(mut work: *mut stralloc, mut rule: *const u8) -> i32 {
+unsafe extern "C" fn doit(mut work: *mut StrAlloc, mut rule: *const u8) -> i32 {
     let mut ch: u8;
     let mut colon: u32;
     let mut prefixlen: u32;
@@ -67,7 +52,7 @@ unsafe extern "C" fn doit(mut work: *mut stralloc, mut rule: *const u8) -> i32 {
                   if ch as (i32) == b'-' as (i32) {
                       (*work).len = 0u32;
                   }
-                  stralloc_cats(work, rule.offset(colon as (isize)).offset(1isize))
+                  StrAlloc::cats(work, rule.offset(colon as (isize)).offset(1isize))
               })
          })
     }
@@ -75,17 +60,17 @@ unsafe extern "C" fn doit(mut work: *mut stralloc, mut rule: *const u8) -> i32 {
 
 #[no_mangle]
 pub unsafe extern "C" fn dns_ip4_qualify_rules(
-    mut out: *mut stralloc,
-    mut fqdn: *mut stralloc,
-    mut in_: *const stralloc,
-    mut rules: *const stralloc,
+    mut out: *mut StrAlloc,
+    mut fqdn: *mut StrAlloc,
+    mut in_: *const StrAlloc,
+    mut rules: *const StrAlloc,
 ) -> i32 {
     let mut _currentBlock;
     let mut i: u32;
     let mut j: u32;
     let mut plus: u32;
     let mut fqdnlen: u32;
-    if stralloc_copy(fqdn, in_) == 0 {
+    if StrAlloc::copy(fqdn, in_) == 0 {
         -1i32
     } else {
         j = {
@@ -110,7 +95,7 @@ pub unsafe extern "C" fn dns_ip4_qualify_rules(
              fqdnlen = (*fqdn).len;
              plus = byte::chr((*fqdn).s, fqdnlen, b'+' as (i32));
              (if plus >= fqdnlen {
-                  dns_ip4(out, fqdn as (*const stralloc))
+                  dns_ip4(out, fqdn as (*const StrAlloc))
               } else {
                   i = plus.wrapping_add(1u32);
                   'loop5: loop {
@@ -125,7 +110,7 @@ pub unsafe extern "C" fn dns_ip4_qualify_rules(
                         (*fqdn).s.offset(i as (isize)),
                     );
                       (*fqdn).len = plus.wrapping_add(j);
-                      if dns_ip4(out, fqdn as (*const stralloc)) == -1i32 {
+                      if dns_ip4(out, fqdn as (*const StrAlloc)) == -1i32 {
                           _currentBlock = 11;
                           break;
                       }
@@ -156,23 +141,23 @@ pub unsafe extern "C" fn dns_ip4_qualify_rules(
 
 #[no_mangle]
 pub unsafe extern "C" fn dns_ip4_qualify(
-    mut out: *mut stralloc,
-    mut fqdn: *mut stralloc,
-    mut in_: *const stralloc,
+    mut out: *mut StrAlloc,
+    mut fqdn: *mut StrAlloc,
+    mut in_: *const StrAlloc,
 ) -> i32 {
-    static mut rules: stralloc = stralloc {
+    static mut rules: StrAlloc = StrAlloc {
         s: 0 as (*mut u8),
         len: 0u32,
         a: 0u32,
     };
-    if dns_resolvconfrewrite(&mut rules as (*mut stralloc)) == -1i32 {
+    if dns_resolvconfrewrite(&mut rules as (*mut StrAlloc)) == -1i32 {
         -1i32
     } else {
         dns_ip4_qualify_rules(
             out,
             fqdn,
             in_,
-            &mut rules as (*mut stralloc) as (*const stralloc),
+            &mut rules as (*mut StrAlloc) as (*const StrAlloc),
         )
     }
 }

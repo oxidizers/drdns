@@ -1,29 +1,11 @@
 use buffer::Buffer;
 use byte;
-
-extern "C" {
-    fn stralloc_ready(arg1: *mut stralloc, arg2: u32) -> i32;
-    fn stralloc_readyplus(arg1: *mut stralloc, arg2: u32) -> i32;
-}
-
-#[derive(Copy)]
-#[repr(C)]
-pub struct stralloc {
-    pub s: *mut u8,
-    pub len: u32,
-    pub a: u32,
-}
-
-impl Clone for stralloc {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
+use stralloc::StrAlloc;
 
 #[no_mangle]
 pub unsafe extern "C" fn getln2(
     mut ss: *mut Buffer,
-    mut sa: *mut stralloc,
+    mut sa: *mut StrAlloc,
     mut cont: *mut *mut u8,
     mut clen: *mut u32,
     mut sep: i32,
@@ -32,7 +14,7 @@ pub unsafe extern "C" fn getln2(
     let mut x: *mut u8;
     let mut i: u32;
     let mut n: i32;
-    if stralloc_ready(sa, 0u32) == 0 {
+    if StrAlloc::ready(sa, 0u32) == 0 {
         -1i32
     } else {
         (*sa).len = 0u32;
@@ -52,7 +34,7 @@ pub unsafe extern "C" fn getln2(
                 _currentBlock = 8;
                 break;
             }
-            if stralloc_readyplus(sa, n as (u32)) == 0 {
+            if StrAlloc::readyplus(sa, n as (u32)) == 0 {
                 _currentBlock = 7;
                 break;
             }

@@ -1,6 +1,7 @@
 use byte;
 use buffer::Buffer;
 use libc;
+use stralloc::StrAlloc;
 use uint16;
 
 extern "C" {
@@ -8,17 +9,14 @@ extern "C" {
     fn case_lowerb(arg1: *mut u8, arg2: u32);
     fn dns_domain_fromdot(arg1: *mut *mut u8, arg2: *const u8, arg3: u32) -> i32;
     fn dns_domain_length(arg1: *const u8) -> u32;
-    fn dns_domain_todot_cat(arg1: *mut stralloc, arg2: *const u8) -> i32;
+    fn dns_domain_todot_cat(arg1: *mut StrAlloc, arg2: *const u8) -> i32;
     fn ip4_scan(arg1: *const u8, arg2: *mut u8) -> u32;
     fn parsetype(arg1: *mut u8, arg2: *mut u8) -> i32;
-    fn printpacket_cat(arg1: *mut stralloc, arg2: *mut u8, arg3: u32) -> u32;
+    fn printpacket_cat(arg1: *mut StrAlloc, arg2: *mut u8, arg3: u32) -> u32;
     fn respond(arg1: *mut u8, arg2: *mut u8, arg3: *mut u8) -> i32;
     static mut response: *mut u8;
     static mut response_len: u32;
     fn response_query(arg1: *const u8, arg2: *const u8, arg3: *const u8) -> i32;
-    fn stralloc_cats(arg1: *mut stralloc, arg2: *const u8) -> i32;
-    fn stralloc_catulong0(arg1: *mut stralloc, arg2: usize, arg3: u32) -> i32;
-    fn stralloc_copys(arg1: *mut stralloc, arg2: *const u8) -> i32;
     fn strerr_die(
         arg1: i32,
         arg2: *const u8,
@@ -81,21 +79,7 @@ static mut type_: [u8; 2] = [0u8; 2];
 
 static mut q: *mut u8 = 0 as (*mut u8);
 
-#[derive(Copy)]
-#[repr(C)]
-pub struct stralloc {
-    pub s: *mut u8,
-    pub len: u32,
-    pub a: u32,
-}
-
-impl Clone for stralloc {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
-static mut out: stralloc = stralloc {
+static mut out: StrAlloc = StrAlloc {
     s: 0 as (*mut u8),
     len: 0u32,
     a: 0u32,
@@ -160,20 +144,20 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
             usage();
         }
     }
-    if stralloc_copys(&mut out as (*mut stralloc), (*b"\0").as_ptr()) == 0 {
+    if StrAlloc::copys(&mut out as (*mut StrAlloc), (*b"\0").as_ptr()) == 0 {
         oops();
     }
     uint16::unpack_big(type_.as_mut_ptr() as (*const u8), &mut u16 as (*mut u16));
-    if stralloc_catulong0(&mut out as (*mut stralloc), u16 as (usize), 0u32) == 0 {
+    if StrAlloc::catulong0(&mut out as (*mut StrAlloc), u16 as (usize), 0u32) == 0 {
         oops();
     }
-    if stralloc_cats(&mut out as (*mut stralloc), (*b" \0").as_ptr()) == 0 {
+    if StrAlloc::cats(&mut out as (*mut StrAlloc), (*b" \0").as_ptr()) == 0 {
         oops();
     }
-    if dns_domain_todot_cat(&mut out as (*mut stralloc), q as (*const u8)) == 0 {
+    if dns_domain_todot_cat(&mut out as (*mut StrAlloc), q as (*const u8)) == 0 {
         oops();
     }
-    if stralloc_cats(&mut out as (*mut stralloc), (*b":\n\0").as_ptr()) == 0 {
+    if StrAlloc::cats(&mut out as (*mut StrAlloc), (*b":\n\0").as_ptr()) == 0 {
         oops();
     }
     if response_query(
@@ -213,7 +197,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
         _currentBlock = 28;
     }
     if _currentBlock == 28 {
-        if printpacket_cat(&mut out as (*mut stralloc), response, response_len) == 0 {
+        if printpacket_cat(&mut out as (*mut StrAlloc), response, response_len) == 0 {
             oops();
         }
     }

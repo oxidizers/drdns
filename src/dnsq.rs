@@ -2,6 +2,7 @@ use byte;
 use buffer::Buffer;
 use errno::errno;
 use libc;
+use stralloc::StrAlloc;
 use tai::Tai;
 use taia::TaiA;
 use uint16;
@@ -9,8 +10,8 @@ use uint16;
 extern "C" {
     static mut buffer_1: *mut Buffer;
     fn dns_domain_fromdot(arg1: *mut *mut u8, arg2: *const u8, arg3: u32) -> i32;
-    fn dns_domain_todot_cat(arg1: *mut stralloc, arg2: *const u8) -> i32;
-    fn dns_ip4_qualify(arg1: *mut stralloc, arg2: *mut stralloc, arg3: *const stralloc) -> i32;
+    fn dns_domain_todot_cat(arg1: *mut StrAlloc, arg2: *const u8) -> i32;
+    fn dns_ip4_qualify(arg1: *mut StrAlloc, arg2: *mut StrAlloc, arg3: *const StrAlloc) -> i32;
     fn dns_random_init(arg1: *const u8);
     fn dns_transmit_get(arg1: *mut dns_transmit, arg2: *const pollfd, arg3: *const TaiA) -> i32;
     fn dns_transmit_io(arg1: *mut dns_transmit, arg2: *mut pollfd, arg3: *mut TaiA);
@@ -24,10 +25,7 @@ extern "C" {
     ) -> i32;
     fn iopause(arg1: *mut pollfd, arg2: u32, arg3: *mut TaiA, arg4: *mut TaiA);
     fn parsetype(arg1: *mut u8, arg2: *mut u8) -> i32;
-    fn printpacket_cat(arg1: *mut stralloc, arg2: *mut u8, arg3: u32) -> u32;
-    fn stralloc_cats(arg1: *mut stralloc, arg2: *const u8) -> i32;
-    fn stralloc_catulong0(arg1: *mut stralloc, arg2: usize, arg3: u32) -> i32;
-    fn stralloc_copys(arg1: *mut stralloc, arg2: *const u8) -> i32;
+    fn printpacket_cat(arg1: *mut StrAlloc, arg2: *mut u8, arg3: u32) -> u32;
     fn strerr_die(
         arg1: i32,
         arg2: *const u8,
@@ -200,27 +198,13 @@ pub unsafe extern "C" fn resolve(mut q: *mut u8, mut qtype: *mut u8, mut servers
 #[no_mangle]
 pub static mut servers: [u8; 64] = [0u8; 64];
 
-#[derive(Copy)]
-#[repr(C)]
-pub struct stralloc {
-    pub s: *mut u8,
-    pub len: u32,
-    pub a: u32,
-}
-
-impl Clone for stralloc {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
-static mut ip: stralloc = stralloc {
+static mut ip: StrAlloc = StrAlloc {
     s: 0 as (*mut u8),
     len: 0u32,
     a: 0u32,
 };
 
-static mut fqdn: stralloc = stralloc {
+static mut fqdn: StrAlloc = StrAlloc {
     s: 0 as (*mut u8),
     len: 0u32,
     a: 0u32,
@@ -231,7 +215,7 @@ pub static mut type_: [u8; 2] = [0u8; 2];
 
 static mut q: *mut u8 = 0 as (*mut u8);
 
-static mut out: stralloc = stralloc {
+static mut out: StrAlloc = StrAlloc {
     s: 0 as (*mut u8),
     len: 0u32,
     a: 0u32,
@@ -296,13 +280,13 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     {
         usage();
     }
-    if stralloc_copys(&mut out as (*mut stralloc), *argv as (*const u8)) == 0 {
+    if StrAlloc::copys(&mut out as (*mut StrAlloc), *argv as (*const u8)) == 0 {
         oops();
     }
     if dns_ip4_qualify(
-        &mut ip as (*mut stralloc),
-        &mut fqdn as (*mut stralloc),
-        &mut out as (*mut stralloc) as (*const stralloc),
+        &mut ip as (*mut StrAlloc),
+        &mut fqdn as (*mut StrAlloc),
+        &mut out as (*mut StrAlloc) as (*const StrAlloc),
     ) == -1i32
     {
         oops();
@@ -312,30 +296,30 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     }
     byte::zero(servers.as_mut_ptr(), 64u32);
     byte::copy(servers.as_mut_ptr(), ip.len, ip.s);
-    if stralloc_copys(&mut out as (*mut stralloc), (*b"\0").as_ptr()) == 0 {
+    if StrAlloc::copys(&mut out as (*mut StrAlloc), (*b"\0").as_ptr()) == 0 {
         oops();
     }
     uint16::unpack_big(type_.as_mut_ptr() as (*const u8), &mut u16 as (*mut u16));
-    if stralloc_catulong0(&mut out as (*mut stralloc), u16 as (usize), 0u32) == 0 {
+    if StrAlloc::catulong0(&mut out as (*mut StrAlloc), u16 as (usize), 0u32) == 0 {
         oops();
     }
-    if stralloc_cats(&mut out as (*mut stralloc), (*b" \0").as_ptr()) == 0 {
+    if StrAlloc::cats(&mut out as (*mut StrAlloc), (*b" \0").as_ptr()) == 0 {
         oops();
     }
-    if dns_domain_todot_cat(&mut out as (*mut stralloc), q as (*const u8)) == 0 {
+    if dns_domain_todot_cat(&mut out as (*mut StrAlloc), q as (*const u8)) == 0 {
         oops();
     }
-    if stralloc_cats(&mut out as (*mut stralloc), (*b":\n\0").as_ptr()) == 0 {
+    if StrAlloc::cats(&mut out as (*mut StrAlloc), (*b":\n\0").as_ptr()) == 0 {
         oops();
     }
     if resolve(q, type_.as_mut_ptr(), servers.as_mut_ptr()) == -1i32 {
-        if stralloc_cats(&mut out as (*mut stralloc), libc::strerror(errno().0)) == 0 {
+        if StrAlloc::cats(&mut out as (*mut StrAlloc), libc::strerror(errno().0)) == 0 {
             oops();
         }
-        if stralloc_cats(&mut out as (*mut stralloc), (*b"\n\0").as_ptr()) == 0 {
+        if StrAlloc::cats(&mut out as (*mut StrAlloc), (*b"\n\0").as_ptr()) == 0 {
             oops();
         }
-    } else if printpacket_cat(&mut out as (*mut stralloc), tx.packet, tx.packetlen) == 0 {
+    } else if printpacket_cat(&mut out as (*mut StrAlloc), tx.packet, tx.packetlen) == 0 {
         oops();
     }
     Buffer::putflush(buffer_1, out.s as (*const u8), out.len);
