@@ -1,8 +1,8 @@
 use buffer::Buffer;
+use buffer_2::BUFFER_2;
 use byte;
 
 extern "C" {
-    static mut buffer_2: *mut Buffer;
     fn case_lowerb(arg1: *mut u8, arg2: u32);
     fn dns_domain_length(arg1: *const u8) -> u32;
     fn dns_packet_copy(arg1: *const u8, arg2: u32, arg3: u32, arg4: *mut u8, arg5: u32) -> u32;
@@ -293,7 +293,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
     initialize();
     ndelay_off(udp53);
     socket_tryreservein(udp53, 65536i32);
-    Buffer::putsflush(buffer_2, starting as (*const u8));
+    Buffer::putsflush(BUFFER_2.as_mut_ptr(), starting as (*const u8));
     'loop9: loop {
         len = socket_recv4(
             udp53,

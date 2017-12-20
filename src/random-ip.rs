@@ -1,8 +1,8 @@
 use buffer::Buffer;
+use buffer_1::BUFFER_1;
 use libc;
 
 extern "C" {
-    static mut buffer_1: *mut Buffer;
     fn dns_random(arg1: u32) -> u32;
     fn dns_random_init(arg1: *const u8);
     fn fmt_ulong(arg1: *mut u8, arg2: usize) -> u32;
@@ -192,33 +192,33 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
         }
         u = ip[0usize] as (usize);
         Buffer::put(
-            buffer_1,
+            BUFFER_1.as_mut_ptr(),
             strnum.as_mut_ptr() as (*const u8),
             fmt_ulong(strnum.as_mut_ptr(), u),
         );
-        Buffer::puts(buffer_1, (*b".\0").as_ptr());
+        Buffer::puts(BUFFER_1.as_mut_ptr(), (*b".\0").as_ptr());
         u = ip[1usize] as (usize);
         Buffer::put(
-            buffer_1,
+            BUFFER_1.as_mut_ptr(),
             strnum.as_mut_ptr() as (*const u8),
             fmt_ulong(strnum.as_mut_ptr(), u),
         );
-        Buffer::puts(buffer_1, (*b".\0").as_ptr());
+        Buffer::puts(BUFFER_1.as_mut_ptr(), (*b".\0").as_ptr());
         u = ip[2usize] as (usize);
         Buffer::put(
-            buffer_1,
+            BUFFER_1.as_mut_ptr(),
             strnum.as_mut_ptr() as (*const u8),
             fmt_ulong(strnum.as_mut_ptr(), u),
         );
-        Buffer::puts(buffer_1, (*b".\0").as_ptr());
+        Buffer::puts(BUFFER_1.as_mut_ptr(), (*b".\0").as_ptr());
         u = ip[3usize] as (usize);
         Buffer::put(
-            buffer_1,
+            BUFFER_1.as_mut_ptr(),
             strnum.as_mut_ptr() as (*const u8),
             fmt_ulong(strnum.as_mut_ptr(), u),
         );
-        Buffer::puts(buffer_1, (*b"\n\0").as_ptr());
+        Buffer::puts(BUFFER_1.as_mut_ptr(), (*b"\n\0").as_ptr());
     }
-    Buffer::flush(buffer_1);
+    Buffer::flush(BUFFER_1.as_mut_ptr());
     libc::_exit(0i32);
 }

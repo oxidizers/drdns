@@ -1,4 +1,5 @@
 use buffer::Buffer;
+use buffer_2::BUFFER_2;
 use byte;
 use errno::{self, Errno};
 use libc;
@@ -6,7 +7,6 @@ use uint16;
 use uint32;
 
 extern "C" {
-    static mut buffer_2: *mut Buffer;
     static mut cache_motion: usize;
     static mut numqueries: usize;
     static mut tactive: i32;
@@ -16,12 +16,12 @@ extern "C" {
 static mut u64: usize = 0usize;
 
 unsafe extern "C" fn string(mut s: *const u8) {
-    Buffer::puts(buffer_2, s);
+    Buffer::puts(BUFFER_2.as_mut_ptr(), s);
 }
 
 unsafe extern "C" fn line() {
     string((*b"\n\0").as_ptr());
-    Buffer::flush(buffer_2);
+    Buffer::flush(BUFFER_2.as_mut_ptr());
 }
 
 #[no_mangle]
@@ -48,7 +48,7 @@ unsafe extern "C" fn u64_print() {
         }
     }
     Buffer::put(
-        buffer_2,
+        BUFFER_2.as_mut_ptr(),
         buf.as_mut_ptr().offset(pos as (isize)) as (*const u8),
         ::std::mem::size_of::<[u8; 20]>().wrapping_sub(pos as (usize)) as (u32),
     );
@@ -60,7 +60,7 @@ unsafe extern "C" fn space() {
 
 unsafe extern "C" fn hex(mut c: u8) {
     Buffer::put(
-        buffer_2,
+        BUFFER_2.as_mut_ptr(),
         (*b"0123456789abcdef\0").as_ptr().offset(
             (c as (i32) >> 4i32) as
                 (isize),
@@ -68,7 +68,7 @@ unsafe extern "C" fn hex(mut c: u8) {
         1u32,
     );
     Buffer::put(
-        buffer_2,
+        BUFFER_2.as_mut_ptr(),
         (*b"0123456789abcdef\0").as_ptr().offset(
             (c as (i32) & 15i32) as
                 (isize),
@@ -130,7 +130,7 @@ unsafe extern "C" fn name(mut q: *const u8) {
                 if ch as (i32) >= b'A' as (i32) && (ch as (i32) <= b'Z' as (i32)) {
                     ch = (ch as (i32) + 32i32) as (u8);
                 }
-                Buffer::put(buffer_2, &mut ch as (*mut u8) as (*const u8), 1u32);
+                Buffer::put(BUFFER_2.as_mut_ptr(), &mut ch as (*mut u8) as (*const u8), 1u32);
             }
             string((*b".\0").as_ptr());
         }

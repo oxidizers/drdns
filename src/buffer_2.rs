@@ -1,15 +1,17 @@
+//! `buffer_2.rs`: a 256-byte thread-unsafe static buffer used for STDERR(?)
+//!
+//! TODO: document those things and find a better way to handle them
+
 use buffer::{self, Buffer};
 
-#[no_mangle]
-pub static mut buffer_2_space: [u8; 256] = [0u8; 256];
+const BUFFER_2_SIZE: usize = 256;
 
-static mut it: Buffer = Buffer {
-    x: buffer_2_space.as_mut_ptr(),
+static mut BUFFER_2_SPACE: [u8; BUFFER_2_SIZE] = [0u8; BUFFER_2_SIZE];
+
+pub static mut BUFFER_2: Buffer = Buffer {
+    x: unsafe { &mut BUFFER_2_SPACE as *mut [u8] as *mut u8 },
     p: 0u32,
-    n: ::std::mem::size_of::<[u8; 256]>() as (u32),
+    n: BUFFER_2_SIZE as u32,
     fd: 2i32,
     op: Some(buffer::unixwrite as buffer::Op),
 };
-
-#[no_mangle]
-pub static mut buffer_2: *mut Buffer = &mut it as (*mut Buffer);

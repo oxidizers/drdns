@@ -1,9 +1,9 @@
 use buffer::Buffer;
+use buffer_1::BUFFER_1;
 use libc;
 use stralloc::StrAlloc;
 
 extern "C" {
-    static mut buffer_1: *mut Buffer;
     fn dns_random_init(arg1: *const u8);
     fn dns_txt(arg1: *mut StrAlloc, arg2: *const StrAlloc) -> i32;
     fn strerr_die(
@@ -104,10 +104,10 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
                 &mut strerr_sys as (*mut strerr) as (*const strerr),
             );
         }
-        Buffer::put(buffer_1, out.s as (*const u8), out.len);
-        Buffer::puts(buffer_1, (*b"\n\0").as_ptr());
+        Buffer::put(BUFFER_1.as_mut_ptr(), out.s as (*const u8), out.len);
+        Buffer::puts(BUFFER_1.as_mut_ptr(), (*b"\n\0").as_ptr());
         argv = argv.offset(1isize);
     }
-    Buffer::flush(buffer_1);
+    Buffer::flush(BUFFER_1.as_mut_ptr());
     libc::_exit(0i32);
 }
