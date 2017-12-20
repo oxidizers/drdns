@@ -3,6 +3,7 @@ use buffer::{self, Buffer};
 use byte;
 use libc;
 use stralloc::StrAlloc;
+use strerr::{StrErr, STRERR_SYS};
 
 extern "C" {
     fn __swbuf(arg1: i32, arg2: *mut __sFILE) -> i32;
@@ -28,17 +29,6 @@ extern "C" {
     fn open_trunc(arg1: *const u8) -> i32;
     fn rename(__old: *const u8, __new: *const u8) -> i32;
     fn scan_ulong(arg1: *const u8, arg2: *mut usize) -> u32;
-    fn strerr_die(
-        arg1: i32,
-        arg2: *const u8,
-        arg3: *const u8,
-        arg4: *const u8,
-        arg5: *const u8,
-        arg6: *const u8,
-        arg7: *const u8,
-        arg8: *const strerr,
-    );
-    static mut strerr_sys: strerr;
     fn umask(arg1: u16) -> u16;
 }
 
@@ -111,24 +101,9 @@ pub unsafe extern "C" fn __sputc(mut _c: i32, mut _p: *mut __sFILE) -> i32 {
     }
 }
 
-#[derive(Copy)]
-#[repr(C)]
-pub struct strerr {
-    pub who: *mut strerr,
-    pub x: *const u8,
-    pub y: *const u8,
-    pub z: *const u8,
-}
-
-impl Clone for strerr {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
 #[no_mangle]
 pub unsafe extern "C" fn nomem() {
-    strerr_die(
+    StrErr::die(
         111i32,
         (*b"pickdns-data: fatal: \0").as_ptr(),
         (*b"out of memory\0").as_ptr(),
@@ -136,7 +111,7 @@ pub unsafe extern "C" fn nomem() {
         0i32 as (*const u8),
         0i32 as (*const u8),
         0i32 as (*const u8),
-        0i32 as (*const strerr),
+        0i32 as (*const StrErr),
     );
 }
 
@@ -462,7 +437,7 @@ pub static mut strnum: [u8; 40] = [0u8; 40];
 #[no_mangle]
 pub unsafe extern "C" fn syntaxerror(mut why: *const u8) {
     strnum[fmt_ulong(strnum.as_mut_ptr(), linenum) as (usize)] = 0u8;
-    strerr_die(
+    StrErr::die(
         111i32,
         (*b"pickdns-data: fatal: \0").as_ptr(),
         (*b"unable to parse data line \0").as_ptr(),
@@ -470,13 +445,13 @@ pub unsafe extern "C" fn syntaxerror(mut why: *const u8) {
         why,
         0i32 as (*const u8),
         0i32 as (*const u8),
-        0i32 as (*const strerr),
+        0i32 as (*const StrErr),
     );
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn die_datatmp() {
-    strerr_die(
+    StrErr::die(
         111i32,
         (*b"pickdns-data: fatal: \0").as_ptr(),
         (*b"unable to create data.tmp: \0").as_ptr(),
@@ -484,7 +459,7 @@ pub unsafe extern "C" fn die_datatmp() {
         0i32 as (*const u8),
         0i32 as (*const u8),
         0i32 as (*const u8),
-        &mut strerr_sys as (*mut strerr) as (*const strerr),
+        &mut STRERR_SYS as (*mut StrErr) as (*const StrErr),
     );
 }
 
@@ -506,7 +481,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
     }
     fd = open_read((*b"data\0").as_ptr());
     if fd == -1i32 {
-        strerr_die(
+        StrErr::die(
             111i32,
             (*b"pickdns-data: fatal: \0").as_ptr(),
             (*b"unable to open data: \0").as_ptr(),
@@ -514,7 +489,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             0i32 as (*const u8),
             0i32 as (*const u8),
             0i32 as (*const u8),
-            &mut strerr_sys as (*mut strerr) as (*const strerr),
+            &mut STRERR_SYS as (*mut StrErr) as (*const StrErr),
         );
     }
     Buffer::init(
@@ -543,7 +518,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             b'\n' as (i32),
         ) == -1i32
         {
-            strerr_die(
+            StrErr::die(
                 111i32,
                 (*b"pickdns-data: fatal: \0").as_ptr(),
                 (*b"unable to read line: \0").as_ptr(),
@@ -551,7 +526,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
                 0i32 as (*const u8),
                 0i32 as (*const u8),
                 0i32 as (*const u8),
-                &mut strerr_sys as (*mut strerr) as (*const strerr),
+                &mut STRERR_SYS as (*mut StrErr) as (*const StrErr),
             );
         }
         'loop39: loop {
@@ -755,7 +730,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
         die_datatmp();
     }
     if rename((*b"data.tmp\0").as_ptr(), (*b"data.cdb\0").as_ptr()) == -1i32 {
-        strerr_die(
+        StrErr::die(
             111i32,
             (*b"pickdns-data: fatal: \0").as_ptr(),
             (*b"unable to move data.tmp to data.cdb: \0").as_ptr(),
@@ -763,7 +738,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             0i32 as (*const u8),
             0i32 as (*const u8),
             0i32 as (*const u8),
-            &mut strerr_sys as (*mut strerr) as (*const strerr),
+            &mut STRERR_SYS as (*mut StrErr) as (*const StrErr),
         );
     }
     libc::_exit(0i32);

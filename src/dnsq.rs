@@ -4,6 +4,7 @@ use buffer_1::BUFFER_1;
 use errno::errno;
 use libc;
 use stralloc::StrAlloc;
+use strerr::{StrErr, STRERR_SYS};
 use tai::Tai;
 use taia::TaiA;
 use uint16;
@@ -26,37 +27,11 @@ extern "C" {
     fn iopause(arg1: *mut pollfd, arg2: u32, arg3: *mut TaiA, arg4: *mut TaiA);
     fn parsetype(arg1: *mut u8, arg2: *mut u8) -> i32;
     fn printpacket_cat(arg1: *mut StrAlloc, arg2: *mut u8, arg3: u32) -> u32;
-    fn strerr_die(
-        arg1: i32,
-        arg2: *const u8,
-        arg3: *const u8,
-        arg4: *const u8,
-        arg5: *const u8,
-        arg6: *const u8,
-        arg7: *const u8,
-        arg8: *const strerr,
-    );
-    static mut strerr_sys: strerr;
-}
-
-#[derive(Copy)]
-#[repr(C)]
-pub struct strerr {
-    pub who: *mut strerr,
-    pub x: *const u8,
-    pub y: *const u8,
-    pub z: *const u8,
-}
-
-impl Clone for strerr {
-    fn clone(&self) -> Self {
-        *self
-    }
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn usage() {
-    strerr_die(
+    StrErr::die(
         100i32,
         (*b"dnsq: usage: dnsq type name server\0").as_ptr(),
         0i32 as (*const u8),
@@ -64,13 +39,13 @@ pub unsafe extern "C" fn usage() {
         0i32 as (*const u8),
         0i32 as (*const u8),
         0i32 as (*const u8),
-        0i32 as (*const strerr),
+        0i32 as (*const StrErr),
     );
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn oops() {
-    strerr_die(
+    StrErr::die(
         111i32,
         (*b"dnsq: fatal: \0").as_ptr(),
         (*b"unable to parse: \0").as_ptr(),
@@ -78,7 +53,7 @@ pub unsafe extern "C" fn oops() {
         0i32 as (*const u8),
         0i32 as (*const u8),
         0i32 as (*const u8),
-        &mut strerr_sys as (*mut strerr) as (*const strerr),
+        &mut STRERR_SYS as (*mut StrErr) as (*const StrErr),
     );
 }
 

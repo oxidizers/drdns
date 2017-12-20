@@ -1,4 +1,5 @@
 use buffer::{self, Buffer};
+use strerr::{StrErr, STRERR_SYS};
 
 extern "C" {
     fn chdir(arg1: *const u8) -> i32;
@@ -8,17 +9,6 @@ extern "C" {
     fn fsync(arg1: i32) -> i32;
     fn mkdir(arg1: *const u8, arg2: u16) -> i32;
     fn open_trunc(arg1: *const u8) -> i32;
-    fn strerr_die(
-        arg1: i32,
-        arg2: *const u8,
-        arg3: *const u8,
-        arg4: *const u8,
-        arg5: *const u8,
-        arg6: *const u8,
-        arg7: *const u8,
-        arg8: *const strerr,
-    );
-    static mut strerr_sys: strerr;
     fn umask(arg1: u16) -> u16;
 }
 
@@ -40,28 +30,13 @@ static mut ss: Buffer = Buffer {
     op: None,
 };
 
-#[derive(Copy)]
-#[repr(C)]
-pub struct strerr {
-    pub who: *mut strerr,
-    pub x: *const u8,
-    pub y: *const u8,
-    pub z: *const u8,
-}
-
-impl Clone for strerr {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
 #[no_mangle]
 pub unsafe extern "C" fn init(mut d: *const u8, mut f: *const u8) {
     dir = d;
     fatal = f;
     umask(0o22u16);
     if mkdir(dir, 0o700u16) == -1i32 {
-        strerr_die(
+        StrErr::die(
             111i32,
             fatal,
             (*b"unable to create \0").as_ptr(),
@@ -69,11 +44,11 @@ pub unsafe extern "C" fn init(mut d: *const u8, mut f: *const u8) {
             (*b": \0").as_ptr(),
             0i32 as (*const u8),
             0i32 as (*const u8),
-            &mut strerr_sys as (*mut strerr) as (*const strerr),
+            &mut STRERR_SYS as (*mut StrErr) as (*const StrErr),
         );
     }
     if chmod(dir, 0o3755u16) == -1i32 {
-        strerr_die(
+        StrErr::die(
             111i32,
             fatal,
             (*b"unable to set mode of \0").as_ptr(),
@@ -81,11 +56,11 @@ pub unsafe extern "C" fn init(mut d: *const u8, mut f: *const u8) {
             (*b": \0").as_ptr(),
             0i32 as (*const u8),
             0i32 as (*const u8),
-            &mut strerr_sys as (*mut strerr) as (*const strerr),
+            &mut STRERR_SYS as (*mut StrErr) as (*const StrErr),
         );
     }
     if chdir(dir) == -1i32 {
-        strerr_die(
+        StrErr::die(
             111i32,
             fatal,
             (*b"unable to switch to \0").as_ptr(),
@@ -93,14 +68,14 @@ pub unsafe extern "C" fn init(mut d: *const u8, mut f: *const u8) {
             (*b": \0").as_ptr(),
             0i32 as (*const u8),
             0i32 as (*const u8),
-            &mut strerr_sys as (*mut strerr) as (*const strerr),
+            &mut STRERR_SYS as (*mut StrErr) as (*const StrErr),
         );
     }
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn fail() {
-    strerr_die(
+    StrErr::die(
         111i32,
         fatal,
         (*b"unable to create \0").as_ptr(),
@@ -108,7 +83,7 @@ pub unsafe extern "C" fn fail() {
         (*b"/\0").as_ptr(),
         fn_,
         (*b": \0").as_ptr(),
-        &mut strerr_sys as (*mut strerr) as (*const strerr),
+        &mut STRERR_SYS as (*mut StrErr) as (*const StrErr),
     );
 }
 

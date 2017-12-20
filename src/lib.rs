@@ -15,6 +15,7 @@ mod buffer_1;
 mod buffer_2;
 mod byte;
 mod stralloc;
+mod strerr;
 mod tai;
 mod taia;
 mod uint16;

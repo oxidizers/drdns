@@ -2,6 +2,7 @@ use alloc;
 use byte;
 use errno::{self, Errno};
 use libc;
+use strerr::{StrErr, STRERR_SYS};
 use tai::Tai;
 use taia::TaiA;
 use uint16;
@@ -56,17 +57,6 @@ extern "C" {
     fn socket_tcp() -> i32;
     fn socket_tryreservein(arg1: i32, arg2: i32);
     fn socket_udp() -> i32;
-    fn strerr_die(
-        arg1: i32,
-        arg2: *const u8,
-        arg3: *const u8,
-        arg4: *const u8,
-        arg5: *const u8,
-        arg6: *const u8,
-        arg7: *const u8,
-        arg8: *const strerr,
-    );
-    static mut strerr_sys: strerr;
 }
 
 static mut myipoutgoing: [u8; 4] = [0u8; 4];
@@ -727,21 +717,6 @@ fn main() {
     ::std::process::exit(ret);
 }
 
-#[derive(Copy)]
-#[repr(C)]
-pub struct strerr {
-    pub who: *mut strerr,
-    pub x: *const u8,
-    pub y: *const u8,
-    pub z: *const u8,
-}
-
-impl Clone for strerr {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
 unsafe extern "C" fn doit() {
     let mut j: i32;
     let mut deadline: TaiA;
@@ -904,7 +879,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
     let mut cachesize: usize;
     x = env_get((*b"IP\0").as_ptr());
     if x.is_null() {
-        strerr_die(
+        StrErr::die(
             111i32,
             (*b"dnscache: fatal: \0").as_ptr(),
             (*b"$IP not set\0").as_ptr(),
@@ -912,11 +887,11 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             0i32 as (*const u8),
             0i32 as (*const u8),
             0i32 as (*const u8),
-            0i32 as (*const strerr),
+            0i32 as (*const StrErr),
         );
     }
     if ip4_scan(x as (*const u8), myipincoming.as_mut_ptr()) == 0 {
-        strerr_die(
+        StrErr::die(
             111i32,
             (*b"dnscache: fatal: \0").as_ptr(),
             (*b"unable to parse IP address \0").as_ptr(),
@@ -924,12 +899,12 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             0i32 as (*const u8),
             0i32 as (*const u8),
             0i32 as (*const u8),
-            0i32 as (*const strerr),
+            0i32 as (*const StrErr),
         );
     }
     udp53 = socket_udp();
     if udp53 == -1i32 {
-        strerr_die(
+        StrErr::die(
             111i32,
             (*b"dnscache: fatal: \0").as_ptr(),
             (*b"unable to create UDP socket: \0").as_ptr(),
@@ -937,11 +912,11 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             0i32 as (*const u8),
             0i32 as (*const u8),
             0i32 as (*const u8),
-            &mut strerr_sys as (*mut strerr) as (*const strerr),
+            &mut STRERR_SYS as (*mut StrErr) as (*const StrErr),
         );
     }
     if socket_bind4_reuse(udp53, myipincoming.as_mut_ptr(), 53u16) == -1i32 {
-        strerr_die(
+        StrErr::die(
             111i32,
             (*b"dnscache: fatal: \0").as_ptr(),
             (*b"unable to bind UDP socket: \0").as_ptr(),
@@ -949,12 +924,12 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             0i32 as (*const u8),
             0i32 as (*const u8),
             0i32 as (*const u8),
-            &mut strerr_sys as (*mut strerr) as (*const strerr),
+            &mut STRERR_SYS as (*mut StrErr) as (*const StrErr),
         );
     }
     tcp53 = socket_tcp();
     if tcp53 == -1i32 {
-        strerr_die(
+        StrErr::die(
             111i32,
             (*b"dnscache: fatal: \0").as_ptr(),
             (*b"unable to create TCP socket: \0").as_ptr(),
@@ -962,11 +937,11 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             0i32 as (*const u8),
             0i32 as (*const u8),
             0i32 as (*const u8),
-            &mut strerr_sys as (*mut strerr) as (*const strerr),
+            &mut STRERR_SYS as (*mut StrErr) as (*const StrErr),
         );
     }
     if socket_bind4_reuse(tcp53, myipincoming.as_mut_ptr(), 53u16) == -1i32 {
-        strerr_die(
+        StrErr::die(
             111i32,
             (*b"dnscache: fatal: \0").as_ptr(),
             (*b"unable to bind TCP socket: \0").as_ptr(),
@@ -974,7 +949,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             0i32 as (*const u8),
             0i32 as (*const u8),
             0i32 as (*const u8),
-            &mut strerr_sys as (*mut strerr) as (*const strerr),
+            &mut STRERR_SYS as (*mut StrErr) as (*const StrErr),
         );
     }
     droproot((*b"dnscache: fatal: \0").as_ptr());
@@ -992,7 +967,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
     close(0i32);
     x = env_get((*b"IPSEND\0").as_ptr());
     if x.is_null() {
-        strerr_die(
+        StrErr::die(
             111i32,
             (*b"dnscache: fatal: \0").as_ptr(),
             (*b"$IPSEND not set\0").as_ptr(),
@@ -1000,11 +975,11 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             0i32 as (*const u8),
             0i32 as (*const u8),
             0i32 as (*const u8),
-            0i32 as (*const strerr),
+            0i32 as (*const StrErr),
         );
     }
     if ip4_scan(x as (*const u8), myipoutgoing.as_mut_ptr()) == 0 {
-        strerr_die(
+        StrErr::die(
             111i32,
             (*b"dnscache: fatal: \0").as_ptr(),
             (*b"unable to parse IP address \0").as_ptr(),
@@ -1012,12 +987,12 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             0i32 as (*const u8),
             0i32 as (*const u8),
             0i32 as (*const u8),
-            0i32 as (*const strerr),
+            0i32 as (*const StrErr),
         );
     }
     x = env_get((*b"CACHESIZE\0").as_ptr());
     if x.is_null() {
-        strerr_die(
+        StrErr::die(
             111i32,
             (*b"dnscache: fatal: \0").as_ptr(),
             (*b"$CACHESIZE not set\0").as_ptr(),
@@ -1025,12 +1000,12 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             0i32 as (*const u8),
             0i32 as (*const u8),
             0i32 as (*const u8),
-            0i32 as (*const strerr),
+            0i32 as (*const StrErr),
         );
     }
     scan_ulong(x as (*const u8), &mut cachesize as (*mut usize));
     if cache_init(cachesize as (u32)) == 0 {
-        strerr_die(
+        StrErr::die(
             111i32,
             (*b"dnscache: fatal: \0").as_ptr(),
             (*b"not enough memory for cache of size \0").as_ptr(),
@@ -1038,7 +1013,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             0i32 as (*const u8),
             0i32 as (*const u8),
             0i32 as (*const u8),
-            0i32 as (*const strerr),
+            0i32 as (*const StrErr),
         );
     }
     if !env_get((*b"HIDETTL\0").as_ptr()).is_null() {
@@ -1048,7 +1023,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
         query_forwardonly();
     }
     if roots_init() == 0 {
-        strerr_die(
+        StrErr::die(
             111i32,
             (*b"dnscache: fatal: \0").as_ptr(),
             (*b"unable to read servers: \0").as_ptr(),
@@ -1056,11 +1031,11 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             0i32 as (*const u8),
             0i32 as (*const u8),
             0i32 as (*const u8),
-            &mut strerr_sys as (*mut strerr) as (*const strerr),
+            &mut STRERR_SYS as (*mut StrErr) as (*const StrErr),
         );
     }
     if socket_listen(tcp53, 20i32) == -1i32 {
-        strerr_die(
+        StrErr::die(
             111i32,
             (*b"dnscache: fatal: \0").as_ptr(),
             (*b"unable to listen on TCP socket: \0").as_ptr(),
@@ -1068,7 +1043,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             0i32 as (*const u8),
             0i32 as (*const u8),
             0i32 as (*const u8),
-            &mut strerr_sys as (*mut strerr) as (*const strerr),
+            &mut STRERR_SYS as (*mut StrErr) as (*const StrErr),
         );
     }
     log_startup();

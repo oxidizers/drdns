@@ -5,6 +5,7 @@ use byte;
 use errno::errno;
 use libc;
 use stralloc::StrAlloc;
+use strerr::{StrErr, STRERR_SYS};
 use tai::Tai;
 use taia::TaiA;
 
@@ -26,44 +27,13 @@ extern "C" {
     fn ip4_scan(arg1: *const u8, arg2: *mut u8) -> u32;
     fn scan_ulong(arg1: *const u8, arg2: *mut usize) -> u32;
     fn sgetoptmine(arg1: i32, arg2: *mut *mut u8, arg3: *const u8) -> i32;
-    fn StrAlloc::append(arg1: *mut StrAlloc, arg2: *const u8) -> i32;
-    fn StrAlloc::catb(arg1: *mut StrAlloc, arg2: *const u8, arg3: u32) -> i32;
-    fn StrAlloc::cats(arg1: *mut StrAlloc, arg2: *const u8) -> i32;
-    fn StrAlloc::copyb(arg1: *mut StrAlloc, arg2: *const u8, arg3: u32) -> i32;
-    fn StrAlloc::copys(arg1: *mut StrAlloc, arg2: *const u8) -> i32;
-    fn strerr_die(
-        arg1: i32,
-        arg2: *const u8,
-        arg3: *const u8,
-        arg4: *const u8,
-        arg5: *const u8,
-        arg6: *const u8,
-        arg7: *const u8,
-        arg8: *const strerr,
-    );
-    static mut strerr_sys: strerr;
     static mut subgetoptarg: *mut u8;
     static mut subgetoptdone: i32;
 }
 
-#[derive(Copy)]
-#[repr(C)]
-pub struct strerr {
-    pub who: *mut strerr,
-    pub x: *const u8,
-    pub y: *const u8,
-    pub z: *const u8,
-}
-
-impl Clone for strerr {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
 #[no_mangle]
 pub unsafe extern "C" fn nomem() {
-    strerr_die(
+    StrErr::die(
         111i32,
         (*b"dnsfilter: fatal: \0").as_ptr(),
         (*b"out of memory\0").as_ptr(),
@@ -71,7 +41,7 @@ pub unsafe extern "C" fn nomem() {
         0i32 as (*const u8),
         0i32 as (*const u8),
         0i32 as (*const u8),
-        0i32 as (*const strerr),
+        0i32 as (*const StrErr),
     );
 }
 
@@ -301,7 +271,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
             }
             maxactive = u as (u32);
         } else {
-            strerr_die(
+            StrErr::die(
                 111i32,
                 (*b"dnsfilter: usage: dnsfilter [ -c concurrency ] [ -l lines ]\0").as_ptr(),
                 0i32 as (*const u8),
@@ -309,7 +279,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
                 0i32 as (*const u8),
                 0i32 as (*const u8),
                 0i32 as (*const u8),
-                0i32 as (*const strerr),
+                0i32 as (*const StrErr),
             );
         }
     }
@@ -541,7 +511,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
                         if ip4_scan(partial.s as (*const u8), ip.as_mut_ptr()) != 0 {
                             dns_name4_domain(name.as_mut_ptr(), ip.as_mut_ptr() as (*const u8));
                             if dns_resolvconfip(servers.as_mut_ptr()) == -1i32 {
-                                strerr_die(
+                                StrErr::die(
                                     111i32,
                                     (*b"dnsfilter: fatal: \0").as_ptr(),
                                     (*b"unable to read /etc/resolv.conf: \0").as_ptr(),
@@ -549,7 +519,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
                                     0i32 as (*const u8),
                                     0i32 as (*const u8),
                                     0i32 as (*const u8),
-                                    &mut strerr_sys as (*mut strerr) as (*const strerr),
+                                    &mut STRERR_SYS as (*mut StrErr) as (*const StrErr),
                                 );
                             }
                             if dns_transmit_start(

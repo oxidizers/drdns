@@ -3,6 +3,7 @@ use buffer_1::BUFFER_1;
 use errno::errno;
 use libc;
 use stralloc::StrAlloc;
+use strerr::{StrErr, STRERR_SYS};
 use tai::Tai;
 use taia::TaiA;
 use uint16;
@@ -15,22 +16,11 @@ extern "C" {
     static mut dns_resolve_tx: dns_transmit;
     fn parsetype(arg1: *mut u8, arg2: *mut u8) -> i32;
     fn printpacket_cat(arg1: *mut StrAlloc, arg2: *mut u8, arg3: u32) -> u32;
-    fn strerr_die(
-        arg1: i32,
-        arg2: *const u8,
-        arg3: *const u8,
-        arg4: *const u8,
-        arg5: *const u8,
-        arg6: *const u8,
-        arg7: *const u8,
-        arg8: *const strerr,
-    );
-    static mut strerr_sys: strerr;
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn usage() {
-    strerr_die(
+    StrErr::die(
         100i32,
         (*b"dnsqr: usage: dnsqr type name\0").as_ptr(),
         0i32 as (*const u8),
@@ -38,13 +28,13 @@ pub unsafe extern "C" fn usage() {
         0i32 as (*const u8),
         0i32 as (*const u8),
         0i32 as (*const u8),
-        0i32 as (*const strerr),
+        0i32 as (*const StrErr),
     );
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn oops() {
-    strerr_die(
+    StrErr::die(
         111i32,
         (*b"dnsqr: fatal: \0").as_ptr(),
         (*b"unable to parse: \0").as_ptr(),
@@ -52,7 +42,7 @@ pub unsafe extern "C" fn oops() {
         0i32 as (*const u8),
         0i32 as (*const u8),
         0i32 as (*const u8),
-        &mut strerr_sys as (*mut strerr) as (*const strerr),
+        &mut STRERR_SYS as (*mut StrErr) as (*const StrErr),
     );
 }
 

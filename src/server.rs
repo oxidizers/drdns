@@ -1,6 +1,7 @@
 use buffer::Buffer;
 use buffer_2::BUFFER_2;
 use byte;
+use strerr::{StrErr, STRERR_SYS};
 
 extern "C" {
     fn case_lowerb(arg1: *mut u8, arg2: u32);
@@ -33,17 +34,6 @@ extern "C" {
     fn socket_tryreservein(arg1: i32, arg2: i32);
     fn socket_udp() -> i32;
     static mut starting: *mut u8;
-    fn strerr_die(
-        arg1: i32,
-        arg2: *const u8,
-        arg3: *const u8,
-        arg4: *const u8,
-        arg5: *const u8,
-        arg6: *const u8,
-        arg7: *const u8,
-        arg8: *const strerr,
-    );
-    static mut strerr_sys: strerr;
 }
 
 static mut ip: [u8; 4] = [0u8; 4];
@@ -59,21 +49,6 @@ static mut q: *mut u8 = 0 as (*mut u8);
 fn main() {
     let ret = unsafe { _c_main() };
     ::std::process::exit(ret);
-}
-
-#[derive(Copy)]
-#[repr(C)]
-pub struct strerr {
-    pub who: *mut strerr,
-    pub x: *const u8,
-    pub y: *const u8,
-    pub z: *const u8,
-}
-
-impl Clone for strerr {
-    fn clone(&self) -> Self {
-        *self
-    }
 }
 
 unsafe extern "C" fn doit() -> i32 {
@@ -241,7 +216,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
     let mut udp53: i32;
     x = env_get((*b"IP\0").as_ptr());
     if x.is_null() {
-        strerr_die(
+        StrErr::die(
             111i32,
             fatal as (*const u8),
             (*b"$IP not set\0").as_ptr(),
@@ -249,11 +224,11 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             0i32 as (*const u8),
             0i32 as (*const u8),
             0i32 as (*const u8),
-            0i32 as (*const strerr),
+            0i32 as (*const StrErr),
         );
     }
     if ip4_scan(x as (*const u8), ip.as_mut_ptr()) == 0 {
-        strerr_die(
+        StrErr::die(
             111i32,
             fatal as (*const u8),
             (*b"unable to parse IP address \0").as_ptr(),
@@ -261,12 +236,12 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             0i32 as (*const u8),
             0i32 as (*const u8),
             0i32 as (*const u8),
-            0i32 as (*const strerr),
+            0i32 as (*const StrErr),
         );
     }
     udp53 = socket_udp();
     if udp53 == -1i32 {
-        strerr_die(
+        StrErr::die(
             111i32,
             fatal as (*const u8),
             (*b"unable to create UDP socket: \0").as_ptr(),
@@ -274,11 +249,11 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             0i32 as (*const u8),
             0i32 as (*const u8),
             0i32 as (*const u8),
-            &mut strerr_sys as (*mut strerr) as (*const strerr),
+            &mut STRERR_SYS as (*mut StrErr) as (*const StrErr),
         );
     }
     if socket_bind4_reuse(udp53, ip.as_mut_ptr(), 53u16) == -1i32 {
-        strerr_die(
+        StrErr::die(
             111i32,
             fatal as (*const u8),
             (*b"unable to bind UDP socket: \0").as_ptr(),
@@ -286,7 +261,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             0i32 as (*const u8),
             0i32 as (*const u8),
             0i32 as (*const u8),
-            &mut strerr_sys as (*mut strerr) as (*const strerr),
+            &mut STRERR_SYS as (*mut StrErr) as (*const StrErr),
         );
     }
     droproot(fatal as (*const u8));

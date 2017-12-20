@@ -10,7 +10,7 @@ extern "C" {
     fn outs(arg1: *const u8);
     fn perm(arg1: i32);
     fn start(arg1: *const u8);
-    fn strerr_die(
+    fn StrErr::die(
         arg1: i32,
         arg2: *const u8,
         arg3: *const u8,
@@ -18,47 +18,15 @@ extern "C" {
         arg5: *const u8,
         arg6: *const u8,
         arg7: *const u8,
-        arg8: *const strerr,
+        arg8: *const StrErr,
     );
 }
 
-static UUID_NULL: [u8; 16] = [
-    0u8,
-    0u8,
-    0u8,
-    0u8,
-    0u8,
-    0u8,
-    0u8,
-    0u8,
-    0u8,
-    0u8,
-    0u8,
-    0u8,
-    0u8,
-    0u8,
-    0u8,
-    0u8,
-];
-
-#[derive(Copy)]
-#[repr(C)]
-pub struct strerr {
-    pub who: *mut strerr,
-    pub x: *const u8,
-    pub y: *const u8,
-    pub z: *const u8,
-}
-
-impl Clone for strerr {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
+static UUID_NULL: [u8; 16] = [0u8; 16];
 
 #[no_mangle]
 pub unsafe extern "C" fn usage() {
-    strerr_die(
+    StrErr::die(
         100i32,
         (*b"walldns-conf: usage: walldns-conf acct logacct /walldns myip\0").as_ptr(),
         0i32 as (*const u8),
@@ -66,7 +34,7 @@ pub unsafe extern "C" fn usage() {
         0i32 as (*const u8),
         0i32 as (*const u8),
         0i32 as (*const u8),
-        0i32 as (*const strerr),
+        0i32 as (*const StrErr),
     );
 }
 
@@ -147,7 +115,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     }
     pw = getpwnam(loguser as (*const u8));
     if pw.is_null() {
-        strerr_die(
+        StrErr::die(
             111i32,
             (*b"walldns-conf: fatal: \0").as_ptr(),
             (*b"unknown account \0").as_ptr(),
@@ -155,7 +123,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
             0i32 as (*const u8),
             0i32 as (*const u8),
             0i32 as (*const u8),
-            0i32 as (*const strerr),
+            0i32 as (*const StrErr),
         );
     }
     init(dir as (*const u8), (*b"walldns-conf: fatal: \0").as_ptr());

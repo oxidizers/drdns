@@ -5,6 +5,7 @@ use byte;
 use errno::{self, Errno};
 use libc;
 use stralloc::StrAlloc;
+use strerr::StrErr;
 use tai::Tai;
 use taia::TaiA;
 use uint16;
@@ -42,36 +43,11 @@ extern "C" {
         arg5: *const u8,
         arg6: *const u8,
     ) -> u32;
-    fn strerr_die(
-        arg1: i32,
-        arg2: *const u8,
-        arg3: *const u8,
-        arg4: *const u8,
-        arg5: *const u8,
-        arg6: *const u8,
-        arg7: *const u8,
-        arg8: *const strerr,
-    );
-}
-
-#[derive(Copy)]
-#[repr(C)]
-pub struct strerr {
-    pub who: *mut strerr,
-    pub x: *const u8,
-    pub y: *const u8,
-    pub z: *const u8,
-}
-
-impl Clone for strerr {
-    fn clone(&self) -> Self {
-        *self
-    }
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn nomem() {
-    strerr_die(
+    StrErr::die(
         111i32,
         (*b"dnstrace: fatal: \0").as_ptr(),
         (*b"out of memory\0").as_ptr(),
@@ -79,13 +55,13 @@ pub unsafe extern "C" fn nomem() {
         0i32 as (*const u8),
         0i32 as (*const u8),
         0i32 as (*const u8),
-        0i32 as (*const strerr),
+        0i32 as (*const StrErr),
     );
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn usage() {
-    strerr_die(
+    StrErr::die(
         100i32,
         (*b"dnstrace: usage: dnstrace type name rootip ...\0").as_ptr(),
         0i32 as (*const u8),
@@ -93,7 +69,7 @@ pub unsafe extern "C" fn usage() {
         0i32 as (*const u8),
         0i32 as (*const u8),
         0i32 as (*const u8),
-        0i32 as (*const strerr),
+        0i32 as (*const StrErr),
     );
 }
 
