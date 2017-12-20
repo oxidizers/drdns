@@ -14,3 +14,5 @@ mod buffer;
 mod byte;
 mod tai;
 mod taia;
+mod uint16;
+mod uint32;
