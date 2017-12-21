@@ -1,5 +1,4 @@
-use buffer::Buffer;
-use buffer_1::BUFFER_1;
+use buffer::{Buffer, STDOUT_BUFFER};
 use byte;
 use libc;
 use stralloc::StrAlloc;
@@ -115,7 +114,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
             if StrAlloc::cats(&mut out as (*mut StrAlloc), (*b"\n\0").as_ptr()) == 0 {
                 nomem();
             }
-            Buffer::put(BUFFER_1.as_mut_ptr(), out.s as (*const u8), out.len);
+            Buffer::put(STDOUT_BUFFER.as_mut_ptr(), out.s as (*const u8), out.len);
         } else {
             i = 0i32;
             'loop10: loop {
@@ -132,22 +131,22 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
                     &mut pref as (*mut u16),
                 );
                 Buffer::put(
-                    BUFFER_1.as_mut_ptr(),
+                    STDOUT_BUFFER.as_mut_ptr(),
                     strnum.as_mut_ptr() as (*const u8),
                     fmt_ulong(strnum.as_mut_ptr(), pref as (usize)),
                 );
-                Buffer::puts(BUFFER_1.as_mut_ptr(), (*b" \0").as_ptr());
+                Buffer::puts(STDOUT_BUFFER.as_mut_ptr(), (*b" \0").as_ptr());
                 Buffer::put(
-                    BUFFER_1.as_mut_ptr(),
+                    STDOUT_BUFFER.as_mut_ptr(),
                     out.s.offset(i as (isize)).offset(2isize) as (*const u8),
                     j as (u32),
                 );
-                Buffer::puts(BUFFER_1.as_mut_ptr(), (*b"\n\0").as_ptr());
+                Buffer::puts(STDOUT_BUFFER.as_mut_ptr(), (*b"\n\0").as_ptr());
                 i = i + (j + 3i32);
             }
         }
         argv = argv.offset(1isize);
     }
-    Buffer::flush(BUFFER_1.as_mut_ptr());
+    Buffer::flush(STDOUT_BUFFER.as_mut_ptr());
     libc::_exit(0i32);
 }

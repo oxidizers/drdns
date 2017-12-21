@@ -12,8 +12,6 @@ extern crate libc;
 mod cdb;
 mod alloc;
 mod buffer;
-mod buffer_1;
-mod buffer_2;
 mod byte;
 mod stralloc;
 mod strerr;

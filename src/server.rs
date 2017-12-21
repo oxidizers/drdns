@@ -1,5 +1,4 @@
-use buffer::Buffer;
-use buffer_2::BUFFER_2;
+use buffer::{Buffer, STDERR_BUFFER};
 use byte;
 use strerr::{StrErr, STRERR_SYS};
 
@@ -268,7 +267,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
     initialize();
     ndelay_off(udp53);
     socket_tryreservein(udp53, 65536i32);
-    Buffer::putsflush(BUFFER_2.as_mut_ptr(), starting as (*const u8));
+    Buffer::putsflush(STDERR_BUFFER.as_mut_ptr(), starting as (*const u8));
     'loop9: loop {
         len = socket_recv4(
             udp53,

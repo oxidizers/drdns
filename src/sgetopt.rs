@@ -1,5 +1,4 @@
-use buffer::Buffer;
-use buffer_2::BUFFER_2;
+use buffer::{Buffer, STDERR_BUFFER};
 
 extern "C" {
     fn subgetopt(arg1: i32, arg2: *mut *mut u8, arg3: *const u8) -> i32;
@@ -43,14 +42,14 @@ pub unsafe extern "C" fn sgetoptmine(
             let mut chp: [u8; 2];
             chp[0usize] = subgetoptproblem as (u8);
             chp[1usize] = b'\n';
-            Buffer::puts(BUFFER_2.as_mut_ptr(), sgetoptprogname);
+            Buffer::puts(STDERR_BUFFER.as_mut_ptr(), sgetoptprogname);
             if !(*argv.offset(subgetoptind as (isize))).is_null() && (subgetoptind < argc) {
-                Buffer::puts(BUFFER_2.as_mut_ptr(), (*b": illegal option -- \0").as_ptr());
+                Buffer::puts(STDERR_BUFFER.as_mut_ptr(), (*b": illegal option -- \0").as_ptr());
             } else {
-                Buffer::puts(BUFFER_2.as_mut_ptr(), (*b": option requires an argument -- \0").as_ptr());
+                Buffer::puts(STDERR_BUFFER.as_mut_ptr(), (*b": option requires an argument -- \0").as_ptr());
             }
-            Buffer::put(BUFFER_2.as_mut_ptr(), chp.as_mut_ptr() as (*const u8), 2u32);
-            Buffer::flush(BUFFER_2.as_mut_ptr());
+            Buffer::put(STDERR_BUFFER.as_mut_ptr(), chp.as_mut_ptr() as (*const u8), 2u32);
+            Buffer::flush(STDERR_BUFFER.as_mut_ptr());
         }
     }
     c

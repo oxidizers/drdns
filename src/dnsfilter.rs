@@ -1,6 +1,5 @@
 use alloc;
-use buffer::Buffer;
-use buffer_1::BUFFER_1;
+use buffer::{Buffer, STDOUT_BUFFER};
 use byte;
 use errno::errno;
 use libc;
@@ -409,21 +408,21 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
         'loop23: loop {
             if xnum != 0 && ((*x.offset(0isize)).flagactive == 0) {
                 Buffer::put(
-                    BUFFER_1.as_mut_ptr(),
+                    STDOUT_BUFFER.as_mut_ptr(),
                     (*x.offset(0isize)).left.s as (*const u8),
                     (*x.offset(0isize)).left.len,
                 );
                 Buffer::put(
-                    BUFFER_1.as_mut_ptr(),
+                    STDOUT_BUFFER.as_mut_ptr(),
                     (*x.offset(0isize)).middle.s as (*const u8),
                     (*x.offset(0isize)).middle.len,
                 );
                 Buffer::put(
-                    BUFFER_1.as_mut_ptr(),
+                    STDOUT_BUFFER.as_mut_ptr(),
                     (*x.offset(0isize)).right.s as (*const u8),
                     (*x.offset(0isize)).right.len,
                 );
-                Buffer::flush(BUFFER_1.as_mut_ptr());
+                Buffer::flush(STDOUT_BUFFER.as_mut_ptr());
                 xnum = xnum.wrapping_sub(1u32);
                 tmp = *x.offset(0isize);
                 i = 0i32;
