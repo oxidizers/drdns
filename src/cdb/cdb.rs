@@ -6,19 +6,6 @@ use libc;
 use uint32;
 use super::hash as cdb_hash;
 
-extern "C" {
-    fn fstat(arg1: i32, arg2: *mut stat) -> i32;
-    fn mmap(
-        arg1: *mut ::std::os::raw::c_void,
-        arg2: usize,
-        arg3: i32,
-        arg4: i32,
-        arg5: i32,
-        arg6: isize,
-    ) -> *mut ::std::os::raw::c_void;
-    fn munmap(arg1: *mut ::std::os::raw::c_void, arg2: usize) -> i32;
-}
-
 /// C DataBase file reader
 #[derive(Copy)]
 #[repr(C)]
@@ -41,56 +28,14 @@ impl Clone for cdb {
     }
 }
 
-#[derive(Copy)]
-#[repr(C)]
-pub struct timespec {
-    pub tv_sec: isize,
-    pub tv_nsec: isize,
-}
-
-impl Clone for timespec {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
-#[derive(Copy)]
-#[repr(C)]
-pub struct stat {
-    pub st_dev: i32,
-    pub st_mode: u16,
-    pub st_nlink: u16,
-    pub st_ino: usize,
-    pub st_uid: u32,
-    pub st_gid: u32,
-    pub st_rdev: i32,
-    pub st_atimespec: timespec,
-    pub st_mtimespec: timespec,
-    pub st_ctimespec: timespec,
-    pub st_birthtimespec: timespec,
-    pub st_size: isize,
-    pub st_blocks: isize,
-    pub st_blksize: i32,
-    pub st_flags: u32,
-    pub st_gen: u32,
-    pub st_lspare: i32,
-    pub st_qspare: [isize; 2],
-}
-
-impl Clone for stat {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
 impl cdb {
     pub unsafe extern "C" fn cdb_free(c: *mut cdb) {
         if !(*c).map.is_null() {
-            munmap(
-                (*c).map as (*mut ::std::os::raw::c_void),
-                (*c).size as (usize),
+            libc::munmap(
+                (*c).map as *mut libc::c_void,
+                (*c).size as usize,
             );
-            (*c).map = 0i32 as (*mut u8);
+            (*c).map = 0i32 as *mut u8;
         }
     }
 
@@ -99,52 +44,44 @@ impl cdb {
     }
 
     pub unsafe extern "C" fn cdb_init(c: *mut cdb, fd: i32) {
-        let mut st: stat = stat {
-            st_dev: 0i32,
-            st_mode: 0u16,
-            st_nlink: 0u16,
-            st_ino: 0usize,
-            st_uid: 0u32,
-            st_gid: 0u32,
-            st_rdev: 0i32,
-            st_atimespec: timespec {
-                tv_sec: 0isize,
-                tv_nsec: 0isize,
-            },
-            st_mtimespec: timespec {
-                tv_sec: 0isize,
-                tv_nsec: 0isize,
-            },
-            st_ctimespec: timespec {
-                tv_sec: 0isize,
-                tv_nsec: 0isize,
-            },
-            st_birthtimespec: timespec {
-                tv_sec: 0isize,
-                tv_nsec: 0isize,
-            },
-            st_size: 0isize,
-            st_blocks: 0isize,
-            st_blksize: 0i32,
-            st_flags: 0u32,
-            st_gen: 0u32,
-            st_lspare: 0i32,
-            st_qspare: [0isize, 0isize],
+        let mut st = libc::stat {
+            st_dev: 0,
+            st_mode: 0,
+            st_nlink: 0,
+            st_ino: 0,
+            st_uid: 0,
+            st_gid: 0,
+            st_rdev: 0,
+            st_atime: 0,
+            st_atime_nsec: 0,
+            st_mtime: 0,
+            st_mtime_nsec: 0,
+            st_birthtime: 0,
+            st_birthtime_nsec: 0,
+            st_ctime: 0,
+            st_ctime_nsec: 0,
+            st_size: 0,
+            st_blocks: 0,
+            st_blksize: 0,
+            st_flags: 0,
+            st_gen: 0,
+            st_lspare: 0,
+            st_qspare: [0; 2],
         };
 
         let x: *mut u8;
         Self::cdb_free(c);
         Self::cdb_findstart(c);
         (*c).fd = fd;
-        if fstat(fd, &mut st as (*mut stat)) == 0i32 {
+        if libc::fstat(fd, &mut st as (*mut libc::stat)) == 0i32 {
             if st.st_size as (usize) <= 0xffffffffusize {
-                x = mmap(
-                    0i32 as (*mut ::std::os::raw::c_void),
+                x = libc::mmap(
+                    0 as *mut libc::c_void,
                     st.st_size as (usize),
-                    0x1i32,
-                    0x1i32,
+                    0x1,
+                    0x1,
                     fd,
-                    0isize,
+                    0,
                 ) as (*mut u8);
                 if !x.offset(1isize).is_null() {
                     (*c).size = st.st_size as (u32);
@@ -212,7 +149,7 @@ impl cdb {
         }
     }
 
-    unsafe extern "C" fn match_(
+    unsafe extern "C" fn switch(
         c: *mut cdb,
         mut key: *const u8,
         mut len: u32,
@@ -314,7 +251,7 @@ impl cdb {
             if !(u == len) {
                 continue;
             }
-            let switch1 = Self::match_(c, key, len, pos.wrapping_add(8u32));
+            let switch1 = Self::switch(c, key, len, pos.wrapping_add(8u32));
             if switch1 == 1i32 {
                 current_block = 17;
                 break;
