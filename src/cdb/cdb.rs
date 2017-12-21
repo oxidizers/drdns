@@ -9,7 +9,7 @@ use super::hash as cdb_hash;
 /// C DataBase file reader
 #[derive(Copy)]
 #[repr(C)]
-pub struct cdb {
+pub struct Cdb {
     pub map: *mut u8,
     pub fd: i32,
     pub size: u32,
@@ -22,14 +22,14 @@ pub struct cdb {
     pub dlen: u32,
 }
 
-impl Clone for cdb {
+impl Clone for Cdb {
     fn clone(&self) -> Self {
         *self
     }
 }
 
-impl cdb {
-    pub unsafe extern "C" fn cdb_free(c: *mut cdb) {
+impl Cdb {
+    pub unsafe fn free(c: *mut Cdb) {
         if !(*c).map.is_null() {
             libc::munmap(
                 (*c).map as *mut libc::c_void,
@@ -39,11 +39,11 @@ impl cdb {
         }
     }
 
-    pub unsafe extern "C" fn cdb_findstart(c: *mut cdb) {
+    pub unsafe fn findstart(c: *mut Cdb) {
         (*c).loopvar = 0u32;
     }
 
-    pub unsafe extern "C" fn cdb_init(c: *mut cdb, fd: i32) {
+    pub unsafe fn init(c: *mut Cdb, fd: i32) {
         let mut st = libc::stat {
             st_dev: 0,
             st_mode: 0,
@@ -70,8 +70,8 @@ impl cdb {
         };
 
         let x: *mut u8;
-        Self::cdb_free(c);
-        Self::cdb_findstart(c);
+        Cdb::free(c);
+        Cdb::findstart(c);
         (*c).fd = fd;
         if libc::fstat(fd, &mut st as (*mut libc::stat)) == 0i32 {
             if st.st_size as (usize) <= 0xffffffffusize {
@@ -91,8 +91,8 @@ impl cdb {
         }
     }
 
-    pub unsafe extern "C" fn cdb_read(
-        c: *mut cdb,
+    pub unsafe fn read(
+        c: *mut Cdb,
         mut buf: *mut u8,
         mut len: u32,
         pos: u32,
@@ -149,53 +149,14 @@ impl cdb {
         }
     }
 
-    unsafe extern "C" fn switch(
-        c: *mut cdb,
-        mut key: *const u8,
-        mut len: u32,
-        mut pos: u32,
-    ) -> i32 {
-        let current_block;
-        let mut buf = [0u8; 32];
-        let mut n: i32;
-        'loop1: loop {
-            if !(len > 0u32) {
-                current_block = 2;
-                break;
-            }
-            n = ::std::mem::size_of::<[u8; 32]>() as (i32);
-            if n as (u32) > len {
-                n = len as (i32);
-            }
-            if Self::cdb_read(c, buf.as_mut_ptr(), n as (u32), pos) == -1i32 {
-                current_block = 9;
-                break;
-            }
-            if byte::diff(buf.as_mut_ptr(), n as (u32), key as (*mut u8)) != 0 {
-                current_block = 8;
-                break;
-            }
-            pos = pos.wrapping_add(n as (u32));
-            key = key.offset(n as (isize));
-            len = len.wrapping_sub(n as (u32));
-        }
-        if current_block == 2 {
-            1i32
-        } else if current_block == 8 {
-            0i32
-        } else {
-            -1i32
-        }
-    }
-
-    pub unsafe extern "C" fn cdb_findnext(c: *mut cdb, key: *const u8, len: u32) -> i32 {
+    pub unsafe fn findnext(c: *mut Cdb, key: *const u8, len: u32) -> i32 {
         let current_block;
         let mut buf = [0u8; 8];
         let mut pos = 0u32;
         let mut u = 0u32;
         if (*c).loopvar == 0 {
             u = cdb_hash(key, len);
-            if Self::cdb_read(c, buf.as_mut_ptr(), 8u32, u << 3i32 & 2047u32) == -1i32 {
+            if Cdb::read(c, buf.as_mut_ptr(), 8u32, u << 3i32 & 2047u32) == -1i32 {
                 return -1i32;
             } else {
                 uint32::unpack(
@@ -222,7 +183,7 @@ impl cdb {
                 current_block = 5;
                 break;
             }
-            if Self::cdb_read(c, buf.as_mut_ptr(), 8u32, (*c).kpos) == -1i32 {
+            if Cdb::read(c, buf.as_mut_ptr(), 8u32, (*c).kpos) == -1i32 {
                 current_block = 20;
                 break;
             }
@@ -243,7 +204,7 @@ impl cdb {
             if !(u == (*c).khash) {
                 continue;
             }
-            if Self::cdb_read(c, buf.as_mut_ptr(), 8u32, pos) == -1i32 {
+            if Cdb::read(c, buf.as_mut_ptr(), 8u32, pos) == -1i32 {
                 current_block = 18;
                 break;
             }
@@ -281,8 +242,47 @@ impl cdb {
         }
     }
 
-    pub unsafe extern "C" fn cdb_find(c: *mut cdb, key: *const u8, len: u32) -> i32 {
-        Self::cdb_findstart(c);
-        Self::cdb_findnext(c, key, len)
+    pub unsafe fn find(c: *mut Cdb, key: *const u8, len: u32) -> i32 {
+        Cdb::findstart(c);
+        Cdb::findnext(c, key, len)
+    }
+
+    unsafe fn switch(
+        c: *mut Cdb,
+        mut key: *const u8,
+        mut len: u32,
+        mut pos: u32,
+    ) -> i32 {
+        let current_block;
+        let mut buf = [0u8; 32];
+        let mut n: i32;
+        'loop1: loop {
+            if !(len > 0u32) {
+                current_block = 2;
+                break;
+            }
+            n = ::std::mem::size_of::<[u8; 32]>() as (i32);
+            if n as (u32) > len {
+                n = len as (i32);
+            }
+            if Cdb::read(c, buf.as_mut_ptr(), n as (u32), pos) == -1i32 {
+                current_block = 9;
+                break;
+            }
+            if byte::diff(buf.as_mut_ptr(), n as (u32), key as (*mut u8)) != 0 {
+                current_block = 8;
+                break;
+            }
+            pos = pos.wrapping_add(n as (u32));
+            key = key.offset(n as (isize));
+            len = len.wrapping_sub(n as (u32));
+        }
+        if current_block == 2 {
+            1i32
+        } else if current_block == 8 {
+            0i32
+        } else {
+            -1i32
+        }
     }
 }

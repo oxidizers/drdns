@@ -8,4 +8,6 @@ mod cdb;
 mod hash;
 mod make;
 
+pub use self::cdb::Cdb;
+pub use self::make::{CdbHp, CdbHpList, CdbMake};
 pub use self::hash::hash;

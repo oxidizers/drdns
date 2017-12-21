@@ -7,12 +7,12 @@ use super::hash as cdb_hash;
 
 #[derive(Copy)]
 #[repr(C)]
-pub struct cdb_hp {
+pub struct CdbHp {
     pub h: u32,
     pub p: u32,
 }
 
-impl Clone for cdb_hp {
+impl Clone for CdbHp {
     fn clone(&self) -> Self {
         *self
     }
@@ -20,13 +20,13 @@ impl Clone for cdb_hp {
 
 #[derive(Copy)]
 #[repr(C)]
-pub struct cdb_hplist {
-    pub hp: [cdb_hp; 1000],
-    pub next: *mut cdb_hplist,
+pub struct CdbHpList {
+    pub hp: [CdbHp; 1000],
+    pub next: *mut CdbHpList,
     pub num: i32,
 }
 
-impl Clone for cdb_hplist {
+impl Clone for CdbHpList {
     fn clone(&self) -> Self {
         *self
     }
@@ -34,31 +34,31 @@ impl Clone for cdb_hplist {
 
 #[derive(Copy)]
 #[repr(C)]
-pub struct cdb_make {
+pub struct CdbMake {
     pub bspace: [u8; 8192],
     pub final_: [u8; 2048],
     pub count: [u32; 256],
     pub start: [u32; 256],
-    pub head: *mut cdb_hplist,
-    pub split: *mut cdb_hp,
-    pub hash: *mut cdb_hp,
+    pub head: *mut CdbHpList,
+    pub split: *mut CdbHp,
+    pub hash: *mut CdbHp,
     pub numentries: u32,
     pub b: Buffer,
     pub pos: u32,
     pub fd: i32,
 }
 
-impl Clone for cdb_make {
+impl Clone for CdbMake {
     fn clone(&self) -> Self {
         *self
     }
 }
 
-impl cdb_make {
-    pub unsafe extern "C" fn cdb_make_start(c: *mut cdb_make, fd: i32) -> i32 {
-        (*c).head = 0i32 as (*mut cdb_hplist);
-        (*c).split = 0i32 as (*mut cdb_hp);
-        (*c).hash = 0i32 as (*mut cdb_hp);
+impl CdbMake {
+    pub unsafe fn start(c: *mut CdbMake, fd: i32) -> i32 {
+        (*c).head = 0i32 as (*mut CdbHpList);
+        (*c).split = 0i32 as (*mut CdbHp);
+        (*c).hash = 0i32 as (*mut CdbHp);
         (*c).numentries = 0u32;
         (*c).fd = fd;
         (*c).pos = ::std::mem::size_of::<[u8; 2048]>() as (u32);
@@ -72,32 +72,21 @@ impl cdb_make {
         libc::lseek(fd, (*c).pos as i64, 0) as i32
     }
 
-    unsafe extern "C" fn posplus(c: *mut cdb_make, len: u32) -> i32 {
-        let newpos: u32 = (*c).pos.wrapping_add(len);
-        if newpos < len {
-            errno::set_errno(Errno(libc::ENOMEM));
-            -1i32
-        } else {
-            (*c).pos = newpos;
-            0i32
-        }
-    }
-
-    pub unsafe extern "C" fn cdb_make_addend(
-        c: *mut cdb_make,
+    pub unsafe fn addend(
+        c: *mut CdbMake,
         keylen: u32,
         datalen: u32,
         h: u32,
     ) -> i32 {
-        let mut head: *mut cdb_hplist;
+        let mut head: *mut CdbHpList;
         head = (*c).head;
         if head.is_null() || (*head).num >= 1000i32 {
-            head = alloc::alloc(::std::mem::size_of::<cdb_hplist>() as (u32)) as (*mut cdb_hplist);
+            head = alloc::alloc(::std::mem::size_of::<CdbHpList>() as (u32)) as (*mut CdbHpList);
             if head.is_null() {
                 return -1i32;
             } else {
                 (*head).num = 0i32;
-                (*head).next = (*c).head as (*mut cdb_hplist);
+                (*head).next = (*c).head as (*mut CdbHpList);
                 (*c).head = head;
             }
         }
@@ -116,8 +105,8 @@ impl cdb_make {
         }
     }
 
-    pub unsafe extern "C" fn cdb_make_addbegin(
-        c: *mut cdb_make,
+    pub unsafe fn addbegin(
+        c: *mut CdbMake,
         keylen: u32,
         datalen: u32,
     ) -> i32 {
@@ -127,25 +116,25 @@ impl cdb_make {
         Buffer::putalign(&mut (*c).b as (*mut Buffer), buf.as_ptr(), 8u32)
     }
 
-    pub unsafe extern "C" fn cdb_make_add(
-        c: *mut cdb_make,
+    pub unsafe fn add(
+        c: *mut CdbMake,
         key: *const u8,
         keylen: u32,
         data: *const u8,
         datalen: u32,
     ) -> i32 {
-        if Self::cdb_make_addbegin(c, keylen, datalen) == -1i32 {
+        if CdbMake::addbegin(c, keylen, datalen) == -1i32 {
             -1i32
         } else if Buffer::putalign(&mut (*c).b as (*mut Buffer), key, keylen) == -1i32 {
             -1i32
         } else if Buffer::putalign(&mut (*c).b as (*mut Buffer), data, datalen) == -1i32 {
             -1i32
         } else {
-            Self::cdb_make_addend(c, keylen, datalen, cdb_hash(key, keylen))
+            CdbMake::addend(c, keylen, datalen, cdb_hash(key, keylen))
         }
     }
 
-    pub unsafe extern "C" fn cdb_make_finish(c: *mut cdb_make) -> i32 {
+    pub unsafe fn finish(c: *mut CdbMake) -> i32 {
         let current_block;
         let mut buf = [0u8; 8];
         let mut i: i32;
@@ -154,8 +143,8 @@ impl cdb_make {
         let mut memsize: u32;
         let mut count: u32;
         let mut where_: u32;
-        let mut x: *mut cdb_hplist;
-        let mut hp: *mut cdb_hp;
+        let mut x: *mut CdbHpList;
+        let mut hp: *mut CdbHp;
         i = 0i32;
         'loop1: loop {
             if !(i < 256i32) {
@@ -183,7 +172,7 @@ impl cdb_make {
                 let _lhs = &mut (*c).count[(255u32 & (*x).hp[i as (usize)].h) as (usize)];
                 *_lhs = (*_lhs).wrapping_add(_rhs as (u32));
             }
-            x = (*x).next as (*mut cdb_hplist);
+            x = (*x).next as (*mut CdbHpList);
         }
         memsize = 1u32;
         i = 0i32;
@@ -199,14 +188,14 @@ impl cdb_make {
         }
         memsize = memsize.wrapping_add((*c).numentries);
         u = 0u32.wrapping_sub(1u32);
-        u = (u as (usize)).wrapping_div(::std::mem::size_of::<cdb_hp>()) as (u32);
+        u = (u as (usize)).wrapping_div(::std::mem::size_of::<CdbHp>()) as (u32);
         if memsize > u {
             errno::set_errno(Errno(libc::ENOMEM));
             -1i32
         } else {
             (*c).split = alloc::alloc((memsize as (usize)).wrapping_mul(
-                ::std::mem::size_of::<cdb_hp>(),
-            ) as (u32)) as (*mut cdb_hp);
+                ::std::mem::size_of::<CdbHp>(),
+            ) as (u32)) as (*mut CdbHp);
             (if (*c).split.is_null() {
                 -1i32
             } else {
@@ -243,7 +232,7 @@ impl cdb_make {
                             *_lhs
                         } as (isize)) = (*x).hp[i as (usize)];
                     }
-                    x = (*x).next as (*mut cdb_hplist);
+                    x = (*x).next as (*mut CdbHpList);
                 }
                 i = 0i32;
                 'loop13: loop {
@@ -350,6 +339,17 @@ impl cdb_make {
                     -1i32
                 })
             })
+        }
+    }
+
+    unsafe fn posplus(c: *mut CdbMake, len: u32) -> i32 {
+        let newpos: u32 = (*c).pos.wrapping_add(len);
+        if newpos < len {
+            errno::set_errno(Errno(libc::ENOMEM));
+            -1i32
+        } else {
+            (*c).pos = newpos;
+            0i32
         }
     }
 }

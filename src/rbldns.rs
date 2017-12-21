@@ -1,13 +1,10 @@
 use byte;
+use cdb::Cdb;
 use libc;
 use uint32;
 use strerr::StrErr;
 
 extern "C" {
-    fn cdb_find(arg1: *mut cdb, arg2: *const u8, arg3: u32) -> i32;
-    fn cdb_free(arg1: *mut cdb);
-    fn cdb_init(arg1: *mut cdb, fd: i32);
-    fn cdb_read(arg1: *mut cdb, arg2: *mut u8, arg3: u32, arg4: u32) -> i32;
     fn close(arg1: i32) -> i32;
     fn dd(arg1: *const u8, arg2: *const u8, arg3: *mut u8) -> i32;
     fn dns_domain_fromdot(arg1: *mut *mut u8, arg2: *const u8, arg3: u32) -> i32;
@@ -23,28 +20,7 @@ extern "C" {
 
 static mut base: *mut u8 = 0 as (*mut u8);
 
-#[derive(Copy)]
-#[repr(C)]
-pub struct cdb {
-    pub map: *mut u8,
-    pub fd: i32,
-    pub size: u32,
-    pub loopvar: u32,
-    pub khash: u32,
-    pub kpos: u32,
-    pub hpos: u32,
-    pub hslots: u32,
-    pub dpos: u32,
-    pub dlen: u32,
-}
-
-impl Clone for cdb {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
-static mut c: cdb = cdb {
+static mut c: Cdb = Cdb {
     map: 0 as (*mut u8),
     fd: 0i32,
     size: 0u32,
@@ -102,7 +78,7 @@ unsafe extern "C" fn doit(mut q: *mut u8, mut qtype: *mut u8) -> i32 {
                 ipnum = ipnum << i;
                 uint32::pack_big(key.as_mut_ptr(), ipnum);
                 key[4usize] = (32i32 - i) as (u8);
-                r = cdb_find(&mut c as (*mut cdb), key.as_mut_ptr() as (*const u8), 5u32);
+                r = Cdb::find(&mut c as (*mut Cdb), key.as_mut_ptr() as (*const u8), 5u32);
                 if r == -1i32 {
                     _currentBlock = 36;
                     break;
@@ -118,24 +94,24 @@ unsafe extern "C" fn doit(mut q: *mut u8, mut qtype: *mut u8) -> i32 {
                     response_nxdomain();
                     return 1i32;
                 } else {
-                    r = cdb_find(&mut c as (*mut cdb), (*b"\0").as_ptr(), 0u32);
+                    r = Cdb::find(&mut c as (*mut Cdb), (*b"\0").as_ptr(), 0u32);
                     if r == -1i32 {
                         return 0i32;
                     } else {
                         if r != 0 &&
                             ({
-                                 dlen = (*(&mut c as (*mut cdb))).dlen;
+                                 dlen = (*(&mut c as (*mut Cdb))).dlen;
                                  dlen
                              } >= 4u32)
                         {
                             if dlen > 100u32 {
                                 dlen = 100u32;
                             }
-                            if cdb_read(
-                                &mut c as (*mut cdb),
+                            if Cdb::read(
+                                &mut c as (*mut Cdb),
                                 data.as_mut_ptr(),
                                 dlen,
-                                (*(&mut c as (*mut cdb))).dpos,
+                                (*(&mut c as (*mut Cdb))).dpos,
                             ) == -1i32
                             {
                                 return 0i32;
@@ -230,9 +206,9 @@ pub unsafe extern "C" fn respond(mut q: *mut u8, mut qtype: *mut u8, mut ip: *mu
     if fd == -1i32 {
         0i32
     } else {
-        cdb_init(&mut c as (*mut cdb), fd);
+        Cdb::init(&mut c as (*mut Cdb), fd);
         result = doit(q, qtype);
-        cdb_free(&mut c as (*mut cdb));
+        Cdb::free(&mut c as (*mut Cdb));
         close(fd);
         result
     }
