@@ -7,3 +7,5 @@
 mod cdb;
 mod hash;
 mod make;
+
+pub use self::hash::hash;

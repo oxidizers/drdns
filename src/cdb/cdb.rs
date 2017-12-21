@@ -4,9 +4,9 @@ use byte;
 use errno::{self, Errno};
 use libc;
 use uint32;
+use super::hash as cdb_hash;
 
 extern "C" {
-    fn cdb_hash(arg1: *const u8, arg2: u32) -> u32;
     fn fstat(arg1: i32, arg2: *mut stat) -> i32;
     fn mmap(
         arg1: *mut ::std::os::raw::c_void,

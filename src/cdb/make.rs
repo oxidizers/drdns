@@ -3,9 +3,9 @@ use buffer::{self, Buffer};
 use errno::{self, Errno};
 use libc;
 use uint32;
+use super::hash as cdb_hash;
 
 extern "C" {
-    fn cdb_hash(arg1: *const u8, arg2: u32) -> u32;
     fn seek_set(arg1: i32, arg2: usize) -> i32;
 }
 

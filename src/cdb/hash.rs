@@ -1,23 +1,26 @@
 //! `cdb/hash.rs`: C DataBase (CDB) hash function
 
-pub unsafe extern "C" fn cdb_hashadd(mut h: u32, c: u8) -> u32 {
-    h = h.wrapping_add(h << 5i32);
-    h ^ c as (u32)
+pub unsafe fn hash(mut buf: *const u8, mut len: u32) -> u32 {
+    let mut h = 5381u32;
+
+    while len > 0 {
+        h = add(h, *buf);
+        buf = buf.offset(1isize);
+        len -= 1;
+    }
+
+    h
 }
 
-pub unsafe extern "C" fn cdb_hash(mut buf: *const u8, mut len: u32) -> u32 {
-    let mut h: u32;
-    h = 5381u32;
-    'loop1: loop {
-        if len == 0 {
-            break;
-        }
-        h = cdb_hashadd(h, *{
-            let _old = buf;
-            buf = buf.offset(1isize);
-            _old
-        });
-        len = len.wrapping_sub(1u32);
+fn add(h: u32, c: u8) -> u32 {
+    h.wrapping_add(h << 5i32) ^ c as (u32)
+}
+
+#[test]
+fn test_cdb_hash() {
+    unsafe {
+        assert_eq!(hash(b"".as_ptr(), 0), 0x0001505);
+        assert_eq!(hash(b"Hello, world!".as_ptr(), 13), 0x564369e8);
+        assert_eq!(hash(b"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa".as_ptr(), 32), 0x40032705);
     }
-    h
 }
