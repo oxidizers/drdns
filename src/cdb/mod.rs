@@ -1,4 +1,4 @@
-//! `cdb/mod.rs`: C DataBase
+//! `cdb/mod.rs`: C DataBase (CDB)
 //!
 //! This should probably be replaced with the `cdb` crate:
 //!

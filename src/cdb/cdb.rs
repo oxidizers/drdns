@@ -1,3 +1,5 @@
+//! `cdb/cdb.rs`: C DataBase (CDB) file reader
+
 use byte;
 use errno::{self, Errno};
 use libc;
@@ -18,6 +20,7 @@ extern "C" {
     fn seek_set(arg1: i32, arg2: usize) -> i32;
 }
 
+/// C DataBase file reader
 #[derive(Copy)]
 #[repr(C)]
 pub struct cdb {
@@ -39,8 +42,7 @@ impl Clone for cdb {
     }
 }
 
-#[no_mangle]
-pub unsafe extern "C" fn cdb_free(mut c: *mut cdb) {
+pub unsafe extern "C" fn cdb_free(c: *mut cdb) {
     if !(*c).map.is_null() {
         munmap(
             (*c).map as (*mut ::std::os::raw::c_void),
@@ -50,8 +52,7 @@ pub unsafe extern "C" fn cdb_free(mut c: *mut cdb) {
     }
 }
 
-#[no_mangle]
-pub unsafe extern "C" fn cdb_findstart(mut c: *mut cdb) {
+pub unsafe extern "C" fn cdb_findstart(c: *mut cdb) {
     (*c).loopvar = 0u32;
 }
 
@@ -97,10 +98,41 @@ impl Clone for stat {
     }
 }
 
-#[no_mangle]
-pub unsafe extern "C" fn cdb_init(mut c: *mut cdb, mut fd: i32) {
-    let mut st: stat;
-    let mut x: *mut u8;
+pub unsafe extern "C" fn cdb_init(c: *mut cdb, fd: i32) {
+    let mut st: stat = stat {
+        st_dev: 0i32,
+        st_mode: 0u16,
+        st_nlink: 0u16,
+        st_ino: 0usize,
+        st_uid: 0u32,
+        st_gid: 0u32,
+        st_rdev: 0i32,
+        st_atimespec: timespec {
+            tv_sec: 0isize,
+            tv_nsec: 0isize,
+        },
+        st_mtimespec: timespec {
+            tv_sec: 0isize,
+            tv_nsec: 0isize,
+        },
+        st_ctimespec: timespec {
+            tv_sec: 0isize,
+            tv_nsec: 0isize,
+        },
+        st_birthtimespec: timespec {
+            tv_sec: 0isize,
+            tv_nsec: 0isize,
+        },
+        st_size: 0isize,
+        st_blocks: 0isize,
+        st_blksize: 0i32,
+        st_flags: 0u32,
+        st_gen: 0u32,
+        st_lspare: 0i32,
+        st_qspare: [0isize, 0isize],
+    };
+
+    let x: *mut u8;
     cdb_free(c);
     cdb_findstart(c);
     (*c).fd = fd;
@@ -122,34 +154,33 @@ pub unsafe extern "C" fn cdb_init(mut c: *mut cdb, mut fd: i32) {
     }
 }
 
-#[no_mangle]
 pub unsafe extern "C" fn cdb_read(
-    mut c: *mut cdb,
+    c: *mut cdb,
     mut buf: *mut u8,
     mut len: u32,
-    mut pos: u32,
+    pos: u32,
 ) -> i32 {
-    let mut _currentBlock;
+    let current_block;
     if !(*c).map.is_null() {
         if pos > (*c).size || (*c).size.wrapping_sub(pos) < len {
-            _currentBlock = 14;
+            current_block = 14;
         } else {
             byte::copy(buf, len, (*c).map.offset(pos as (isize)));
-            _currentBlock = 13;
+            current_block = 13;
         }
     } else if seek_set((*c).fd, pos as (usize)) == -1i32 {
         return -1i32;
     } else {
         'loop2: loop {
             if !(len > 0u32) {
-                _currentBlock = 13;
+                current_block = 13;
                 break;
             }
             let mut r: i32;
             'loop4: loop {
                 r = libc::read(
                     (*c).fd,
-                    buf as libc::c_void,
+                    buf as *mut libc::c_void,
                     len as (usize),
                 ) as (i32);
                 if !(r == -1i32 && (errno::errno() == Errno(libc::EINTR))) {
@@ -157,23 +188,23 @@ pub unsafe extern "C" fn cdb_read(
                 }
             }
             if r == -1i32 {
-                _currentBlock = 9;
+                current_block = 9;
                 break;
             }
             if r == 0i32 {
-                _currentBlock = 14;
+                current_block = 14;
                 break;
             }
             buf = buf.offset(r as (isize));
             len = len.wrapping_sub(r as (u32));
         }
-        if _currentBlock == 13 {
-        } else if _currentBlock == 14 {
+        if current_block == 13 {
+        } else if current_block == 14 {
         } else {
             return -1i32;
         }
     }
-    if _currentBlock == 13 {
+    if current_block == 13 {
         0i32
     } else {
         errno::set_errno(Errno(libc::EPROTO));
@@ -182,17 +213,17 @@ pub unsafe extern "C" fn cdb_read(
 }
 
 unsafe extern "C" fn match_(
-    mut c: *mut cdb,
+    c: *mut cdb,
     mut key: *const u8,
     mut len: u32,
     mut pos: u32,
 ) -> i32 {
-    let mut _currentBlock;
-    let mut buf: [u8; 32];
+    let current_block;
+    let mut buf = [0u8; 32];
     let mut n: i32;
     'loop1: loop {
         if !(len > 0u32) {
-            _currentBlock = 2;
+            current_block = 2;
             break;
         }
         n = ::std::mem::size_of::<[u8; 32]>() as (i32);
@@ -200,32 +231,31 @@ unsafe extern "C" fn match_(
             n = len as (i32);
         }
         if cdb_read(c, buf.as_mut_ptr(), n as (u32), pos) == -1i32 {
-            _currentBlock = 9;
+            current_block = 9;
             break;
         }
         if byte::diff(buf.as_mut_ptr(), n as (u32), key as (*mut u8)) != 0 {
-            _currentBlock = 8;
+            current_block = 8;
             break;
         }
         pos = pos.wrapping_add(n as (u32));
         key = key.offset(n as (isize));
         len = len.wrapping_sub(n as (u32));
     }
-    if _currentBlock == 2 {
+    if current_block == 2 {
         1i32
-    } else if _currentBlock == 8 {
+    } else if current_block == 8 {
         0i32
     } else {
         -1i32
     }
 }
 
-#[no_mangle]
-pub unsafe extern "C" fn cdb_findnext(mut c: *mut cdb, mut key: *const u8, mut len: u32) -> i32 {
-    let mut _currentBlock;
-    let mut buf: [u8; 8];
-    let mut pos: u32;
-    let mut u: u32;
+pub unsafe extern "C" fn cdb_findnext(c: *mut cdb, key: *const u8, len: u32) -> i32 {
+    let current_block;
+    let mut buf = [0u8; 8];
+    let mut pos = 0u32;
+    let mut u = 0u32;
     if (*c).loopvar == 0 {
         u = cdb_hash(key, len);
         if cdb_read(c, buf.as_mut_ptr(), 8u32, u << 3i32 & 2047u32) == -1i32 {
@@ -252,11 +282,11 @@ pub unsafe extern "C" fn cdb_findnext(mut c: *mut cdb, mut key: *const u8, mut l
     }
     'loop4: loop {
         if !((*c).loopvar < (*c).hslots) {
-            _currentBlock = 5;
+            current_block = 5;
             break;
         }
         if cdb_read(c, buf.as_mut_ptr(), 8u32, (*c).kpos) == -1i32 {
-            _currentBlock = 20;
+            current_block = 20;
             break;
         }
         uint32::unpack(
@@ -264,7 +294,7 @@ pub unsafe extern "C" fn cdb_findnext(mut c: *mut cdb, mut key: *const u8, mut l
             &mut pos as (*mut u32),
         );
         if pos == 0 {
-            _currentBlock = 19;
+            current_block = 19;
             break;
         }
         (*c).loopvar = (*c).loopvar.wrapping_add(1u32);
@@ -277,7 +307,7 @@ pub unsafe extern "C" fn cdb_findnext(mut c: *mut cdb, mut key: *const u8, mut l
             continue;
         }
         if cdb_read(c, buf.as_mut_ptr(), 8u32, pos) == -1i32 {
-            _currentBlock = 18;
+            current_block = 18;
             break;
         }
         uint32::unpack(buf.as_mut_ptr() as (*const u8), &mut u as (*mut u32));
@@ -286,36 +316,35 @@ pub unsafe extern "C" fn cdb_findnext(mut c: *mut cdb, mut key: *const u8, mut l
         }
         let switch1 = match_(c, key, len, pos.wrapping_add(8u32));
         if switch1 == 1i32 {
-            _currentBlock = 17;
+            current_block = 17;
             break;
         }
         if switch1 == -1i32 {
-            _currentBlock = 16;
+            current_block = 16;
             break;
         }
     }
-    if _currentBlock == 5 {
+    if current_block == 5 {
         0i32
-    } else if _currentBlock == 16 {
+    } else if current_block == 16 {
         -1i32
-    } else if _currentBlock == 17 {
+    } else if current_block == 17 {
         uint32::unpack(
             buf.as_mut_ptr().offset(4isize) as (*const u8),
             &mut (*c).dlen as (*mut u32),
         );
         (*c).dpos = pos.wrapping_add(8u32).wrapping_add(len);
         1i32
-    } else if _currentBlock == 18 {
+    } else if current_block == 18 {
         -1i32
-    } else if _currentBlock == 19 {
+    } else if current_block == 19 {
         0i32
     } else {
         -1i32
     }
 }
 
-#[no_mangle]
-pub unsafe extern "C" fn cdb_find(mut c: *mut cdb, mut key: *const u8, mut len: u32) -> i32 {
+pub unsafe extern "C" fn cdb_find(c: *mut cdb, key: *const u8, len: u32) -> i32 {
     cdb_findstart(c);
     cdb_findnext(c, key, len)
 }

@@ -1,10 +1,10 @@
-#[no_mangle]
-pub unsafe extern "C" fn cdb_hashadd(mut h: u32, mut c: u8) -> u32 {
+//! `cdb/hash.rs`: C DataBase (CDB) hash function
+
+pub unsafe extern "C" fn cdb_hashadd(mut h: u32, c: u8) -> u32 {
     h = h.wrapping_add(h << 5i32);
     h ^ c as (u32)
 }
 
-#[no_mangle]
 pub unsafe extern "C" fn cdb_hash(mut buf: *const u8, mut len: u32) -> u32 {
     let mut h: u32;
     h = 5381u32;

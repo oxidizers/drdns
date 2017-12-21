@@ -58,8 +58,7 @@ impl Clone for cdb_make {
     }
 }
 
-#[no_mangle]
-pub unsafe extern "C" fn cdb_make_start(mut c: *mut cdb_make, mut fd: i32) -> i32 {
+pub unsafe extern "C" fn cdb_make_start(c: *mut cdb_make, fd: i32) -> i32 {
     (*c).head = 0i32 as (*mut cdb_hplist);
     (*c).split = 0i32 as (*mut cdb_hp);
     (*c).hash = 0i32 as (*mut cdb_hp);
@@ -76,8 +75,8 @@ pub unsafe extern "C" fn cdb_make_start(mut c: *mut cdb_make, mut fd: i32) -> i3
     seek_set(fd, (*c).pos as (usize))
 }
 
-unsafe extern "C" fn posplus(mut c: *mut cdb_make, mut len: u32) -> i32 {
-    let mut newpos: u32 = (*c).pos.wrapping_add(len);
+unsafe extern "C" fn posplus(c: *mut cdb_make, len: u32) -> i32 {
+    let newpos: u32 = (*c).pos.wrapping_add(len);
     if newpos < len {
         errno::set_errno(Errno(libc::ENOMEM));
         -1i32
@@ -87,12 +86,11 @@ unsafe extern "C" fn posplus(mut c: *mut cdb_make, mut len: u32) -> i32 {
     }
 }
 
-#[no_mangle]
 pub unsafe extern "C" fn cdb_make_addend(
-    mut c: *mut cdb_make,
-    mut keylen: u32,
-    mut datalen: u32,
-    mut h: u32,
+    c: *mut cdb_make,
+    keylen: u32,
+    datalen: u32,
+    h: u32,
 ) -> i32 {
     let mut head: *mut cdb_hplist;
     head = (*c).head;
@@ -121,42 +119,23 @@ pub unsafe extern "C" fn cdb_make_addend(
     }
 }
 
-#[no_mangle]
 pub unsafe extern "C" fn cdb_make_addbegin(
-    mut c: *mut cdb_make,
-    mut keylen: u32,
-    mut datalen: u32,
+    c: *mut cdb_make,
+    keylen: u32,
+    datalen: u32,
 ) -> i32 {
-    let mut buf: [u8; 8];
-    if keylen > 0xffffffffu32 {
-        errno::set_errno(Errno(libc::ENOMEM));
-        -1i32
-    } else if datalen > 0xffffffffu32 {
-        errno::set_errno(Errno(libc::ENOMEM));
-        -1i32
-    } else {
-        uint32::pack(buf.as_mut_ptr(), keylen);
-        uint32::pack(buf.as_mut_ptr().offset(4isize), datalen);
-        (if Buffer::putalign(
-            &mut (*c).b as (*mut Buffer),
-            buf.as_mut_ptr() as (*const u8),
-            8u32,
-        ) == -1i32
-        {
-             -1i32
-         } else {
-             0i32
-         })
-    }
+    let mut buf = [0u8; 8];
+    uint32::pack(buf.as_mut_ptr(), keylen);
+    uint32::pack(buf.as_mut_ptr().offset(4isize), datalen);
+    Buffer::putalign(&mut (*c).b as (*mut Buffer), buf.as_ptr(), 8u32)
 }
 
-#[no_mangle]
 pub unsafe extern "C" fn cdb_make_add(
-    mut c: *mut cdb_make,
-    mut key: *const u8,
-    mut keylen: u32,
-    mut data: *const u8,
-    mut datalen: u32,
+    c: *mut cdb_make,
+    key: *const u8,
+    keylen: u32,
+    data: *const u8,
+    datalen: u32,
 ) -> i32 {
     if cdb_make_addbegin(c, keylen, datalen) == -1i32 {
         -1i32
@@ -169,10 +148,9 @@ pub unsafe extern "C" fn cdb_make_add(
     }
 }
 
-#[no_mangle]
-pub unsafe extern "C" fn cdb_make_finish(mut c: *mut cdb_make) -> i32 {
-    let mut _currentBlock;
-    let mut buf: [u8; 8];
+pub unsafe extern "C" fn cdb_make_finish(c: *mut cdb_make) -> i32 {
+    let current_block;
+    let mut buf = [0u8; 8];
     let mut i: i32;
     let mut len: u32;
     let mut u: u32;
@@ -273,7 +251,7 @@ pub unsafe extern "C" fn cdb_make_finish(mut c: *mut cdb_make) -> i32 {
              i = 0i32;
              'loop13: loop {
                  if !(i < 256i32) {
-                     _currentBlock = 14;
+                     current_block = 14;
                      break;
                  }
                  count = (*c).count[i as (usize)];
@@ -346,18 +324,18 @@ pub unsafe extern "C" fn cdb_make_finish(mut c: *mut cdb_make) -> i32 {
                         8u32,
                     ) == -1i32
                     {
-                         _currentBlock = 30;
+                         current_block = 30;
                          break 'loop13;
                      }
                      if posplus(c, 8u32) == -1i32 {
-                         _currentBlock = 29;
+                         current_block = 29;
                          break 'loop13;
                      }
                      u = u.wrapping_add(1u32);
                  }
                  i = i + 1;
              }
-             (if _currentBlock == 14 {
+             (if current_block == 14 {
                   (if Buffer::flush(&mut (*c).b as (*mut Buffer)) == -1i32 {
                        -1i32
                    } else if seek_set((*c).fd, 0usize) == -1i32 {
@@ -369,7 +347,7 @@ pub unsafe extern "C" fn cdb_make_finish(mut c: *mut cdb_make) -> i32 {
                         ::std::mem::size_of::<[u8; 2048]>() as (u32),
                     )
                    })
-              } else if _currentBlock == 29 {
+              } else if current_block == 29 {
                   -1i32
               } else {
                   -1i32
