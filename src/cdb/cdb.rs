@@ -17,7 +17,6 @@ extern "C" {
         arg6: isize,
     ) -> *mut ::std::os::raw::c_void;
     fn munmap(arg1: *mut ::std::os::raw::c_void, arg2: usize) -> i32;
-    fn seek_set(arg1: i32, arg2: usize) -> i32;
 }
 
 /// C DataBase file reader
@@ -169,7 +168,7 @@ impl cdb {
                 byte::copy(buf, len, (*c).map.offset(pos as (isize)));
                 current_block = 13;
             }
-        } else if seek_set((*c).fd, pos as (usize)) == -1i32 {
+        } else if libc::lseek((*c).fd, pos as i64, 0) == -1 {
             return -1i32;
         } else {
             'loop2: loop {

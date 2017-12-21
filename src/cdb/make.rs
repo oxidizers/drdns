@@ -5,10 +5,6 @@ use libc;
 use uint32;
 use super::hash as cdb_hash;
 
-extern "C" {
-    fn seek_set(arg1: i32, arg2: usize) -> i32;
-}
-
 #[derive(Copy)]
 #[repr(C)]
 pub struct cdb_hp {
@@ -73,7 +69,7 @@ impl cdb_make {
             (*c).bspace.as_mut_ptr(),
             ::std::mem::size_of::<[u8; 8192]>() as (u32),
         );
-        seek_set(fd, (*c).pos as (usize))
+        libc::lseek(fd, (*c).pos as i64, 0) as i32
     }
 
     unsafe extern "C" fn posplus(c: *mut cdb_make, len: u32) -> i32 {
@@ -339,7 +335,7 @@ impl cdb_make {
                 (if current_block == 14 {
                     (if Buffer::flush(&mut (*c).b as (*mut Buffer)) == -1i32 {
                         -1i32
-                    } else if seek_set((*c).fd, 0usize) == -1i32 {
+                    } else if libc::lseek((*c).fd, 0, 0) == -1 {
                         -1i32
                     } else {
                         Buffer::putflush(

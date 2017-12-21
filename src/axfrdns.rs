@@ -41,7 +41,6 @@ extern "C" {
     static mut response_len: u32;
     fn response_query(arg1: *const u8, arg2: *const u8, arg3: *const u8) -> i32;
     fn scan_ulong(arg1: *const u8, arg2: *mut usize) -> u32;
-    fn seek_set(arg1: i32, arg2: usize) -> i32;
     fn timeoutread(t: i32, fd: i32, buf: *mut u8, len: i32) -> i32;
     fn timeoutwrite(t: i32, fd: i32, buf: *mut u8, len: i32) -> i32;
 }
@@ -601,7 +600,7 @@ pub unsafe extern "C" fn doaxfr(mut id: *mut u8) {
     }
     cdb_free(&mut c as (*mut cdb));
     print(soa.s, soa.len);
-    seek_set(fdcdb, 0usize);
+    libc::lseek(fdcdb, 0, 0);
     Buffer::init(
         &mut bcdb as (*mut Buffer),
         buffer::unixread as buffer::Op,
