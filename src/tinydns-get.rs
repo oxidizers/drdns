@@ -1,6 +1,5 @@
 use byte;
-use buffer::Buffer;
-use buffer_1::BUFFER_1;
+use buffer::{Buffer, STDOUT_BUFFER};
 use libc;
 use stralloc::StrAlloc;
 use uint16;
@@ -175,6 +174,6 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
             oops();
         }
     }
-    Buffer::putflush(BUFFER_1.as_mut_ptr(), out.s as (*const u8), out.len);
+    Buffer::putflush(STDOUT_BUFFER.as_mut_ptr(), out.s as (*const u8), out.len);
     libc::_exit(0i32);
 }

@@ -1,5 +1,4 @@
-use buffer::Buffer;
-use buffer_1::BUFFER_1;
+use buffer::{Buffer, STDOUT_BUFFER};
 use libc;
 use stralloc::StrAlloc;
 use strerr::{StrErr, STRERR_SYS};
@@ -91,24 +90,24 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
                 &mut STRERR_SYS as (*mut StrErr) as (*const StrErr),
             );
         }
-        Buffer::put(BUFFER_1.as_mut_ptr(), fqdn.s as (*const u8), fqdn.len);
-        Buffer::puts(BUFFER_1.as_mut_ptr(), (*b" \0").as_ptr());
+        Buffer::put(STDOUT_BUFFER.as_mut_ptr(), fqdn.s as (*const u8), fqdn.len);
+        Buffer::puts(STDOUT_BUFFER.as_mut_ptr(), (*b" \0").as_ptr());
         i = 0i32;
         'loop9: loop {
             if !((i + 4i32) as (u32) <= out.len) {
                 break;
             }
             Buffer::put(
-                BUFFER_1.as_mut_ptr(),
+                STDOUT_BUFFER.as_mut_ptr(),
                 str.as_mut_ptr() as (*const u8),
                 ip4_fmt(str.as_mut_ptr(), out.s.offset(i as (isize)) as (*const u8)),
             );
-            Buffer::puts(BUFFER_1.as_mut_ptr(), (*b" \0").as_ptr());
+            Buffer::puts(STDOUT_BUFFER.as_mut_ptr(), (*b" \0").as_ptr());
             i = i + 4i32;
         }
-        Buffer::puts(BUFFER_1.as_mut_ptr(), (*b"\n\0").as_ptr());
+        Buffer::puts(STDOUT_BUFFER.as_mut_ptr(), (*b"\n\0").as_ptr());
         argv = argv.offset(1isize);
     }
-    Buffer::flush(BUFFER_1.as_mut_ptr());
+    Buffer::flush(STDOUT_BUFFER.as_mut_ptr());
     libc::_exit(0i32);
 }

@@ -314,3 +314,31 @@ unsafe fn oneread(
     }
     r
 }
+
+/// I/O buffer used for STDOUT
+// TODO: Replace this with Rust's standard STDOUT facilities
+const STDOUT_BUFFER_SIZE: usize = 8192;
+
+static mut STDOUT_BUFFER_SPACE: [u8; STDOUT_BUFFER_SIZE] = [0u8; STDOUT_BUFFER_SIZE];
+
+pub static mut STDOUT_BUFFER: Buffer = Buffer {
+    x: unsafe { &mut STDOUT_BUFFER_SPACE as *mut [u8] as *mut u8 },
+    p: 0u32,
+    n: STDOUT_BUFFER_SIZE as u32,
+    fd: 1i32, // STDOUT
+    op: Some(unixwrite as Op),
+};
+
+/// I/O buffer used for STDERR
+// TODO: Replace this with Rust's standard STDERR facilities
+const STDERR_BUFFER_SIZE: usize = 256;
+
+static mut STDERR_BUFFER_SPACE: [u8; STDERR_BUFFER_SIZE] = [0u8; STDERR_BUFFER_SIZE];
+
+pub static mut STDERR_BUFFER: Buffer = Buffer {
+    x: unsafe { &mut STDERR_BUFFER_SPACE as *mut [u8] as *mut u8 },
+    p: 0u32,
+    n: STDERR_BUFFER_SIZE as u32,
+    fd: 2i32,
+    op: Some(unixwrite as Op),
+};

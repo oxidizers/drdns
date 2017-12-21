@@ -2,8 +2,7 @@
 //!
 //! This should probably be replaced by panic!
 
-use buffer::Buffer;
-use buffer_2::BUFFER_2;
+use buffer::{Buffer, STDERR_BUFFER};
 use errno::errno;
 use libc;
 
@@ -48,40 +47,40 @@ impl StrErr {
     ) {
         StrErr::sysinit();
         if !x1.is_null() {
-            Buffer::puts(BUFFER_2.as_mut_ptr(), x1);
+            Buffer::puts(STDERR_BUFFER.as_mut_ptr(), x1);
         }
         if !x2.is_null() {
-            Buffer::puts(BUFFER_2.as_mut_ptr(), x2);
+            Buffer::puts(STDERR_BUFFER.as_mut_ptr(), x2);
         }
         if !x3.is_null() {
-            Buffer::puts(BUFFER_2.as_mut_ptr(), x3);
+            Buffer::puts(STDERR_BUFFER.as_mut_ptr(), x3);
         }
         if !x4.is_null() {
-            Buffer::puts(BUFFER_2.as_mut_ptr(), x4);
+            Buffer::puts(STDERR_BUFFER.as_mut_ptr(), x4);
         }
         if !x5.is_null() {
-            Buffer::puts(BUFFER_2.as_mut_ptr(), x5);
+            Buffer::puts(STDERR_BUFFER.as_mut_ptr(), x5);
         }
         if !x6.is_null() {
-            Buffer::puts(BUFFER_2.as_mut_ptr(), x6);
+            Buffer::puts(STDERR_BUFFER.as_mut_ptr(), x6);
         }
         'loop12: loop {
             if se.is_null() {
                 break;
             }
             if !(*se).x.is_null() {
-                Buffer::puts(BUFFER_2.as_mut_ptr(), (*se).x);
+                Buffer::puts(STDERR_BUFFER.as_mut_ptr(), (*se).x);
             }
             if !(*se).y.is_null() {
-                Buffer::puts(BUFFER_2.as_mut_ptr(), (*se).y);
+                Buffer::puts(STDERR_BUFFER.as_mut_ptr(), (*se).y);
             }
             if !(*se).z.is_null() {
-                Buffer::puts(BUFFER_2.as_mut_ptr(), (*se).z);
+                Buffer::puts(STDERR_BUFFER.as_mut_ptr(), (*se).z);
             }
             se = (*se).who as (*const StrErr);
         }
-        Buffer::puts(BUFFER_2.as_mut_ptr(), (*b"\n\0").as_ptr());
-        Buffer::flush(BUFFER_2.as_mut_ptr());
+        Buffer::puts(STDERR_BUFFER.as_mut_ptr(), (*b"\n\0").as_ptr());
+        Buffer::flush(STDERR_BUFFER.as_mut_ptr());
     }
 
     pub unsafe fn die(
