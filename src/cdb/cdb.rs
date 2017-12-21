@@ -44,30 +44,7 @@ impl Cdb {
     }
 
     pub unsafe fn init(c: *mut Cdb, fd: i32) {
-        let mut st = libc::stat {
-            st_dev: 0,
-            st_mode: 0,
-            st_nlink: 0,
-            st_ino: 0,
-            st_uid: 0,
-            st_gid: 0,
-            st_rdev: 0,
-            st_atime: 0,
-            st_atime_nsec: 0,
-            st_mtime: 0,
-            st_mtime_nsec: 0,
-            st_birthtime: 0,
-            st_birthtime_nsec: 0,
-            st_ctime: 0,
-            st_ctime_nsec: 0,
-            st_size: 0,
-            st_blocks: 0,
-            st_blksize: 0,
-            st_flags: 0,
-            st_gen: 0,
-            st_lspare: 0,
-            st_qspare: [0; 2],
-        };
+        let mut st: libc::stat = ::std::mem::zeroed();
 
         let x: *mut u8;
         Cdb::free(c);
