@@ -1,6 +1,7 @@
 use alloc;
 use buffer::{self, Buffer};
 use byte;
+use cdb::CdbMake;
 use libc;
 use stralloc::StrAlloc;
 use strerr::{StrErr, STRERR_SYS};
@@ -9,15 +10,6 @@ extern "C" {
     fn __swbuf(arg1: i32, arg2: *mut __sFILE) -> i32;
     fn case_diffb(arg1: *const u8, arg2: u32, arg3: *const u8) -> i32;
     fn case_lowerb(arg1: *mut u8, arg2: u32);
-    fn cdb_make_add(
-        arg1: *mut cdb_make,
-        arg2: *const u8,
-        arg3: u32,
-        arg4: *const u8,
-        arg5: u32,
-    ) -> i32;
-    fn cdb_make_finish(arg1: *mut cdb_make) -> i32;
-    fn cdb_make_start(arg1: *mut cdb_make, arg2: i32) -> i32;
     fn close(arg1: i32) -> i32;
     fn dns_domain_fromdot(arg1: *mut *mut u8, arg2: *const u8, arg3: u32) -> i32;
     fn dns_domain_length(arg1: *const u8) -> u32;
@@ -331,64 +323,15 @@ pub static mut bspace: [u8; 1024] = [0u8; 1024];
 #[no_mangle]
 pub static mut fdcdb: i32 = 0i32;
 
-#[derive(Copy)]
-#[repr(C)]
-pub struct cdb_hp {
-    pub h: u32,
-    pub p: u32,
-}
-
-impl Clone for cdb_hp {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
-#[derive(Copy)]
-#[repr(C)]
-pub struct cdb_hplist {
-    pub hp: [cdb_hp; 1000],
-    pub next: *mut cdb_hplist,
-    pub num: i32,
-}
-
-impl Clone for cdb_hplist {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
-#[derive(Copy)]
-#[repr(C)]
-pub struct cdb_make {
-    pub bspace: [u8; 8192],
-    pub final_: [u8; 2048],
-    pub count: [u32; 256],
-    pub start: [u32; 256],
-    pub head: *mut cdb_hplist,
-    pub split: *mut cdb_hp,
-    pub hash: *mut cdb_hp,
-    pub numentries: u32,
-    pub b: Buffer,
-    pub pos: u32,
-    pub fd: i32,
-}
-
-impl Clone for cdb_make {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
 #[no_mangle]
-pub static mut cdb: cdb_make = cdb_make {
+pub static mut cdb: CdbMake = CdbMake {
     bspace: [0u8; 8192],
     final_: [0u8; 2048],
     count: [0u32; 256],
     start: [0u32; 256],
-    head: 0 as (*mut cdb_hplist),
-    split: 0 as (*mut cdb_hp),
-    hash: 0 as (*mut cdb_hp),
+    head: 0 as (*mut CdbHpList),
+    split: 0 as (*mut CdbHp),
+    hash: 0 as (*mut CdbHp),
     numentries: 0u32,
     b: Buffer {
         x: 0 as (*mut u8),
@@ -503,7 +446,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
     if fdcdb == -1i32 {
         die_datatmp();
     }
-    if cdb_make_start(&mut cdb as (*mut cdb_make), fdcdb) == -1i32 {
+    if CdbMake::start(&mut cdb as (*mut CdbMake), fdcdb) == -1i32 {
         die_datatmp();
     }
     'loop8: loop {
@@ -598,8 +541,8 @@ pub unsafe extern "C" fn _c_main() -> i32 {
                 nomem();
             }
             ipprefix_cat(&mut key as (*mut StrAlloc), f[1usize].s);
-            if !(cdb_make_add(
-                &mut cdb as (*mut cdb_make),
+            if !(CdbMake::add(
+                &mut cdb as (*mut CdbMake),
                 key.s as (*const u8),
                 key.len,
                 result.s as (*const u8),
@@ -708,8 +651,8 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             }
             nomem();
         }
-        if !(cdb_make_add(
-            &mut cdb as (*mut cdb_make),
+        if !(CdbMake::add(
+            &mut cdb as (*mut CdbMake),
             key.s as (*const u8),
             key.len,
             result.s as (*const u8),
@@ -720,7 +663,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
         }
         die_datatmp();
     }
-    if cdb_make_finish(&mut cdb as (*mut cdb_make)) == -1i32 {
+    if CdbMake::finish(&mut cdb as (*mut CdbMake)) == -1i32 {
         die_datatmp();
     }
     if fsync(fdcdb) == -1i32 {
