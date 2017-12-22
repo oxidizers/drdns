@@ -1,5 +1,4 @@
-#[no_mangle]
-pub unsafe extern "C" fn scan_ulong(mut s: *const u8, mut u: *mut usize) -> u32 {
+pub unsafe fn scan_ulong(s: *const u8, u: *mut usize) -> u32 {
     let mut pos: u32 = 0u32;
     let mut result: usize = 0usize;
     let mut c: usize;

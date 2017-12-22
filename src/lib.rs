@@ -16,6 +16,7 @@ mod case;
 mod cdb;
 mod fmt_ulong;
 mod ndelay;
+mod scan_ulong;
 mod socket;
 mod stralloc;
 mod strerr;
