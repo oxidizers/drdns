@@ -4,6 +4,7 @@ use libc;
 use stralloc::StrAlloc;
 use strerr::{StrErr, STRERR_SYS};
 use string;
+use ulong;
 
 extern "C" {
     fn __swbuf(arg1: i32, arg2: *mut __sFILE) -> i32;
@@ -12,7 +13,6 @@ extern "C" {
     fn dns_domain_fromdot(arg1: *mut *mut u8, arg2: *const u8, arg3: u32) -> i32;
     fn dns_domain_todot_cat(arg1: *mut StrAlloc, arg2: *const u8) -> i32;
     fn fchmod(arg1: i32, arg2: u16) -> i32;
-    fn fmt_ulong(arg1: *mut u8, arg2: usize) -> u32;
     fn fstat(arg1: i32, arg2: *mut stat) -> i32;
     fn fsync(arg1: i32) -> i32;
     fn getln(arg1: *mut Buffer, arg2: *mut StrAlloc, arg3: *mut i32, arg4: i32) -> i32;
@@ -21,7 +21,6 @@ extern "C" {
     fn open_read(arg1: *const u8) -> i32;
     fn open_trunc(arg1: *const u8) -> i32;
     fn rename(__old: *const u8, __new: *const u8) -> i32;
-    fn scan_ulong(arg1: *const u8, arg2: *mut usize) -> u32;
     fn umask(arg1: u16) -> u16;
 }
 
@@ -574,7 +573,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
             if StrAlloc::append(&mut f[4usize] as (*mut StrAlloc), (*b"\0").as_ptr()) == 0 {
                 nomem();
             }
-            if scan_ulong(f[4usize].s as (*const u8), &mut ttl as (*mut usize)) == 0 {
+            if ulong::scan(f[4usize].s as (*const u8), &mut ttl as (*mut usize)) == 0 {
                 ttl = 86400usize;
             }
             i = 0i32;
@@ -673,7 +672,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
             if StrAlloc::append(&mut f[3usize] as (*mut StrAlloc), (*b"\0").as_ptr()) == 0 {
                 nomem();
             }
-            if scan_ulong(f[3usize].s as (*const u8), &mut ttl as (*mut usize)) == 0 {
+            if ulong::scan(f[3usize].s as (*const u8), &mut ttl as (*mut usize)) == 0 {
                 ttl = 259200usize;
             }
             i = 0i32;
@@ -760,7 +759,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     if StrAlloc::catb(
         &mut f[0usize] as (*mut StrAlloc),
         strnum.as_mut_ptr() as (*const u8),
-        fmt_ulong(strnum.as_mut_ptr(), ttl),
+        ulong::fmt(strnum.as_mut_ptr(), ttl),
     ) == 0
     {
         nomem();

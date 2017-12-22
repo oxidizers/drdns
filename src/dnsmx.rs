@@ -4,13 +4,13 @@ use libc;
 use stralloc::StrAlloc;
 use strerr::{StrErr, STRERR_SYS};
 use uint16;
+use ulong;
 
 extern "C" {
     fn dns_domain_fromdot(arg1: *mut *mut u8, arg2: *const u8, arg3: u32) -> i32;
     fn dns_domain_todot_cat(arg1: *mut StrAlloc, arg2: *const u8) -> i32;
     fn dns_mx(arg1: *mut StrAlloc, arg2: *const StrAlloc) -> i32;
     fn dns_random_init(arg1: *const u8);
-    fn fmt_ulong(arg1: *mut u8, arg2: usize) -> u32;
 }
 
 #[no_mangle]
@@ -133,7 +133,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
                 Buffer::put(
                     STDOUT_BUFFER.as_mut_ptr(),
                     strnum.as_mut_ptr() as (*const u8),
-                    fmt_ulong(strnum.as_mut_ptr(), pref as (usize)),
+                    ulong::fmt(strnum.as_mut_ptr(), pref as (usize)),
                 );
                 Buffer::puts(STDOUT_BUFFER.as_mut_ptr(), (*b" \0").as_ptr());
                 Buffer::put(

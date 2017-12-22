@@ -1,12 +1,12 @@
 use libc;
 use strerr::{StrErr, STRERR_SYS};
+use ulong;
 
 extern "C" {
     fn chdir(arg1: *const u8) -> i32;
     fn chroot(arg1: *const u8) -> i32;
     fn prot_gid(arg1: i32) -> i32;
     fn prot_uid(arg1: i32) -> i32;
-    fn scan_ulong(arg1: *const u8, arg2: *mut usize) -> u32;
 }
 
 #[no_mangle]
@@ -63,7 +63,7 @@ pub unsafe extern "C" fn droproot(mut fatal: *const u8) {
             0i32 as (*const strerr),
         );
     }
-    scan_ulong(x as (*const u8), &mut id as (*mut usize));
+    ulong::scan(x as (*const u8), &mut id as (*mut usize));
     if prot_gid(id as (i32)) == -1i32 {
         StrErr::die(
             111i32,
@@ -89,7 +89,7 @@ pub unsafe extern "C" fn droproot(mut fatal: *const u8) {
             0i32 as (*const strerr),
         );
     }
-    scan_ulong(x as (*const u8), &mut id as (*mut usize));
+    ulong::scan(x as (*const u8), &mut id as (*mut usize));
     if prot_uid(id as (i32)) == -1i32 {
         StrErr::die(
             111i32,

@@ -8,6 +8,7 @@ use strerr::{StrErr, STRERR_SYS};
 use tai::Tai;
 use uint16;
 use uint32;
+use ulong;
 
 extern "C" {
     fn close(arg1: i32) -> i32;
@@ -34,7 +35,6 @@ extern "C" {
     fn response_id(arg1: *const u8);
     static mut response_len: u32;
     fn response_query(arg1: *const u8, arg2: *const u8, arg3: *const u8) -> i32;
-    fn scan_ulong(arg1: *const u8, arg2: *mut usize) -> u32;
     fn timeoutread(t: i32, fd: i32, buf: *mut u8, len: i32) -> i32;
     fn timeoutwrite(t: i32, fd: i32, buf: *mut u8, len: i32) -> i32;
 }
@@ -700,7 +700,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
     if x.is_null() {
         x = (*b"0\0").as_ptr();
     }
-    scan_ulong(x, &mut port as (*mut usize));
+    ulong::scan(x, &mut port as (*mut usize));
     'loop5: loop {
         netread(tcpheader.as_mut_ptr(), 2u32);
         uint16::unpack_big(

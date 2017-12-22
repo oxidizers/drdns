@@ -8,6 +8,7 @@ use strerr::{StrErr, STRERR_SYS};
 use tai::Tai;
 use taia::TaiA;
 use uint16;
+use ulong;
 
 extern "C" {
     fn cache_init(arg1: u32) -> i32;
@@ -48,7 +49,6 @@ extern "C" {
     static mut response_len: u32;
     fn response_tc();
     fn roots_init() -> i32;
-    fn scan_ulong(arg1: *const u8, arg2: *mut usize) -> u32;
 }
 
 static mut myipoutgoing: [u8; 4] = [0u8; 4];
@@ -995,7 +995,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             0i32 as (*const StrErr),
         );
     }
-    scan_ulong(x as (*const u8), &mut cachesize as (*mut usize));
+    ulong::scan(x as (*const u8), &mut cachesize as (*mut usize));
     if cache_init(cachesize as (u32)) == 0 {
         StrErr::die(
             111i32,

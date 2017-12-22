@@ -7,6 +7,7 @@ use stralloc::StrAlloc;
 use strerr::{StrErr, STRERR_SYS};
 use uint16;
 use uint32;
+use ulong;
 
 extern "C" {
     fn __swbuf(arg1: i32, arg2: *mut __sFILE) -> i32;
@@ -14,7 +15,6 @@ extern "C" {
     fn dns_domain_fromdot(arg1: *mut *mut u8, arg2: *const u8, arg3: u32) -> i32;
     fn dns_domain_length(arg1: *const u8) -> u32;
     fn dns_name4_domain(arg1: *mut u8, arg2: *const u8);
-    fn fmt_ulong(arg1: *mut u8, arg2: usize) -> u32;
     fn fstat(arg1: i32, arg2: *mut stat) -> i32;
     fn fsync(arg1: i32) -> i32;
     fn getln(arg1: *mut Buffer, arg2: *mut StrAlloc, arg3: *mut i32, arg4: i32) -> i32;
@@ -22,7 +22,6 @@ extern "C" {
     fn open_read(arg1: *const u8) -> i32;
     fn open_trunc(arg1: *const u8) -> i32;
     fn rename(__old: *const u8, __new: *const u8) -> i32;
-    fn scan_ulong(arg1: *const u8, arg2: *mut usize) -> u32;
     fn umask(arg1: u16) -> u16;
 }
 
@@ -174,7 +173,7 @@ pub unsafe extern "C" fn ipprefix_cat(mut out: *mut StrAlloc, mut s: *mut u8) {
         if *s as (i32) == b'.' as (i32) {
             s = s.offset(1isize);
         } else {
-            j = scan_ulong(s as (*const u8), &mut u as (*mut usize));
+            j = ulong::scan(s as (*const u8), &mut u as (*mut usize));
             if j == 0 {
                 break;
             }
@@ -466,7 +465,7 @@ pub static mut strnum: [u8; 40] = [0u8; 40];
 
 #[no_mangle]
 pub unsafe extern "C" fn syntaxerror(mut why: *const u8) {
-    strnum[fmt_ulong(strnum.as_mut_ptr(), linenum) as (usize)] = 0u8;
+    strnum[ulong::fmt(strnum.as_mut_ptr(), linenum) as (usize)] = 0u8;
     StrErr::die(
         111i32,
         (*b"tinydns-data: fatal: \0").as_ptr(),
@@ -613,7 +612,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             if StrAlloc::append(&mut f[3usize] as (*mut StrAlloc), (*b"\0").as_ptr()) == 0 {
                 nomem();
             }
-            if scan_ulong(f[3usize].s as (*const u8), &mut ttl as (*mut usize)) == 0 {
+            if ulong::scan(f[3usize].s as (*const u8), &mut ttl as (*mut usize)) == 0 {
                 ttl = 86400usize;
             }
             ttdparse(&mut f[4usize] as (*mut StrAlloc), ttd.as_mut_ptr());
@@ -621,7 +620,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             if StrAlloc::append(&mut f[1usize] as (*mut StrAlloc), (*b"\0").as_ptr()) == 0 {
                 nomem();
             }
-            scan_ulong(f[1usize].s as (*const u8), &mut u as (*mut usize));
+            ulong::scan(f[1usize].s as (*const u8), &mut u as (*mut usize));
             uint16::pack_big(type_.as_mut_ptr(), u as (u16));
             if byte::diff(
                 type_.as_mut_ptr(),
@@ -695,7 +694,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             if StrAlloc::append(&mut f[2usize] as (*mut StrAlloc), (*b"\0").as_ptr()) == 0 {
                 nomem();
             }
-            if scan_ulong(f[2usize].s as (*const u8), &mut ttl as (*mut usize)) == 0 {
+            if ulong::scan(f[2usize].s as (*const u8), &mut ttl as (*mut usize)) == 0 {
                 ttl = 86400usize;
             }
             ttdparse(&mut f[3usize] as (*mut StrAlloc), ttd.as_mut_ptr());
@@ -742,7 +741,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             if StrAlloc::append(&mut f[2usize] as (*mut StrAlloc), (*b"\0").as_ptr()) == 0 {
                 nomem();
             }
-            if scan_ulong(f[2usize].s as (*const u8), &mut ttl as (*mut usize)) == 0 {
+            if ulong::scan(f[2usize].s as (*const u8), &mut ttl as (*mut usize)) == 0 {
                 ttl = 86400usize;
             }
             ttdparse(&mut f[3usize] as (*mut StrAlloc), ttd.as_mut_ptr());
@@ -776,7 +775,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             if StrAlloc::append(&mut f[4usize] as (*mut StrAlloc), (*b"\0").as_ptr()) == 0 {
                 nomem();
             }
-            if scan_ulong(f[4usize].s as (*const u8), &mut ttl as (*mut usize)) == 0 {
+            if ulong::scan(f[4usize].s as (*const u8), &mut ttl as (*mut usize)) == 0 {
                 ttl = 86400usize;
             }
             ttdparse(&mut f[5usize] as (*mut StrAlloc), ttd.as_mut_ptr());
@@ -808,7 +807,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             if StrAlloc::append(&mut f[3usize] as (*mut StrAlloc), (*b"\0").as_ptr()) == 0 {
                 nomem();
             }
-            if scan_ulong(f[3usize].s as (*const u8), &mut u as (*mut usize)) == 0 {
+            if ulong::scan(f[3usize].s as (*const u8), &mut u as (*mut usize)) == 0 {
                 u = 0usize;
             }
             rr_start(
@@ -844,7 +843,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             if StrAlloc::append(&mut f[2usize] as (*mut StrAlloc), (*b"\0").as_ptr()) == 0 {
                 nomem();
             }
-            if scan_ulong(f[2usize].s as (*const u8), &mut ttl as (*mut usize)) == 0 {
+            if ulong::scan(f[2usize].s as (*const u8), &mut ttl as (*mut usize)) == 0 {
                 ttl = 86400usize;
             }
             ttdparse(&mut f[3usize] as (*mut StrAlloc), ttd.as_mut_ptr());
@@ -887,7 +886,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             if StrAlloc::append(&mut f[3usize] as (*mut StrAlloc), (*b"\0").as_ptr()) == 0 {
                 nomem();
             }
-            if scan_ulong(f[3usize].s as (*const u8), &mut ttl as (*mut usize)) == 0 {
+            if ulong::scan(f[3usize].s as (*const u8), &mut ttl as (*mut usize)) == 0 {
                 ttl = 259200usize;
             }
             ttdparse(&mut f[4usize] as (*mut StrAlloc), ttd.as_mut_ptr());
@@ -960,7 +959,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             if StrAlloc::append(&mut f[3usize] as (*mut StrAlloc), (*b"\0").as_ptr()) == 0 {
                 nomem();
             }
-            if scan_ulong(f[3usize].s as (*const u8), &mut u as (*mut usize)) == 0 {
+            if ulong::scan(f[3usize].s as (*const u8), &mut u as (*mut usize)) == 0 {
                 uint32::unpack_big(
                     defaultsoa.as_mut_ptr() as (*const u8),
                     &mut u as (*mut usize) as (*mut u32),
@@ -970,7 +969,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             if StrAlloc::append(&mut f[4usize] as (*mut StrAlloc), (*b"\0").as_ptr()) == 0 {
                 nomem();
             }
-            if scan_ulong(f[4usize].s as (*const u8), &mut u as (*mut usize)) == 0 {
+            if ulong::scan(f[4usize].s as (*const u8), &mut u as (*mut usize)) == 0 {
                 uint32::unpack_big(
                     defaultsoa.as_mut_ptr().offset(4isize) as (*const u8),
                     &mut u as (*mut usize) as (*mut u32),
@@ -980,7 +979,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             if StrAlloc::append(&mut f[5usize] as (*mut StrAlloc), (*b"\0").as_ptr()) == 0 {
                 nomem();
             }
-            if scan_ulong(f[5usize].s as (*const u8), &mut u as (*mut usize)) == 0 {
+            if ulong::scan(f[5usize].s as (*const u8), &mut u as (*mut usize)) == 0 {
                 uint32::unpack_big(
                     defaultsoa.as_mut_ptr().offset(8isize) as (*const u8),
                     &mut u as (*mut usize) as (*mut u32),
@@ -990,7 +989,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             if StrAlloc::append(&mut f[6usize] as (*mut StrAlloc), (*b"\0").as_ptr()) == 0 {
                 nomem();
             }
-            if scan_ulong(f[6usize].s as (*const u8), &mut u as (*mut usize)) == 0 {
+            if ulong::scan(f[6usize].s as (*const u8), &mut u as (*mut usize)) == 0 {
                 uint32::unpack_big(
                     defaultsoa.as_mut_ptr().offset(12isize) as (*const u8),
                     &mut u as (*mut usize) as (*mut u32),
@@ -1000,7 +999,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             if StrAlloc::append(&mut f[7usize] as (*mut StrAlloc), (*b"\0").as_ptr()) == 0 {
                 nomem();
             }
-            if scan_ulong(f[7usize].s as (*const u8), &mut u as (*mut usize)) == 0 {
+            if ulong::scan(f[7usize].s as (*const u8), &mut u as (*mut usize)) == 0 {
                 uint32::unpack_big(
                     defaultsoa.as_mut_ptr().offset(16isize) as (*const u8),
                     &mut u as (*mut usize) as (*mut u32),
@@ -1010,7 +1009,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             if StrAlloc::append(&mut f[8usize] as (*mut StrAlloc), (*b"\0").as_ptr()) == 0 {
                 nomem();
             }
-            if scan_ulong(f[8usize].s as (*const u8), &mut ttl as (*mut usize)) == 0 {
+            if ulong::scan(f[8usize].s as (*const u8), &mut ttl as (*mut usize)) == 0 {
                 ttl = 2560usize;
             }
             ttdparse(&mut f[9usize] as (*mut StrAlloc), ttd.as_mut_ptr());

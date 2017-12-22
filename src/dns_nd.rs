@@ -1,15 +1,12 @@
 use byte;
-
-extern "C" {
-    fn fmt_ulong(arg1: *mut u8, arg2: usize) -> u32;
-}
+use ulong;
 
 #[no_mangle]
 pub unsafe extern "C" fn dns_name4_domain(mut name: *mut u8, mut ip: *const u8) {
     let mut namelen: u32;
     let mut i: u32;
     namelen = 0u32;
-    i = fmt_ulong(
+    i = ulong::fmt(
         name.offset(namelen as (isize)).offset(1isize),
         *ip.offset(3isize) as (usize),
     );
@@ -19,7 +16,7 @@ pub unsafe extern "C" fn dns_name4_domain(mut name: *mut u8, mut ip: *const u8) 
         _old
     } as (isize)) = i as (u8);
     namelen = namelen.wrapping_add(i);
-    i = fmt_ulong(
+    i = ulong::fmt(
         name.offset(namelen as (isize)).offset(1isize),
         *ip.offset(2isize) as (usize),
     );
@@ -29,7 +26,7 @@ pub unsafe extern "C" fn dns_name4_domain(mut name: *mut u8, mut ip: *const u8) 
         _old
     } as (isize)) = i as (u8);
     namelen = namelen.wrapping_add(i);
-    i = fmt_ulong(
+    i = ulong::fmt(
         name.offset(namelen as (isize)).offset(1isize),
         *ip.offset(1isize) as (usize),
     );
@@ -39,7 +36,7 @@ pub unsafe extern "C" fn dns_name4_domain(mut name: *mut u8, mut ip: *const u8) 
         _old
     } as (isize)) = i as (u8);
     namelen = namelen.wrapping_add(i);
-    i = fmt_ulong(
+    i = ulong::fmt(
         name.offset(namelen as (isize)).offset(1isize),
         *ip.offset(0isize) as (usize),
     );

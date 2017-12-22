@@ -6,6 +6,7 @@ use stralloc::StrAlloc;
 use strerr::{StrErr, STRERR_SYS};
 use uint16;
 use uint32;
+use ulong;
 
 extern "C" {
     fn __swbuf(arg1: i32, arg2: *mut __sFILE) -> i32;
@@ -24,7 +25,6 @@ extern "C" {
     fn open_read(arg1: *const u8) -> i32;
     fn open_trunc(arg1: *const u8) -> i32;
     fn rename(__old: *const u8, __new: *const u8) -> i32;
-    fn scan_ulong(arg1: *const u8, arg2: *mut usize) -> u32;
     fn timeoutread(t: i32, fd: i32, buf: *mut u8, len: i32) -> i32;
     fn timeoutwrite(t: i32, fd: i32, buf: *mut u8, len: i32) -> i32;
 }
@@ -861,7 +861,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
             die_read();
         }
         if *line.s.offset(0isize) as (i32) == b'#' as (i32) {
-            scan_ulong(line.s.offset(1isize) as (*const u8), &mut u as (*mut usize));
+            ulong::scan(line.s.offset(1isize) as (*const u8), &mut u as (*mut usize));
             oldserial = u as (u32);
         }
         close(fd);

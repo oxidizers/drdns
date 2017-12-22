@@ -4,18 +4,17 @@ use cdb::CdbMake;
 use libc;
 use stralloc::StrAlloc;
 use strerr::{StrErr, STRERR_SYS};
+use ulong;
 
 extern "C" {
     fn __swbuf(arg1: i32, arg2: *mut __sFILE) -> i32;
     fn close(arg1: i32) -> i32;
-    fn fmt_ulong(arg1: *mut u8, arg2: usize) -> u32;
     fn fsync(arg1: i32) -> i32;
     fn getln(arg1: *mut Buffer, arg2: *mut StrAlloc, arg3: *mut i32, arg4: i32) -> i32;
     fn ip4_scan(arg1: *const u8, arg2: *mut u8) -> u32;
     fn open_read(arg1: *const u8) -> i32;
     fn open_trunc(arg1: *const u8) -> i32;
     fn rename(__old: *const u8, __new: *const u8) -> i32;
-    fn scan_ulong(arg1: *const u8, arg2: *mut usize) -> u32;
     fn umask(arg1: u16) -> u16;
 }
 
@@ -164,7 +163,7 @@ pub static mut strnum: [u8; 40] = [0u8; 40];
 
 #[no_mangle]
 pub unsafe extern "C" fn syntaxerror(mut why: *const u8) {
-    strnum[fmt_ulong(strnum.as_mut_ptr(), linenum) as (usize)] = 0u8;
+    strnum[ulong::fmt(strnum.as_mut_ptr(), linenum) as (usize)] = 0u8;
     StrErr::die(
         111i32,
         (*b"rbldns-data: fatal: \0").as_ptr(),
@@ -290,7 +289,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
                 nomem();
             }
             'loop41: loop {
-                k = scan_ulong(
+                k = ulong::scan(
                     line.s.offset(j as (isize)) as (*const u8),
                     &mut u as (*mut usize),
                 );
@@ -317,7 +316,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             }
             tmp.len = 4u32;
             if *line.s.offset(j as (isize)) as (i32) == b'/' as (i32) {
-                scan_ulong(
+                ulong::scan(
                     line.s.offset(j as (isize)).offset(1isize) as (*const u8),
                     &mut u as (*mut usize),
                 );
