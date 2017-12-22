@@ -1,11 +1,11 @@
 use byte;
 use case;
 use stralloc::StrAlloc;
+use string;
 
 extern "C" {
     fn dns_ip4(arg1: *mut StrAlloc, arg2: *const StrAlloc) -> i32;
     fn dns_resolvconfrewrite(arg1: *mut StrAlloc) -> i32;
-    fn str_chr(arg1: *const u8, arg2: i32) -> u32;
 }
 
 unsafe extern "C" fn doit(mut work: *mut StrAlloc, mut rule: *const u8) -> i32 {
@@ -22,7 +22,7 @@ unsafe extern "C" fn doit(mut work: *mut StrAlloc, mut rule: *const u8) -> i32 {
     {
         1i32
     } else {
-        colon = str_chr(rule, b':' as (i32));
+        colon = string::chr(rule, b':' as (i32));
         (if *rule.offset(colon as (isize)) == 0 {
              1i32
          } else if (*work).len < colon {

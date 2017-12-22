@@ -1,7 +1,8 @@
+use string;
+
 extern "C" {
     fn ip4_fmt(arg1: *mut u8, arg2: *const u8) -> u32;
     fn stat(arg1: *const u8, arg2: *mut stat) -> i32;
-    fn str_rchr(arg1: *const u8, arg2: i32) -> u32;
 }
 
 static mut fn_: [u8; 23] = [0u8; 23];
@@ -63,7 +64,7 @@ pub unsafe extern "C" fn okclient(mut ip: *mut u8) -> i32 {
             _currentBlock = 5;
             break;
         }
-        i = str_rchr(fn_.as_mut_ptr() as (*const u8), b'.' as (i32)) as (i32);
+        i = string::rchr(fn_.as_mut_ptr() as (*const u8), b'.' as (i32)) as (i32);
         if fn_[i as (usize)] == 0 {
             _currentBlock = 4;
             break;

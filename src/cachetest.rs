@@ -1,11 +1,11 @@
 use buffer::{Buffer, STDOUT_BUFFER};
 use libc;
+use string;
 
 extern "C" {
     fn cache_get(arg1: *const u8, arg2: u32, arg3: *mut u32, arg4: *mut u32) -> *mut u8;
     fn cache_init(arg1: u32) -> i32;
     fn cache_set(arg1: *const u8, arg2: u32, arg3: *const u8, arg4: u32, arg5: u32);
-    fn str_chr(arg1: *const u8, arg2: i32) -> u32;
 }
 
 fn main() {
@@ -51,7 +51,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
         {
             break;
         }
-        i = str_chr(x as (*const u8), b':' as (i32)) as (i32);
+        i = string::chr(x as (*const u8), b':' as (i32)) as (i32);
         if *x.offset(i as (isize)) != 0 {
             cache_set(
                 x as (*const u8),

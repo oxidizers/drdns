@@ -1,5 +1,6 @@
 use byte;
 use stralloc::StrAlloc;
+use string;
 use tai::Tai;
 use taia::TaiA;
 
@@ -7,7 +8,6 @@ extern "C" {
     fn env_get(arg1: *const u8) -> *mut u8;
     fn gethostname(arg1: *mut u8, arg2: usize) -> i32;
     fn openreadclose(arg1: *const u8, arg2: *mut StrAlloc, arg3: u32) -> i32;
-    fn str_chr(arg1: *const u8, arg2: i32) -> u32;
 }
 
 static mut data: StrAlloc = StrAlloc {
@@ -280,7 +280,7 @@ unsafe extern "C" fn init(mut rules: *mut StrAlloc) -> i32 {
                             -1i32
                         } else {
                             host[::std::mem::size_of::<[u8; 256]>().wrapping_sub(1usize)] = 0u8;
-                            i = str_chr(host.as_mut_ptr() as (*const u8), b'.' as (i32)) as (i32);
+                            i = string::chr(host.as_mut_ptr() as (*const u8), b'.' as (i32)) as (i32);
                             if host[i as (usize)] != 0 {
                                 if StrAlloc::copys(rules, (*b"?:\0").as_ptr()) == 0 {
                                     return -1i32;

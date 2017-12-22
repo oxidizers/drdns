@@ -3,6 +3,7 @@ use byte;
 use libc;
 use stralloc::StrAlloc;
 use strerr::{StrErr, STRERR_SYS};
+use string;
 
 extern "C" {
     fn __swbuf(arg1: i32, arg2: *mut __sFILE) -> i32;
@@ -21,7 +22,6 @@ extern "C" {
     fn open_trunc(arg1: *const u8) -> i32;
     fn rename(__old: *const u8, __new: *const u8) -> i32;
     fn scan_ulong(arg1: *const u8, arg2: *mut usize) -> u32;
-    fn str_diff(arg1: *const u8, arg2: *const u8) -> i32;
     fn umask(arg1: u16) -> u16;
 }
 
@@ -328,7 +328,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     {
         die_usage();
     }
-    if str_diff(*argv as (*const u8), (*b"add\0").as_ptr()) != 0 {
+    if string::diff(*argv as (*const u8), (*b"add\0").as_ptr()) != 0 {
         die_usage();
     }
     if (*{
@@ -338,15 +338,15 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     {
         die_usage();
     }
-    if str_diff(*argv as (*const u8), (*b"ns\0").as_ptr()) == 0 {
+    if string::diff(*argv as (*const u8), (*b"ns\0").as_ptr()) == 0 {
         mode = b'.';
-    } else if str_diff(*argv as (*const u8), (*b"childns\0").as_ptr()) == 0 {
+    } else if string::diff(*argv as (*const u8), (*b"childns\0").as_ptr()) == 0 {
         mode = b'&';
-    } else if str_diff(*argv as (*const u8), (*b"host\0").as_ptr()) == 0 {
+    } else if string::diff(*argv as (*const u8), (*b"host\0").as_ptr()) == 0 {
         mode = b'=';
-    } else if str_diff(*argv as (*const u8), (*b"alias\0").as_ptr()) == 0 {
+    } else if string::diff(*argv as (*const u8), (*b"alias\0").as_ptr()) == 0 {
         mode = b'+';
-    } else if str_diff(*argv as (*const u8), (*b"mx\0").as_ptr()) == 0 {
+    } else if string::diff(*argv as (*const u8), (*b"mx\0").as_ptr()) == 0 {
         mode = b'@';
     } else {
         die_usage();

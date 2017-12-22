@@ -1,11 +1,10 @@
-//! `str.rs`: string-related functions
+//! `string.rs`: string-related functions
 //!
 //! These should probably be replaced with functionality from the
 //! Rust standard library
 
-#[no_mangle]
-pub unsafe extern "C" fn str_chr(mut s: *const u8, mut c: i32) -> u32 {
-    let mut ch: u8;
+pub unsafe fn chr(s: *const u8, c: i32) -> u32 {
+    let ch: u8;
     let mut t: *const u8;
     ch = c as (u8);
     t = s;
@@ -42,8 +41,7 @@ pub unsafe extern "C" fn str_chr(mut s: *const u8, mut c: i32) -> u32 {
     ((t as (isize)).wrapping_sub(s as (isize)) / ::std::mem::size_of::<u8>() as (isize)) as (u32)
 }
 
-#[no_mangle]
-pub unsafe extern "C" fn str_diff(mut s: *const u8, mut t: *const u8) -> i32 {
+pub unsafe fn diff(mut s: *const u8, mut t: *const u8) -> i32 {
     let mut x: u8;
     'loop1: loop {
         x = *s;
@@ -86,9 +84,8 @@ pub unsafe extern "C" fn str_diff(mut s: *const u8, mut t: *const u8) -> i32 {
     x as (u32) as (i32) - *t as (u32) as (i32)
 }
 
-#[no_mangle]
-pub unsafe extern "C" fn str_rchr(mut s: *const u8, mut c: i32) -> u32 {
-    let mut ch: u8;
+pub unsafe fn rchr(s: *const u8, c: i32) -> u32 {
+    let ch: u8;
     let mut t: *const u8;
     let mut u: *const u8;
     ch = c as (u8);
@@ -130,9 +127,8 @@ pub unsafe extern "C" fn str_rchr(mut s: *const u8, mut c: i32) -> u32 {
     ((u as (isize)).wrapping_sub(s as (isize)) / ::std::mem::size_of::<u8>() as (isize)) as (u32)
 }
 
-#[no_mangle]
-pub unsafe extern "C" fn str_start(mut s: *const u8, mut t: *const u8) -> i32 {
-    let mut _currentBlock;
+pub unsafe fn start(mut s: *const u8, mut t: *const u8) -> i32 {
+    let current_block;
     let mut x: u8;
     'loop1: loop {
         x = *{
@@ -141,7 +137,7 @@ pub unsafe extern "C" fn str_start(mut s: *const u8, mut t: *const u8) -> i32 {
             _old
         };
         if x == 0 {
-            _currentBlock = 16;
+            current_block = 16;
             break;
         }
         if x as (i32) !=
@@ -151,7 +147,7 @@ pub unsafe extern "C" fn str_start(mut s: *const u8, mut t: *const u8) -> i32 {
                 _old
             } as (i32)
         {
-            _currentBlock = 15;
+            current_block = 15;
             break;
         }
         x = *{
@@ -160,7 +156,7 @@ pub unsafe extern "C" fn str_start(mut s: *const u8, mut t: *const u8) -> i32 {
             _old
         };
         if x == 0 {
-            _currentBlock = 14;
+            current_block = 14;
             break;
         }
         if x as (i32) !=
@@ -170,7 +166,7 @@ pub unsafe extern "C" fn str_start(mut s: *const u8, mut t: *const u8) -> i32 {
                 _old
             } as (i32)
         {
-            _currentBlock = 13;
+            current_block = 13;
             break;
         }
         x = *{
@@ -179,7 +175,7 @@ pub unsafe extern "C" fn str_start(mut s: *const u8, mut t: *const u8) -> i32 {
             _old
         };
         if x == 0 {
-            _currentBlock = 12;
+            current_block = 12;
             break;
         }
         if x as (i32) !=
@@ -189,7 +185,7 @@ pub unsafe extern "C" fn str_start(mut s: *const u8, mut t: *const u8) -> i32 {
                 _old
             } as (i32)
         {
-            _currentBlock = 11;
+            current_block = 11;
             break;
         }
         x = *{
@@ -198,7 +194,7 @@ pub unsafe extern "C" fn str_start(mut s: *const u8, mut t: *const u8) -> i32 {
             _old
         };
         if x == 0 {
-            _currentBlock = 10;
+            current_block = 10;
             break;
         }
         if x as (i32) !=
@@ -208,23 +204,23 @@ pub unsafe extern "C" fn str_start(mut s: *const u8, mut t: *const u8) -> i32 {
                 _old
             } as (i32)
         {
-            _currentBlock = 9;
+            current_block = 9;
             break;
         }
     }
-    if _currentBlock == 9 {
+    if current_block == 9 {
         0i32
-    } else if _currentBlock == 10 {
+    } else if current_block == 10 {
         1i32
-    } else if _currentBlock == 11 {
+    } else if current_block == 11 {
         0i32
-    } else if _currentBlock == 12 {
+    } else if current_block == 12 {
         1i32
-    } else if _currentBlock == 13 {
+    } else if current_block == 13 {
         0i32
-    } else if _currentBlock == 14 {
+    } else if current_block == 14 {
         1i32
-    } else if _currentBlock == 15 {
+    } else if current_block == 15 {
         0i32
     } else {
         1i32

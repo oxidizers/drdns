@@ -2,6 +2,7 @@ use byte;
 use errno::{self, Errno};
 use libc;
 use stralloc::StrAlloc;
+use string;
 
 extern "C" {
     fn chdir(arg1: *const u8) -> i32;
@@ -16,7 +17,6 @@ extern "C" {
     fn opendir(arg1: *const u8) -> *mut Struct1;
     fn openreadclose(arg1: *const u8, arg2: *mut StrAlloc, arg3: u32) -> i32;
     fn readdir(arg1: *mut Struct1) -> *mut dirent;
-    fn str_diff(arg1: *const u8, arg2: *const u8) -> i32;
 }
 
 enum _telldir {
@@ -174,7 +174,7 @@ unsafe extern "C" fn init2(mut dir: *mut Struct1) -> i32 {
             break;
         }
         fqdn = (*d).d_name.as_mut_ptr() as (*const u8);
-        if str_diff(fqdn, (*b"@\0").as_ptr()) == 0 {
+        if string::diff(fqdn, (*b"@\0").as_ptr()) == 0 {
             fqdn = (*b".\0").as_ptr();
         }
         if dns_domain_fromdot(&mut q as (*mut *mut u8), fqdn, libc::strlen(fqdn as *const i8) as u32) == 0 {
