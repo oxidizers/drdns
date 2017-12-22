@@ -2,6 +2,7 @@ use buffer::{Buffer, STDERR_BUFFER};
 use byte;
 use case;
 use libc;
+use ndelay;
 use strerr::{StrErr, STRERR_SYS};
 
 extern "C" {
@@ -12,7 +13,6 @@ extern "C" {
     static mut fatal: *mut u8;
     fn initialize();
     fn ip4_scan(arg1: *const u8, arg2: *mut u8) -> u32;
-    fn ndelay_off(arg1: i32) -> i32;
     fn qlog(
         arg1: *const u8,
         arg2: u16,
@@ -265,7 +265,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
     }
     droproot(fatal as (*const u8));
     initialize();
-    ndelay_off(udp53);
+    ndelay::off(udp53);
     socket_tryreservein(udp53, 65536i32);
     Buffer::putsflush(STDERR_BUFFER.as_mut_ptr(), starting as (*const u8));
     'loop9: loop {

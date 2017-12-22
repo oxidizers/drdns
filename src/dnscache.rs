@@ -2,6 +2,7 @@ use alloc;
 use byte;
 use errno::{self, Errno};
 use libc;
+use ndelay;
 use strerr::{StrErr, STRERR_SYS};
 use tai::Tai;
 use taia::TaiA;
@@ -29,7 +30,6 @@ extern "C" {
     fn log_startup();
     fn log_tcpclose(arg1: *const u8, arg2: u32);
     fn log_tcpopen(arg1: *const u8, arg2: u32);
-    fn ndelay_on(arg1: i32) -> i32;
     fn okclient(arg1: *mut u8) -> i32;
     fn query_forwardonly();
     fn query_get(arg1: *mut query, arg2: *mut pollfd, arg3: *mut TaiA) -> i32;
@@ -683,7 +683,7 @@ pub unsafe extern "C" fn t_new() {
         }
         (if okclient((*x).ip.as_mut_ptr()) == 0 {
              close((*x).tcp);
-         } else if ndelay_on((*x).tcp) == -1i32 {
+         } else if ndelay::on((*x).tcp) == -1i32 {
              close((*x).tcp);
          } else {
              (*x).active = 1usize;
