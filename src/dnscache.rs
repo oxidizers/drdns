@@ -3,6 +3,7 @@ use byte;
 use errno::{self, Errno};
 use libc;
 use ndelay;
+use socket;
 use strerr::{StrErr, STRERR_SYS};
 use tai::Tai;
 use taia::TaiA;
@@ -48,14 +49,6 @@ extern "C" {
     fn response_tc();
     fn roots_init() -> i32;
     fn scan_ulong(arg1: *const u8, arg2: *mut usize) -> u32;
-    fn socket_accept4(arg1: i32, arg2: *mut u8, arg3: *mut u16) -> i32;
-    fn socket_bind4_reuse(arg1: i32, arg2: *mut u8, arg3: u16) -> i32;
-    fn socket_listen(arg1: i32, arg2: i32) -> i32;
-    fn socket_recv4(arg1: i32, arg2: *mut u8, arg3: i32, arg4: *mut u8, arg5: *mut u16) -> i32;
-    fn socket_send4(arg1: i32, arg2: *const u8, arg3: i32, arg4: *const u8, arg5: u16) -> i32;
-    fn socket_tcp() -> i32;
-    fn socket_tryreservein(arg1: i32, arg2: i32);
-    fn socket_udp() -> i32;
 }
 
 static mut myipoutgoing: [u8; 4] = [0u8; 4];
@@ -214,7 +207,7 @@ pub unsafe extern "C" fn u_respond(mut j: i32) {
         if response_len > 512u32 {
             response_tc();
         }
-        socket_send4(
+        socket::send4(
             udp53,
             response as (*const u8),
             response_len as (i32),
@@ -321,7 +314,7 @@ pub unsafe extern "C" fn u_new() {
     }
     x = u.as_mut_ptr().offset(j as (isize));
     TaiA::now(&mut (*x).start as (*mut TaiA));
-    len = socket_recv4(
+    len = socket::recv4(
         udp53,
         buf.as_mut_ptr(),
         ::std::mem::size_of::<[u8; 1024]>() as (i32),
@@ -672,7 +665,7 @@ pub unsafe extern "C" fn t_new() {
     }
     x = t.as_mut_ptr().offset(j as (isize));
     TaiA::now(&mut (*x).start as (*mut TaiA));
-    (*x).tcp = socket_accept4(tcp53, (*x).ip.as_mut_ptr(), &mut (*x).port as (*mut u16));
+    (*x).tcp = socket::accept4(tcp53, (*x).ip.as_mut_ptr(), &mut (*x).port as (*mut u16));
     if (*x).tcp == -1i32 {
     } else {
         if (*x).port as (i32) < 1024i32 {
@@ -901,7 +894,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             0i32 as (*const StrErr),
         );
     }
-    udp53 = socket_udp();
+    udp53 = socket::udp();
     if udp53 == -1i32 {
         StrErr::die(
             111i32,
@@ -914,7 +907,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             &mut STRERR_SYS as (*mut StrErr) as (*const StrErr),
         );
     }
-    if socket_bind4_reuse(udp53, myipincoming.as_mut_ptr(), 53u16) == -1i32 {
+    if socket::bind4_reuse(udp53, myipincoming.as_mut_ptr(), 53u16) == -1i32 {
         StrErr::die(
             111i32,
             (*b"dnscache: fatal: \0").as_ptr(),
@@ -926,7 +919,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             &mut STRERR_SYS as (*mut StrErr) as (*const StrErr),
         );
     }
-    tcp53 = socket_tcp();
+    tcp53 = socket::tcp();
     if tcp53 == -1i32 {
         StrErr::die(
             111i32,
@@ -939,7 +932,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             &mut STRERR_SYS as (*mut StrErr) as (*const StrErr),
         );
     }
-    if socket_bind4_reuse(tcp53, myipincoming.as_mut_ptr(), 53u16) == -1i32 {
+    if socket::bind4_reuse(tcp53, myipincoming.as_mut_ptr(), 53u16) == -1i32 {
         StrErr::die(
             111i32,
             (*b"dnscache: fatal: \0").as_ptr(),
@@ -952,7 +945,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
         );
     }
     droproot((*b"dnscache: fatal: \0").as_ptr());
-    socket_tryreservein(udp53, 131072i32);
+    socket::tryreservein(udp53, 131072i32);
     byte::zero(
         seed.as_mut_ptr(),
         ::std::mem::size_of::<[u8; 128]>() as (u32),
@@ -1033,7 +1026,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             &mut STRERR_SYS as (*mut StrErr) as (*const StrErr),
         );
     }
-    if socket_listen(tcp53, 20i32) == -1i32 {
+    if socket::listen(tcp53, 20i32) == -1i32 {
         StrErr::die(
             111i32,
             (*b"dnscache: fatal: \0").as_ptr(),

@@ -2,6 +2,7 @@ use alloc;
 use byte;
 use errno::{self, Errno};
 use libc;
+use socket;
 use tai::Tai;
 use taia::TaiA;
 use uint16;
@@ -15,11 +16,6 @@ extern "C" {
     fn dns_random(arg1: u32) -> u32;
     fn recv(arg1: i32, arg2: *mut ::std::os::raw::c_void, arg3: usize, arg4: i32) -> isize;
     fn send(arg1: i32, arg2: *const ::std::os::raw::c_void, arg3: usize, arg4: i32) -> isize;
-    fn socket_bind4(arg1: i32, arg2: *mut u8, arg3: u16) -> i32;
-    fn socket_connect4(arg1: i32, arg2: *const u8, arg3: u16) -> i32;
-    fn socket_connected(arg1: i32) -> i32;
-    fn socket_tcp() -> i32;
-    fn socket_udp() -> i32;
 }
 
 #[derive(Copy)]
@@ -88,7 +84,7 @@ unsafe extern "C" fn randombind(mut d: *mut dns_transmit) -> i32 {
             _currentBlock = 2;
             break;
         }
-        if socket_bind4(
+        if socket::bind4(
             (*d).s1 - 1i32,
             (*d).localip.as_mut_ptr(),
             1025u32.wrapping_add(dns_random(64510u32)) as (u16),
@@ -100,7 +96,7 @@ unsafe extern "C" fn randombind(mut d: *mut dns_transmit) -> i32 {
         j = j + 1;
     }
     if _currentBlock == 2 {
-        (if socket_bind4((*d).s1 - 1i32, (*d).localip.as_mut_ptr(), 0u16) == 0i32 {
+        (if socket::bind4((*d).s1 - 1i32, (*d).localip.as_mut_ptr(), 0u16) == 0i32 {
              0i32
          } else {
              -1i32
@@ -132,7 +128,7 @@ unsafe extern "C" fn thistcp(mut d: *mut dns_transmit) -> i32 {
         {
             *(*d).query.offset(2isize) = dns_random(256u32) as (u8);
             *(*d).query.offset(3isize) = dns_random(256u32) as (u8);
-            (*d).s1 = 1i32 + socket_tcp();
+            (*d).s1 = 1i32 + socket::tcp();
             if (*d).s1 == 0 {
                 _currentBlock = 13;
                 break;
@@ -148,7 +144,7 @@ unsafe extern "C" fn thistcp(mut d: *mut dns_transmit) -> i32 {
                 &mut (*d).deadline as (*mut TaiA) as (*const TaiA),
                 &mut now as (*mut TaiA) as (*const TaiA),
             );
-            if socket_connect4((*d).s1 - 1i32, ip, 53u16) == 0i32 {
+            if socket::connect4((*d).s1 - 1i32, ip, 53u16) == 0i32 {
                 _currentBlock = 11;
                 break;
             }
@@ -207,7 +203,7 @@ unsafe extern "C" fn thisudp(mut d: *mut dns_transmit) -> i32 {
             {
                 *(*d).query.offset(2isize) = dns_random(256u32) as (u8);
                 *(*d).query.offset(3isize) = dns_random(256u32) as (u8);
-                (*d).s1 = 1i32 + socket_udp();
+                (*d).s1 = 1i32 + socket::udp();
                 if (*d).s1 == 0 {
                     _currentBlock = 14;
                     break 'loop1;
@@ -216,7 +212,7 @@ unsafe extern "C" fn thisudp(mut d: *mut dns_transmit) -> i32 {
                     _currentBlock = 13;
                     break 'loop1;
                 }
-                if socket_connect4((*d).s1 - 1i32, ip, 53u16) == 0i32 {
+                if socket::connect4((*d).s1 - 1i32, ip, 53u16) == 0i32 {
                     if send(
                         (*d).s1 - 1i32,
                         (*d).query.offset(2isize) as (*const ::std::os::raw::c_void),
@@ -510,7 +506,7 @@ pub unsafe extern "C" fn dns_transmit_get(
               })
          })
     } else if (*d).tcpstate == 1i32 {
-        (if socket_connected(fd) == 0 {
+        (if socket::connected(fd) == 0 {
              nexttcp(d)
          } else {
              (*d).pos = 0u32;

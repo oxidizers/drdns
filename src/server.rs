@@ -3,6 +3,7 @@ use byte;
 use case;
 use libc;
 use ndelay;
+use socket;
 use strerr::{StrErr, STRERR_SYS};
 
 extern "C" {
@@ -27,11 +28,6 @@ extern "C" {
     static mut response_len: u32;
     fn response_query(arg1: *const u8, arg2: *const u8, arg3: *const u8) -> i32;
     fn response_tc();
-    fn socket_bind4_reuse(arg1: i32, arg2: *mut u8, arg3: u16) -> i32;
-    fn socket_recv4(arg1: i32, arg2: *mut u8, arg3: i32, arg4: *mut u8, arg5: *mut u16) -> i32;
-    fn socket_send4(arg1: i32, arg2: *const u8, arg3: i32, arg4: *const u8, arg5: u16) -> i32;
-    fn socket_tryreservein(arg1: i32, arg2: i32);
-    fn socket_udp() -> i32;
     static mut starting: *mut u8;
 }
 
@@ -238,7 +234,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             0i32 as (*const StrErr),
         );
     }
-    udp53 = socket_udp();
+    udp53 = socket::udp();
     if udp53 == -1i32 {
         StrErr::die(
             111i32,
@@ -251,7 +247,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             &mut STRERR_SYS as (*mut StrErr) as (*const StrErr),
         );
     }
-    if socket_bind4_reuse(udp53, ip.as_mut_ptr(), 53u16) == -1i32 {
+    if socket::bind4_reuse(udp53, ip.as_mut_ptr(), 53u16) == -1i32 {
         StrErr::die(
             111i32,
             fatal as (*const u8),
@@ -266,10 +262,10 @@ pub unsafe extern "C" fn _c_main() -> i32 {
     droproot(fatal as (*const u8));
     initialize();
     ndelay::off(udp53);
-    socket_tryreservein(udp53, 65536i32);
+    socket::tryreservein(udp53, 65536i32);
     Buffer::putsflush(STDERR_BUFFER.as_mut_ptr(), starting as (*const u8));
     'loop9: loop {
-        len = socket_recv4(
+        len = socket::recv4(
             udp53,
             buf.as_mut_ptr(),
             ::std::mem::size_of::<[u8; 513]>() as (i32),
@@ -285,7 +281,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
         if response_len > 512u32 {
             response_tc();
         }
-        socket_send4(
+        socket::send4(
             udp53,
             response as (*const u8),
             response_len as (i32),
