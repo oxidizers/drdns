@@ -1,5 +1,6 @@
 use byte;
 use errno::{self, Errno};
+use ip4;
 use libc;
 use stralloc::StrAlloc;
 use string;
@@ -12,7 +13,6 @@ extern "C" {
     fn dns_domain_fromdot(arg1: *mut *mut u8, arg2: *const u8, arg3: u32) -> i32;
     fn dns_domain_length(arg1: *const u8) -> u32;
     fn fchdir(arg1: i32) -> i32;
-    fn ip4_scan(arg1: *const u8, arg2: *mut u8) -> u32;
     fn open_read(arg1: *const u8) -> i32;
     fn opendir(arg1: *const u8) -> *mut Struct1;
     fn openreadclose(arg1: *const u8, arg2: *mut StrAlloc, arg3: u32) -> i32;
@@ -190,7 +190,7 @@ unsafe extern "C" fn init2(mut dir: *mut Struct1) -> i32 {
             }
             if *text.s.offset(i as (isize)) as (i32) == b'\n' as (i32) {
                 if serverslen <= 60i32 {
-                    if ip4_scan(
+                    if ip4::scan(
                         text.s.offset(j as (isize)) as (*const u8),
                         servers.as_mut_ptr().offset(serverslen as (isize)),
                     ) != 0

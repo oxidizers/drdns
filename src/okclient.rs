@@ -1,7 +1,7 @@
+use ip4;
 use string;
 
 extern "C" {
-    fn ip4_fmt(arg1: *mut u8, arg2: *const u8) -> u32;
     fn stat(arg1: *const u8, arg2: *mut stat) -> i32;
 }
 
@@ -57,7 +57,7 @@ pub unsafe extern "C" fn okclient(mut ip: *mut u8) -> i32 {
     fn_[0usize] = b'i';
     fn_[1usize] = b'p';
     fn_[2usize] = b'/';
-    fn_[3u32.wrapping_add(ip4_fmt(fn_.as_mut_ptr().offset(3isize), ip as (*const u8))) as
+    fn_[3u32.wrapping_add(ip4::fmt(fn_.as_mut_ptr().offset(3isize), ip as (*const u8))) as
             (usize)] = 0u8;
     'loop1: loop {
         if stat(fn_.as_mut_ptr() as (*const u8), &mut st as (*mut stat)) == 0i32 {

@@ -1,6 +1,7 @@
 use buffer::{self, Buffer};
 use byte;
 use cdb::CdbMake;
+use ip4;
 use libc;
 use stralloc::StrAlloc;
 use strerr::{StrErr, STRERR_SYS};
@@ -11,7 +12,6 @@ extern "C" {
     fn close(arg1: i32) -> i32;
     fn fsync(arg1: i32) -> i32;
     fn getln(arg1: *mut Buffer, arg2: *mut StrAlloc, arg3: *mut i32, arg4: i32) -> i32;
-    fn ip4_scan(arg1: *const u8, arg2: *mut u8) -> u32;
     fn open_read(arg1: *const u8) -> i32;
     fn open_trunc(arg1: *const u8) -> i32;
     fn rename(__old: *const u8, __new: *const u8) -> i32;
@@ -355,7 +355,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             if j >= line.len.wrapping_sub(1u32) {
                 syntaxerror((*b": missing colon\0").as_ptr());
             }
-            if ip4_scan(line.s.offset(1isize) as (*const u8), ip.as_mut_ptr()) != j {
+            if ip4::scan(line.s.offset(1isize) as (*const u8), ip.as_mut_ptr()) != j {
                 syntaxerror((*b": malformed IP address\0").as_ptr());
             }
             if StrAlloc::copyb(

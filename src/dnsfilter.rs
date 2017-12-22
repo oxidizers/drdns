@@ -2,6 +2,7 @@ use alloc;
 use buffer::{Buffer, STDOUT_BUFFER};
 use byte;
 use errno::errno;
+use ip4;
 use libc;
 use stralloc::StrAlloc;
 use strerr::{StrErr, STRERR_SYS};
@@ -24,7 +25,6 @@ extern "C" {
         arg6: *const u8,
     ) -> i32;
     fn iopause(arg1: *mut pollfd, arg2: u32, arg3: *mut TaiA, arg4: *mut TaiA);
-    fn ip4_scan(arg1: *const u8, arg2: *mut u8) -> u32;
     fn sgetoptmine(arg1: i32, arg2: *mut *mut u8, arg3: *const u8) -> i32;
     static mut subgetoptarg: *mut u8;
     static mut subgetoptdone: i32;
@@ -507,7 +507,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
                         {
                             nomem();
                         }
-                        if ip4_scan(partial.s as (*const u8), ip.as_mut_ptr()) != 0 {
+                        if ip4::scan(partial.s as (*const u8), ip.as_mut_ptr()) != 0 {
                             dns_name4_domain(name.as_mut_ptr(), ip.as_mut_ptr() as (*const u8));
                             if dns_resolvconfip(servers.as_mut_ptr()) == -1i32 {
                                 StrErr::die(

@@ -3,6 +3,7 @@ use buffer::{self, Buffer};
 use byte;
 use case;
 use cdb::CdbMake;
+use ip4;
 use libc;
 use stralloc::StrAlloc;
 use strerr::{StrErr, STRERR_SYS};
@@ -15,7 +16,6 @@ extern "C" {
     fn dns_domain_length(arg1: *const u8) -> u32;
     fn fsync(arg1: i32) -> i32;
     fn getln(arg1: *mut Buffer, arg2: *mut StrAlloc, arg3: *mut i32, arg4: i32) -> i32;
-    fn ip4_scan(arg1: *const u8, arg2: *mut u8) -> u32;
     fn open_read(arg1: *const u8) -> i32;
     fn open_trunc(arg1: *const u8) -> i32;
     fn rename(__old: *const u8, __new: *const u8) -> i32;
@@ -568,7 +568,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             if StrAlloc::append(&mut f[1usize] as (*mut StrAlloc), (*b"\0").as_ptr()) == 0 {
                 nomem();
             }
-            if ip4_scan(f[1usize].s as (*const u8), t.ip.as_mut_ptr()) == 0 {
+            if ip4::scan(f[1usize].s as (*const u8), t.ip.as_mut_ptr()) == 0 {
                 syntaxerror((*b": malformed IP address\0").as_ptr());
             }
             if StrAlloc::append(&mut f[2usize] as (*mut StrAlloc), (*b"\0").as_ptr()) == 0 {

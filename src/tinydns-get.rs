@@ -1,6 +1,7 @@
 use byte;
 use buffer::{Buffer, STDOUT_BUFFER};
 use case;
+use ip4;
 use libc;
 use stralloc::StrAlloc;
 use uint16;
@@ -9,7 +10,6 @@ extern "C" {
     fn dns_domain_fromdot(arg1: *mut *mut u8, arg2: *const u8, arg3: u32) -> i32;
     fn dns_domain_length(arg1: *const u8) -> u32;
     fn dns_domain_todot_cat(arg1: *mut StrAlloc, arg2: *const u8) -> i32;
-    fn ip4_scan(arg1: *const u8, arg2: *mut u8) -> u32;
     fn parsetype(arg1: *mut u8, arg2: *mut u8) -> i32;
     fn printpacket_cat(arg1: *mut StrAlloc, arg2: *mut u8, arg3: u32) -> u32;
     fn respond(arg1: *mut u8, arg2: *mut u8, arg3: *mut u8) -> i32;
@@ -113,7 +113,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
              argv
          }).is_null()
     {
-        if ip4_scan(*argv as (*const u8), ip.as_mut_ptr()) == 0 {
+        if ip4::scan(*argv as (*const u8), ip.as_mut_ptr()) == 0 {
             usage();
         }
     }

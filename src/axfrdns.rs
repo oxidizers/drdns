@@ -2,6 +2,7 @@ use buffer::{self, Buffer};
 use byte;
 use case;
 use cdb::Cdb;
+use ip4;
 use libc;
 use stralloc::StrAlloc;
 use strerr::{StrErr, STRERR_SYS};
@@ -20,7 +21,6 @@ extern "C" {
     fn dns_packet_getname(arg1: *const u8, arg2: u32, arg3: u32, arg4: *mut *mut u8) -> u32;
     fn dns_random_init(arg1: *const u8);
     fn droproot(arg1: *const u8);
-    fn ip4_scan(arg1: *const u8, arg2: *mut u8) -> u32;
     fn open_read(arg1: *const u8) -> i32;
     fn qlog(
         arg1: *const u8,
@@ -693,7 +693,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
     dns_random_init(seed.as_mut_ptr() as (*const u8));
     axfr = libc::getenv((*b"AXFR\0" as *const libc::c_char).as_ptr());
     x = libc::getenv((*b"TCPREMOTEIP\0").as_ptr() as *const libc::c_char) as (*const u8);
-    if !(!x.is_null() && (ip4_scan(x, ip.as_mut_ptr()) != 0)) {
+    if !(!x.is_null() && (ip4::scan(x, ip.as_mut_ptr()) != 0)) {
         byte::zero(ip.as_mut_ptr(), 4u32);
     }
     x = libc::getenv((*b"TCPREMOTEPORT\0").as_ptr() as *const libc::c_char) as (*const u8);

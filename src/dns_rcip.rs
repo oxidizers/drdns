@@ -1,11 +1,11 @@
 use byte;
+use ip4;
 use libc;
 use stralloc::StrAlloc;
 use tai::Tai;
 use taia::TaiA;
 
 extern "C" {
-    fn ip4_scan(arg1: *const u8, arg2: *mut u8) -> u32;
     fn openreadclose(arg1: *const u8, arg2: *mut StrAlloc, arg3: u32) -> i32;
 }
 
@@ -49,7 +49,7 @@ unsafe extern "C" fn init(mut ip: *mut u8) -> i32 {
                 x = x.offset(1isize);
                 _currentBlock = 1;
             } else {
-                i = ip4_scan(x as (*const u8), ip.offset(iplen as (isize))) as (i32);
+                i = ip4::scan(x as (*const u8), ip.offset(iplen as (isize))) as (i32);
                 if i == 0 {
                     _currentBlock = 5;
                     continue;
@@ -106,7 +106,7 @@ unsafe extern "C" fn init(mut ip: *mut u8) -> i32 {
                                 i = i + 1;
                             }
                             if iplen <= 60i32 {
-                                if ip4_scan(
+                                if ip4::scan(
                                     data.s.offset(i as (isize)) as (*const u8),
                                     ip.offset(iplen as (isize)),
                                 ) != 0

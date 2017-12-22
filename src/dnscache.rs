@@ -1,6 +1,7 @@
 use alloc;
 use byte;
 use errno::{self, Errno};
+use ip4;
 use libc;
 use ndelay;
 use socket;
@@ -18,7 +19,6 @@ extern "C" {
     fn dns_random_init(arg1: *const u8);
     fn droproot(arg1: *const u8);
     fn iopause(arg1: *mut pollfd, arg2: u32, arg3: *mut TaiA, arg4: *mut TaiA);
-    fn ip4_scan(arg1: *const u8, arg2: *mut u8) -> u32;
     fn log_query(
         arg1: *mut usize,
         arg2: *const u8,
@@ -882,7 +882,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             0i32 as (*const StrErr),
         );
     }
-    if ip4_scan(x as (*const u8), myipincoming.as_mut_ptr()) == 0 {
+    if ip4::scan(x as (*const u8), myipincoming.as_mut_ptr()) == 0 {
         StrErr::die(
             111i32,
             (*b"dnscache: fatal: \0").as_ptr(),
@@ -970,7 +970,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             0i32 as (*const StrErr),
         );
     }
-    if ip4_scan(x as (*const u8), myipoutgoing.as_mut_ptr()) == 0 {
+    if ip4::scan(x as (*const u8), myipoutgoing.as_mut_ptr()) == 0 {
         StrErr::die(
             111i32,
             (*b"dnscache: fatal: \0").as_ptr(),

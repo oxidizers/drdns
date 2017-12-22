@@ -1,5 +1,6 @@
 use buffer::{self, Buffer};
 use byte;
+use ip4;
 use libc;
 use stralloc::StrAlloc;
 use strerr::{StrErr, STRERR_SYS};
@@ -16,8 +17,6 @@ extern "C" {
     fn fstat(arg1: i32, arg2: *mut stat) -> i32;
     fn fsync(arg1: i32) -> i32;
     fn getln(arg1: *mut Buffer, arg2: *mut StrAlloc, arg3: *mut i32, arg4: i32) -> i32;
-    fn ip4_fmt(arg1: *mut u8, arg2: *const u8) -> u32;
-    fn ip4_scan(arg1: *const u8, arg2: *mut u8) -> u32;
     fn open_read(arg1: *const u8) -> i32;
     fn open_trunc(arg1: *const u8) -> i32;
     fn rename(__old: *const u8, __new: *const u8) -> i32;
@@ -372,7 +371,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     {
         die_usage();
     }
-    if ip4_scan(*argv as (*const u8), targetip.as_mut_ptr()) == 0 {
+    if ip4::scan(*argv as (*const u8), targetip.as_mut_ptr()) == 0 {
         die_usage();
     }
     umask(0o77u16);
@@ -614,7 +613,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
             if StrAlloc::append(&mut f[1usize] as (*mut StrAlloc), (*b"\0").as_ptr()) == 0 {
                 nomem();
             }
-            if ip4_scan(f[1usize].s as (*const u8), ip.as_mut_ptr()) == 0 {
+            if ip4::scan(f[1usize].s as (*const u8), ip.as_mut_ptr()) == 0 {
                 continue;
             }
             if !(byte::diff(ip.as_mut_ptr(), 4u32, targetip.as_mut_ptr()) == 0) {
@@ -705,7 +704,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     if StrAlloc::catb(
         &mut f[0usize] as (*mut StrAlloc),
         ipstr.as_mut_ptr() as (*const u8),
-        ip4_fmt(ipstr.as_mut_ptr(), targetip.as_mut_ptr() as (*const u8)),
+        ip4::fmt(ipstr.as_mut_ptr(), targetip.as_mut_ptr() as (*const u8)),
     ) == 0
     {
         nomem();

@@ -1,4 +1,5 @@
 use buffer::{Buffer, STDOUT_BUFFER};
+use ip4;
 use libc;
 use stralloc::StrAlloc;
 use strerr::{StrErr, STRERR_SYS};
@@ -6,7 +7,6 @@ use strerr::{StrErr, STRERR_SYS};
 extern "C" {
     fn dns_ip4_qualify(arg1: *mut StrAlloc, arg2: *mut StrAlloc, arg3: *const StrAlloc) -> i32;
     fn dns_random_init(arg1: *const u8);
-    fn ip4_fmt(arg1: *mut u8, arg2: *const u8) -> u32;
 }
 
 static mut seed: [u8; 128] = [0u8; 128];
@@ -100,7 +100,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
             Buffer::put(
                 STDOUT_BUFFER.as_mut_ptr(),
                 str.as_mut_ptr() as (*const u8),
-                ip4_fmt(str.as_mut_ptr(), out.s.offset(i as (isize)) as (*const u8)),
+                ip4::fmt(str.as_mut_ptr(), out.s.offset(i as (isize)) as (*const u8)),
             );
             Buffer::puts(STDOUT_BUFFER.as_mut_ptr(), (*b" \0").as_ptr());
             i = i + 4i32;
