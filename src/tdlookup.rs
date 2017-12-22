@@ -1,6 +1,7 @@
 use byte;
 use case;
 use cdb::Cdb;
+use open;
 use tai::Tai;
 use uint16;
 use uint32;
@@ -13,7 +14,6 @@ extern "C" {
     fn dns_packet_getname(arg1: *const u8, arg2: u32, arg3: u32, arg4: *mut *mut u8) -> u32;
     fn dns_packet_skipname(arg1: *const u8, arg2: u32, arg3: u32) -> u32;
     fn dns_random(arg1: u32) -> u32;
-    fn open_read(arg1: *const u8) -> i32;
     static mut response: *mut u8;
     fn response_addbytes(arg1: *const u8, arg2: u32) -> i32;
     fn response_addname(arg1: *const u8) -> i32;
@@ -782,7 +782,7 @@ pub unsafe extern "C" fn respond(mut q: *mut u8, mut qtype: *mut u8, mut ip: *mu
     let mut r: i32;
     let mut key: [u8; 6];
     Tai::now(&mut now as (*mut Tai));
-    fd = open_read((*b"data.cdb\0").as_ptr());
+    fd = open::read((*b"data.cdb\0").as_ptr());
     if fd == -1i32 {
         0i32
     } else {

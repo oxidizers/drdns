@@ -4,6 +4,7 @@ use case;
 use cdb::Cdb;
 use ip4;
 use libc;
+use open;
 use stralloc::StrAlloc;
 use strerr::{StrErr, STRERR_SYS};
 use tai::Tai;
@@ -21,7 +22,6 @@ extern "C" {
     fn dns_packet_getname(arg1: *const u8, arg2: u32, arg3: u32, arg4: *mut *mut u8) -> u32;
     fn dns_random_init(arg1: *const u8);
     fn droproot(arg1: *const u8);
-    fn open_read(arg1: *const u8) -> i32;
     fn qlog(
         arg1: *const u8,
         arg2: u16,
@@ -821,7 +821,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
         ) == 0
         {
             case::lowerb(zone, zonelen);
-            fdcdb = open_read((*b"data.cdb\0").as_ptr());
+            fdcdb = open::read((*b"data.cdb\0").as_ptr());
             if fdcdb == -1i32 {
                 die_cdbread();
             }

@@ -2,6 +2,7 @@ use byte;
 use cdb::Cdb;
 use ip4;
 use libc;
+use open;
 use uint32;
 use strerr::StrErr;
 
@@ -9,7 +10,6 @@ extern "C" {
     fn close(arg1: i32) -> i32;
     fn dd(arg1: *const u8, arg2: *const u8, arg3: *mut u8) -> i32;
     fn dns_domain_fromdot(arg1: *mut *mut u8, arg2: *const u8, arg3: u32) -> i32;
-    fn open_read(arg1: *const u8) -> i32;
     static mut response: *mut u8;
     fn response_addbytes(arg1: *const u8, arg2: u32) -> i32;
     fn response_nxdomain();
@@ -201,7 +201,7 @@ unsafe extern "C" fn doit(mut q: *mut u8, mut qtype: *mut u8) -> i32 {
 pub unsafe extern "C" fn respond(mut q: *mut u8, mut qtype: *mut u8, mut ip: *mut u8) -> i32 {
     let mut fd: i32;
     let mut result: i32;
-    fd = open_read((*b"data.cdb\0").as_ptr());
+    fd = open::read((*b"data.cdb\0").as_ptr());
     if fd == -1i32 {
         0i32
     } else {

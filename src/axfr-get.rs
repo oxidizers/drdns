@@ -3,6 +3,7 @@ use buffer::{self, Buffer};
 use errno::{self, Errno};
 use ip4;
 use libc;
+use open;
 use stralloc::StrAlloc;
 use strerr::{StrErr, STRERR_SYS};
 use uint16;
@@ -22,8 +23,6 @@ extern "C" {
     fn dns_packet_skipname(arg1: *const u8, arg2: u32, arg3: u32) -> u32;
     fn fsync(arg1: i32) -> i32;
     fn getln(arg1: *mut Buffer, arg2: *mut StrAlloc, arg3: *mut i32, arg4: i32) -> i32;
-    fn open_read(arg1: *const u8) -> i32;
-    fn open_trunc(arg1: *const u8) -> i32;
     fn rename(__old: *const u8, __new: *const u8) -> i32;
     fn timeoutread(t: i32, fd: i32, buf: *mut u8, len: i32) -> i32;
     fn timeoutwrite(t: i32, fd: i32, buf: *mut u8, len: i32) -> i32;
@@ -184,7 +183,7 @@ static mut zone: *mut u8 = 0 as (*mut u8);
 pub static mut zonelen: u32 = 0u32;
 
 #[no_mangle]
-pub static mut fn_: *mut u8 = 0 as (*mut u8);
+pub static mut filename: *mut u8 = 0 as (*mut u8);
 
 #[no_mangle]
 pub static mut fntmp: *mut u8 = 0 as (*mut u8);
@@ -223,7 +222,7 @@ pub unsafe extern "C" fn die_read() {
         111i32,
         (*b"axfr-get: fatal: \0").as_ptr(),
         (*b"unable to read \0").as_ptr(),
-        fn_ as (*const u8),
+        filename as (*const u8),
         (*b": \0").as_ptr(),
         0i32 as (*const u8),
         0i32 as (*const u8),
@@ -826,7 +825,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     {
         die_usage();
     }
-    fn_ = *argv;
+    filename = *argv;
     if (*{
             argv = argv.offset(1isize);
             argv
@@ -835,7 +834,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
         die_usage();
     }
     fntmp = *argv;
-    fd = open_read(fn_ as (*const u8));
+    fd = open::read(filename as (*const u8));
     if fd == -1i32 {
         if errno::errno() != Errno(libc::ENOENT) {
             die_read();
@@ -952,7 +951,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
             libc::_exit(0i32);
         }
     }
-    fd = open_trunc(fntmp as (*const u8));
+    fd = open::trunc(fntmp as (*const u8));
     if fd == -1i32 {
         die_write();
     }
@@ -1039,14 +1038,14 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     if close(fd) == -1i32 {
         die_write();
     }
-    if rename(fntmp as (*const u8), fn_ as (*const u8)) == -1i32 {
+    if rename(fntmp as (*const u8), filename as (*const u8)) == -1i32 {
         StrErr::die(
             111i32,
             (*b"axfr-get: fatal: \0").as_ptr(),
             (*b"unable to move \0").as_ptr(),
             fntmp as (*const u8),
             (*b" to \0").as_ptr(),
-            fn_ as (*const u8),
+            filename as (*const u8),
             (*b": \0").as_ptr(),
             &mut STRERR_SYS as (*mut StrErr) as (*const StrErr),
         );

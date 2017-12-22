@@ -16,6 +16,7 @@ mod case;
 mod cdb;
 mod ip4;
 mod ndelay;
+mod open;
 mod socket;
 mod stralloc;
 mod strerr;

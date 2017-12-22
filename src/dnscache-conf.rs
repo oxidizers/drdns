@@ -1,6 +1,7 @@
 use buffer::{self, Buffer};
 use errno::{errno, Errno};
 use libc;
+use open;
 use strerr::{StrErr, STRERR_SYS};
 use tai::Tai;
 use taia::TaiA;
@@ -17,7 +18,6 @@ extern "C" {
     fn getuid() -> u32;
     fn init(arg1: *const u8, arg2: *const u8);
     fn makedir(arg1: *const u8);
-    fn open_read(arg1: *const u8) -> i32;
     fn out(arg1: *const u8, arg2: u32);
     fn outs(arg1: *const u8);
     fn owner(arg1: i32, arg2: i32);
@@ -209,7 +209,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
             &mut STRERR_SYS as (*mut StrErr) as (*const StrErr),
         );
     }
-    fdrootservers = open_read((*b"/etc/dnsroots.local\0").as_ptr());
+    fdrootservers = open::read((*b"/etc/dnsroots.local\0").as_ptr());
     if fdrootservers == -1i32 {
         if errno() != Errno(libc::ENOENT) {
             StrErr::die(
@@ -223,7 +223,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
                 &mut STRERR_SYS as (*mut StrErr) as (*const StrErr),
             );
         }
-        fdrootservers = open_read((*b"/etc/dnsroots.global\0").as_ptr());
+        fdrootservers = open::read((*b"/etc/dnsroots.global\0").as_ptr());
         if fdrootservers == -1i32 {
             StrErr::die(
                 111i32,

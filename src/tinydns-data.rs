@@ -4,6 +4,7 @@ use case;
 use cdb::CdbMake;
 use ip4;
 use libc;
+use open;
 use stralloc::StrAlloc;
 use strerr::{StrErr, STRERR_SYS};
 use uint16;
@@ -19,8 +20,6 @@ extern "C" {
     fn fstat(arg1: i32, arg2: *mut stat) -> i32;
     fn fsync(arg1: i32) -> i32;
     fn getln(arg1: *mut Buffer, arg2: *mut StrAlloc, arg3: *mut i32, arg4: i32) -> i32;
-    fn open_read(arg1: *const u8) -> i32;
-    fn open_trunc(arg1: *const u8) -> i32;
     fn rename(__old: *const u8, __new: *const u8) -> i32;
     fn umask(arg1: u16) -> u16;
 }
@@ -499,7 +498,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
     let mut soa: [u8; 20];
     let mut buf: [u8; 4];
     umask(0o22u16);
-    fddata = open_read((*b"data\0").as_ptr());
+    fddata = open::read((*b"data\0").as_ptr());
     if fddata == -1i32 {
         StrErr::die(
             111i32,
@@ -520,7 +519,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
         bspace.as_mut_ptr(),
         ::std::mem::size_of::<[u8; 1024]>() as (u32),
     );
-    fdcdb = open_trunc((*b"data.tmp\0").as_ptr());
+    fdcdb = open::trunc((*b"data.tmp\0").as_ptr());
     if fdcdb == -1i32 {
         die_datatmp();
     }
