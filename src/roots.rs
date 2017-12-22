@@ -3,6 +3,7 @@ use errno::{self, Errno};
 use ip4;
 use libc;
 use open;
+use openreadclose::openreadclose;
 use stralloc::StrAlloc;
 use string;
 
@@ -15,7 +16,6 @@ extern "C" {
     fn dns_domain_length(arg1: *const u8) -> u32;
     fn fchdir(arg1: i32) -> i32;
     fn opendir(arg1: *const u8) -> *mut Struct1;
-    fn openreadclose(arg1: *const u8, arg2: *mut StrAlloc, arg3: u32) -> i32;
     fn readdir(arg1: *mut Struct1) -> *mut dirent;
 }
 

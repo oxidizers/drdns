@@ -17,6 +17,8 @@ mod cdb;
 mod ip4;
 mod ndelay;
 mod open;
+mod openreadclose;
+mod readclose;
 mod socket;
 mod stralloc;
 mod strerr;

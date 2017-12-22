@@ -1,13 +1,10 @@
 use byte;
 use ip4;
 use libc;
+use openreadclose::openreadclose;
 use stralloc::StrAlloc;
 use tai::Tai;
 use taia::TaiA;
-
-extern "C" {
-    fn openreadclose(arg1: *const u8, arg2: *mut StrAlloc, arg3: u32) -> i32;
-}
 
 static mut data: StrAlloc = StrAlloc {
     s: 0i32 as (*mut u8),
