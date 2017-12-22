@@ -1,8 +1,8 @@
 use byte;
+use case;
 use stralloc::StrAlloc;
 
 extern "C" {
-    fn case_diffb(arg1: *const u8, arg2: u32, arg3: *const u8) -> i32;
     fn dns_ip4(arg1: *mut StrAlloc, arg2: *const StrAlloc) -> i32;
     fn dns_resolvconfrewrite(arg1: *mut StrAlloc) -> i32;
     fn str_chr(arg1: *const u8, arg2: i32) -> u32;
@@ -31,7 +31,7 @@ unsafe extern "C" fn doit(mut work: *mut StrAlloc, mut rule: *const u8) -> i32 {
              prefixlen = (*work).len.wrapping_sub(colon);
              (if ch as (i32) == b'=' as (i32) && (prefixlen != 0) {
                   1i32
-              } else if case_diffb(
+              } else if case::diffb(
                 rule,
                 colon,
                 (*work).s.offset(prefixlen as (isize)) as (*const u8),

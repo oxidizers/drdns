@@ -1,5 +1,6 @@
 use buffer::{self, Buffer};
 use byte;
+use case;
 use cdb::Cdb;
 use libc;
 use stralloc::StrAlloc;
@@ -9,7 +10,6 @@ use uint16;
 use uint32;
 
 extern "C" {
-    fn case_lowerb(arg1: *mut u8, arg2: u32);
     fn close(arg1: i32) -> i32;
     fn dns_domain_equal(arg1: *const u8, arg2: *const u8) -> i32;
     fn dns_domain_fromdot(arg1: *mut *mut u8, arg2: *const u8, arg3: u32) -> i32;
@@ -821,7 +821,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             (*b"\0\xFC\0").as_ptr() as (*mut u8),
         ) == 0
         {
-            case_lowerb(zone, zonelen);
+            case::lowerb(zone, zonelen);
             fdcdb = open_read((*b"data.cdb\0").as_ptr());
             if fdcdb == -1i32 {
                 die_cdbread();
@@ -840,7 +840,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             let _rhs = 4i32;
             let _lhs = &mut *response.offset(2isize);
             *_lhs = (*_lhs as (i32) | _rhs) as (u8);
-            case_lowerb(zone, zonelen);
+            case::lowerb(zone, zonelen);
             response_id(header.as_mut_ptr() as (*const u8));
             let _rhs = !128i32;
             let _lhs = &mut *response.offset(3isize);

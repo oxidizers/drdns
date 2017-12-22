@@ -1,8 +1,8 @@
 use byte;
+use case;
 use cdb::Cdb;
 
 extern "C" {
-    fn case_lowerb(arg1: *mut u8, arg2: u32);
     fn close(arg1: i32) -> i32;
     fn dns_domain_length(arg1: *const u8) -> u32;
     fn dns_random_init(arg1: *const u8);
@@ -93,7 +93,7 @@ unsafe extern "C" fn doit(mut q: *mut u8, mut qtype: *mut u8, mut ip: *mut u8) -
                     }
                 }
                 byte::copy(key.as_mut_ptr().offset(3isize), qlen, q);
-                case_lowerb(key.as_mut_ptr().offset(3isize), qlen.wrapping_add(3u32));
+                case::lowerb(key.as_mut_ptr().offset(3isize), qlen.wrapping_add(3u32));
                 r = Cdb::find(
                     &mut c as (*mut Cdb),
                     key.as_mut_ptr() as (*const u8),

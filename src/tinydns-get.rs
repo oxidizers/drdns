@@ -1,11 +1,11 @@
 use byte;
 use buffer::{Buffer, STDOUT_BUFFER};
+use case;
 use libc;
 use stralloc::StrAlloc;
 use uint16;
 
 extern "C" {
-    fn case_lowerb(arg1: *mut u8, arg2: u32);
     fn dns_domain_fromdot(arg1: *mut *mut u8, arg2: *const u8, arg3: u32) -> i32;
     fn dns_domain_length(arg1: *const u8) -> u32;
     fn dns_domain_todot_cat(arg1: *mut StrAlloc, arg2: *const u8) -> i32;
@@ -150,7 +150,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     let _rhs = 4i32;
     let _lhs = &mut *response.offset(2isize);
     *_lhs = (*_lhs as (i32) | _rhs) as (u8);
-    case_lowerb(q, dns_domain_length(q as (*const u8)));
+    case::lowerb(q, dns_domain_length(q as (*const u8)));
     if byte::diff(
         type_.as_mut_ptr(),
         2u32,

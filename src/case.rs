@@ -1,11 +1,15 @@
-#[no_mangle]
-pub unsafe extern "C" fn case_diffb(mut s: *const u8, mut len: u32, mut t: *const u8) -> i32 {
-    let mut _currentBlock;
-    let mut x: u8;
-    let mut y: u8;
+//! `case.rs`: case comparison utilities
+//!
+//! These should probably be replaced with functionality from the
+//! Rust standard library
+
+pub unsafe fn diffb(mut s: *const u8, mut len: u32, mut t: *const u8) -> i32 {
+    let current_block;
+    let mut x: u8 = 0;
+    let mut y: u8 = 0;
     'loop1: loop {
         if !(len > 0u32) {
-            _currentBlock = 2;
+            current_block = 2;
             break;
         }
         len = len.wrapping_sub(1u32);
@@ -30,19 +34,18 @@ pub unsafe extern "C" fn case_diffb(mut s: *const u8, mut len: u32, mut t: *cons
             y = (y as (i32) + b'A' as (i32)) as (u8);
         }
         if x as (i32) != y as (i32) {
-            _currentBlock = 10;
+            current_block = 10;
             break;
         }
     }
-    if _currentBlock == 2 {
+    if current_block == 2 {
         0i32
     } else {
         x as (u32) as (i32) - y as (u32) as (i32)
     }
 }
 
-#[no_mangle]
-pub unsafe extern "C" fn case_diffs(mut s: *const u8, mut t: *const u8) -> i32 {
+pub unsafe fn diffs(mut s: *const u8, mut t: *const u8) -> i32 {
     let mut x: u8;
     let mut y: u8;
     'loop1: loop {
@@ -76,8 +79,7 @@ pub unsafe extern "C" fn case_diffs(mut s: *const u8, mut t: *const u8) -> i32 {
     x as (u32) as (i32) - y as (u32) as (i32)
 }
 
-#[no_mangle]
-pub unsafe extern "C" fn case_lowerb(mut s: *mut u8, mut len: u32) {
+pub unsafe fn lowerb(mut s: *mut u8, mut len: u32) {
     let mut x: u8;
     'loop1: loop {
         if !(len > 0u32) {

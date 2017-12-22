@@ -1,6 +1,7 @@
 use alloc;
 use buffer::{self, Buffer};
 use byte;
+use case;
 use cdb::CdbMake;
 use libc;
 use stralloc::StrAlloc;
@@ -8,8 +9,6 @@ use strerr::{StrErr, STRERR_SYS};
 
 extern "C" {
     fn __swbuf(arg1: i32, arg2: *mut __sFILE) -> i32;
-    fn case_diffb(arg1: *const u8, arg2: u32, arg3: *const u8) -> i32;
-    fn case_lowerb(arg1: *mut u8, arg2: u32);
     fn close(arg1: i32) -> i32;
     fn dns_domain_fromdot(arg1: *mut *mut u8, arg2: *const u8, arg3: u32) -> i32;
     fn dns_domain_length(arg1: *const u8) -> u32;
@@ -158,7 +157,7 @@ pub unsafe extern "C" fn address_diff(mut p: *mut address, mut q: *mut address) 
     } else if (*p).namelen > (*q).namelen {
         1i32
     } else {
-        case_diffb(
+        case::diffb(
             (*p).name as (*const u8),
             (*p).namelen,
             (*q).name as (*const u8),
@@ -566,7 +565,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
                 nomem();
             }
             t.namelen = dns_domain_length(t.name as (*const u8));
-            case_lowerb(t.name, t.namelen);
+            case::lowerb(t.name, t.namelen);
             if StrAlloc::append(&mut f[1usize] as (*mut StrAlloc), (*b"\0").as_ptr()) == 0 {
                 nomem();
             }

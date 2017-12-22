@@ -1,5 +1,6 @@
 use alloc;
 use byte;
+use case;
 use errno::{self, Errno};
 use libc;
 use tai::Tai;
@@ -10,8 +11,6 @@ use uint32;
 extern "C" {
     fn cache_get(arg1: *const u8, arg2: u32, arg3: *mut u32, arg4: *mut u32) -> *mut u8;
     fn cache_set(arg1: *const u8, arg2: u32, arg3: *const u8, arg4: u32, arg5: u32);
-    fn case_diffb(arg1: *const u8, arg2: u32, arg3: *const u8) -> i32;
-    fn case_lowerb(arg1: *mut u8, arg2: u32);
     fn dd(arg1: *const u8, arg2: *const u8, arg3: *mut u8) -> i32;
     fn dns_domain_copy(arg1: *mut *mut u8, arg2: *const u8) -> i32;
     fn dns_domain_equal(arg1: *const u8, arg2: *const u8) -> i32;
@@ -300,7 +299,7 @@ unsafe extern "C" fn smaller(mut buf: *mut u8, mut len: u32, mut pos1: u32, mut 
          } else if len1 > len2 {
              0i32
          } else {
-             r = case_diffb(t1 as (*const u8), len1, t2 as (*const u8));
+             r = case::diffb(t1 as (*const u8), len1, t2 as (*const u8));
              (if r < 0i32 {
                   1i32
               } else if r > 0i32 {
@@ -349,7 +348,7 @@ unsafe extern "C" fn cachegeneric(
     } else {
         byte::copy(key.as_mut_ptr(), 2u32, type_ as (*mut u8));
         byte::copy(key.as_mut_ptr().offset(2isize), len, d as (*mut u8));
-        case_lowerb(key.as_mut_ptr().offset(2isize), len);
+        case::lowerb(key.as_mut_ptr().offset(2isize), len);
         cache_set(
             key.as_mut_ptr() as (*const u8),
             len.wrapping_add(2u32),
@@ -2101,7 +2100,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                 if dlen <= 255u32 {
                     byte::copy(key.as_mut_ptr(), 2u32, (*b"\0\xFF\0").as_ptr() as (*mut u8));
                     byte::copy(key.as_mut_ptr().offset(2isize), dlen, d);
-                    case_lowerb(key.as_mut_ptr().offset(2isize), dlen);
+                    case::lowerb(key.as_mut_ptr().offset(2isize), dlen);
                     cached = cache_get(
                         key.as_mut_ptr() as (*const u8),
                         dlen.wrapping_add(2u32),
@@ -2509,7 +2508,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                         if dlen < 255u32 {
                             byte::copy(key.as_mut_ptr(), 2u32, (*b"\0\x02\0").as_ptr() as (*mut u8));
                             byte::copy(key.as_mut_ptr().offset(2isize), dlen, d);
-                            case_lowerb(key.as_mut_ptr().offset(2isize), dlen);
+                            case::lowerb(key.as_mut_ptr().offset(2isize), dlen);
                             cached = cache_get(
                                 key.as_mut_ptr() as (*const u8),
                                 dlen.wrapping_add(2u32),
