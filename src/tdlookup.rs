@@ -1,11 +1,11 @@
 use byte;
+use case;
 use cdb::Cdb;
 use tai::Tai;
 use uint16;
 use uint32;
 
 extern "C" {
-    fn case_lowerb(arg1: *mut u8, arg2: u32);
     fn close(arg1: i32) -> i32;
     fn dns_domain_equal(arg1: *const u8, arg2: *const u8) -> i32;
     fn dns_domain_length(arg1: *const u8) -> u32;
@@ -705,7 +705,7 @@ unsafe extern "C" fn doit(mut q: *mut u8, mut qtype: *mut u8) -> i32 {
                     _currentBlock = 91;
                     break;
                 }
-                case_lowerb(d1, dns_domain_length(d1 as (*const u8)));
+                case::lowerb(d1, dns_domain_length(d1 as (*const u8)));
                 if want(d1 as (*const u8), (*b"\0\x01\0").as_ptr()) != 0 {
                     Cdb::findstart(&mut c as (*mut Cdb));
                     'loop95: loop {

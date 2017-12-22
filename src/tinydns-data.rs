@@ -1,5 +1,6 @@
 use buffer::{self, Buffer};
 use byte;
+use case;
 use cdb::CdbMake;
 use libc;
 use stralloc::StrAlloc;
@@ -9,7 +10,6 @@ use uint32;
 
 extern "C" {
     fn __swbuf(arg1: i32, arg2: *mut __sFILE) -> i32;
-    fn case_lowerb(arg1: *mut u8, arg2: u32);
     fn close(arg1: i32) -> i32;
     fn dns_domain_fromdot(arg1: *mut *mut u8, arg2: *const u8, arg3: u32) -> i32;
     fn dns_domain_length(arg1: *const u8) -> u32;
@@ -411,7 +411,7 @@ pub unsafe extern "C" fn rr_finish(mut owner: *const u8) {
     if StrAlloc::copyb(&mut key as (*mut StrAlloc), owner, dns_domain_length(owner)) == 0 {
         nomem();
     }
-    case_lowerb(key.s, key.len);
+    case::lowerb(key.s, key.len);
     if CdbMake::add(
         &mut cdb as (*mut CdbMake),
         key.s as (*const u8),

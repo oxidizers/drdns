@@ -1,9 +1,6 @@
 use alloc;
 use byte;
-
-extern "C" {
-    fn case_diffb(arg1: *const u8, arg2: u32, arg3: *const u8) -> i32;
-}
+use case;
 
 #[no_mangle]
 pub unsafe extern "C" fn dns_domain_length(mut dn: *const u8) -> u32 {
@@ -59,7 +56,7 @@ pub unsafe extern "C" fn dns_domain_equal(mut dn1: *const u8, mut dn2: *const u8
     len = dns_domain_length(dn1);
     if len != dns_domain_length(dn2) {
         0i32
-    } else if case_diffb(dn1, len, dn2) != 0 {
+    } else if case::diffb(dn1, len, dn2) != 0 {
         0i32
     } else {
         1i32

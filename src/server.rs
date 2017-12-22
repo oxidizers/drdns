@@ -1,9 +1,9 @@
 use buffer::{Buffer, STDERR_BUFFER};
 use byte;
+use case;
 use strerr::{StrErr, STRERR_SYS};
 
 extern "C" {
-    fn case_lowerb(arg1: *mut u8, arg2: u32);
     fn dns_domain_length(arg1: *const u8) -> u32;
     fn dns_packet_copy(arg1: *const u8, arg2: u32, arg3: u32, arg4: *mut u8, arg5: u32) -> u32;
     fn dns_packet_getname(arg1: *const u8, arg2: u32, arg3: u32, arg4: *mut *mut u8) -> u32;
@@ -144,7 +144,7 @@ unsafe extern "C" fn doit() -> i32 {
                                             ) ==
                                                      0)
                                             {
-                                                case_lowerb(q, dns_domain_length(q as (*const u8)));
+                                                case::lowerb(q, dns_domain_length(q as (*const u8)));
                                                 if respond(
                                                     q,
                                                     qtype.as_mut_ptr(),
