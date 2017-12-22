@@ -16,6 +16,7 @@ mod case;
 mod cdb;
 mod stralloc;
 mod strerr;
+mod string;
 mod tai;
 mod taia;
 mod uint16;

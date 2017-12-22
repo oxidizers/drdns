@@ -1,8 +1,8 @@
 use libc;
+use string;
 
 extern "C" {
     static mut environ: *mut *mut u8;
-    fn str_start(arg1: *const u8, arg2: *const u8) -> i32;
 }
 
 #[no_mangle]
@@ -20,7 +20,7 @@ pub unsafe extern "C" fn env_get(mut s: *const u8) -> *mut u8 {
                 _currentBlock = 3;
                 break;
             }
-            if str_start(*environ.offset(i as (isize)) as (*const u8), s) != 0 &&
+            if string::start(*environ.offset(i as (isize)) as (*const u8), s) != 0 &&
                 (*(*environ.offset(i as (isize))).offset(len as (isize)) as (i32) ==
                     b'=' as (i32))
             {
