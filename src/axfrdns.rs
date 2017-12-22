@@ -2,12 +2,14 @@ use buffer::{self, Buffer};
 use byte;
 use case;
 use cdb::Cdb;
+use ip4;
 use libc;
 use stralloc::StrAlloc;
 use strerr::{StrErr, STRERR_SYS};
 use tai::Tai;
 use uint16;
 use uint32;
+use ulong;
 
 extern "C" {
     fn close(arg1: i32) -> i32;
@@ -19,7 +21,6 @@ extern "C" {
     fn dns_packet_getname(arg1: *const u8, arg2: u32, arg3: u32, arg4: *mut *mut u8) -> u32;
     fn dns_random_init(arg1: *const u8);
     fn droproot(arg1: *const u8);
-    fn ip4_scan(arg1: *const u8, arg2: *mut u8) -> u32;
     fn open_read(arg1: *const u8) -> i32;
     fn qlog(
         arg1: *const u8,
@@ -34,7 +35,6 @@ extern "C" {
     fn response_id(arg1: *const u8);
     static mut response_len: u32;
     fn response_query(arg1: *const u8, arg2: *const u8, arg3: *const u8) -> i32;
-    fn scan_ulong(arg1: *const u8, arg2: *mut usize) -> u32;
     fn timeoutread(t: i32, fd: i32, buf: *mut u8, len: i32) -> i32;
     fn timeoutwrite(t: i32, fd: i32, buf: *mut u8, len: i32) -> i32;
 }
@@ -693,14 +693,14 @@ pub unsafe extern "C" fn _c_main() -> i32 {
     dns_random_init(seed.as_mut_ptr() as (*const u8));
     axfr = libc::getenv((*b"AXFR\0" as *const libc::c_char).as_ptr());
     x = libc::getenv((*b"TCPREMOTEIP\0").as_ptr() as *const libc::c_char) as (*const u8);
-    if !(!x.is_null() && (ip4_scan(x, ip.as_mut_ptr()) != 0)) {
+    if !(!x.is_null() && (ip4::scan(x, ip.as_mut_ptr()) != 0)) {
         byte::zero(ip.as_mut_ptr(), 4u32);
     }
     x = libc::getenv((*b"TCPREMOTEPORT\0").as_ptr() as *const libc::c_char) as (*const u8);
     if x.is_null() {
         x = (*b"0\0").as_ptr();
     }
-    scan_ulong(x, &mut port as (*mut usize));
+    ulong::scan(x, &mut port as (*mut usize));
     'loop5: loop {
         netread(tcpheader.as_mut_ptr(), 2u32);
         uint16::unpack_big(

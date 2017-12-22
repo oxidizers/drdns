@@ -1,15 +1,12 @@
 use byte;
 use case;
 use uint16;
-
-extern "C" {
-    fn scan_ulong(arg1: *const u8, arg2: *mut usize) -> u32;
-}
+use ulong;
 
 #[no_mangle]
 pub unsafe extern "C" fn parsetype(mut s: *mut u8, mut type_: *mut u8) -> i32 {
     let mut u: usize;
-    if *s.offset(scan_ulong(s as (*const u8), &mut u as (*mut usize)) as
+    if *s.offset(ulong::scan(s as (*const u8), &mut u as (*mut usize)) as
         (isize)) == 0
     {
         uint16::pack_big(type_, u as (u16));

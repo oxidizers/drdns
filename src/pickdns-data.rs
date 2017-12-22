@@ -3,23 +3,22 @@ use buffer::{self, Buffer};
 use byte;
 use case;
 use cdb::CdbMake;
+use ip4;
 use libc;
 use stralloc::StrAlloc;
 use strerr::{StrErr, STRERR_SYS};
+use ulong;
 
 extern "C" {
     fn __swbuf(arg1: i32, arg2: *mut __sFILE) -> i32;
     fn close(arg1: i32) -> i32;
     fn dns_domain_fromdot(arg1: *mut *mut u8, arg2: *const u8, arg3: u32) -> i32;
     fn dns_domain_length(arg1: *const u8) -> u32;
-    fn fmt_ulong(arg1: *mut u8, arg2: usize) -> u32;
     fn fsync(arg1: i32) -> i32;
     fn getln(arg1: *mut Buffer, arg2: *mut StrAlloc, arg3: *mut i32, arg4: i32) -> i32;
-    fn ip4_scan(arg1: *const u8, arg2: *mut u8) -> u32;
     fn open_read(arg1: *const u8) -> i32;
     fn open_trunc(arg1: *const u8) -> i32;
     fn rename(__old: *const u8, __new: *const u8) -> i32;
-    fn scan_ulong(arg1: *const u8, arg2: *mut usize) -> u32;
     fn umask(arg1: u16) -> u16;
 }
 
@@ -115,7 +114,7 @@ pub unsafe extern "C" fn ipprefix_cat(mut out: *mut StrAlloc, mut s: *mut u8) {
         if *s as (i32) == b'.' as (i32) {
             s = s.offset(1isize);
         } else {
-            j = scan_ulong(s as (*const u8), &mut u as (*mut usize));
+            j = ulong::scan(s as (*const u8), &mut u as (*mut usize));
             if j == 0 {
                 break;
             }
@@ -378,7 +377,7 @@ pub static mut strnum: [u8; 40] = [0u8; 40];
 
 #[no_mangle]
 pub unsafe extern "C" fn syntaxerror(mut why: *const u8) {
-    strnum[fmt_ulong(strnum.as_mut_ptr(), linenum) as (usize)] = 0u8;
+    strnum[ulong::fmt(strnum.as_mut_ptr(), linenum) as (usize)] = 0u8;
     StrErr::die(
         111i32,
         (*b"pickdns-data: fatal: \0").as_ptr(),
@@ -569,7 +568,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             if StrAlloc::append(&mut f[1usize] as (*mut StrAlloc), (*b"\0").as_ptr()) == 0 {
                 nomem();
             }
-            if ip4_scan(f[1usize].s as (*const u8), t.ip.as_mut_ptr()) == 0 {
+            if ip4::scan(f[1usize].s as (*const u8), t.ip.as_mut_ptr()) == 0 {
                 syntaxerror((*b": malformed IP address\0").as_ptr());
             }
             if StrAlloc::append(&mut f[2usize] as (*mut StrAlloc), (*b"\0").as_ptr()) == 0 {

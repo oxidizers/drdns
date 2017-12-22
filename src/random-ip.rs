@@ -1,11 +1,10 @@
 use buffer::{Buffer, STDOUT_BUFFER};
 use libc;
+use ulong;
 
 extern "C" {
     fn dns_random(arg1: u32) -> u32;
     fn dns_random_init(arg1: *const u8);
-    fn fmt_ulong(arg1: *mut u8, arg2: usize) -> u32;
-    fn scan_ulong(arg1: *const u8, arg2: *mut usize) -> u32;
 }
 
 #[no_mangle]
@@ -74,7 +73,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
         argv = argv.offset(1isize);
     }
     if !(*argv).is_null() {
-        scan_ulong(
+        ulong::scan(
             *{
                 let _old = argv;
                 argv = argv.offset(1isize);
@@ -84,7 +83,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
         );
     }
     if !(*argv).is_null() {
-        scan_ulong(
+        ulong::scan(
             *{
                 let _old = argv;
                 argv = argv.offset(1isize);
@@ -96,7 +95,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
         ipfixed = 1i32;
     }
     if !(*argv).is_null() {
-        scan_ulong(
+        ulong::scan(
             *{
                 let _old = argv;
                 argv = argv.offset(1isize);
@@ -108,7 +107,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
         ipfixed = 2i32;
     }
     if !(*argv).is_null() {
-        scan_ulong(
+        ulong::scan(
             *{
                 let _old = argv;
                 argv = argv.offset(1isize);
@@ -120,7 +119,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
         ipfixed = 3i32;
     }
     if !(*argv).is_null() {
-        scan_ulong(
+        ulong::scan(
             *{
                 let _old = argv;
                 argv = argv.offset(1isize);
@@ -193,28 +192,28 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
         Buffer::put(
             STDOUT_BUFFER.as_mut_ptr(),
             strnum.as_mut_ptr() as (*const u8),
-            fmt_ulong(strnum.as_mut_ptr(), u),
+            ulong::fmt(strnum.as_mut_ptr(), u),
         );
         Buffer::puts(STDOUT_BUFFER.as_mut_ptr(), (*b".\0").as_ptr());
         u = ip[1usize] as (usize);
         Buffer::put(
             STDOUT_BUFFER.as_mut_ptr(),
             strnum.as_mut_ptr() as (*const u8),
-            fmt_ulong(strnum.as_mut_ptr(), u),
+            ulong::fmt(strnum.as_mut_ptr(), u),
         );
         Buffer::puts(STDOUT_BUFFER.as_mut_ptr(), (*b".\0").as_ptr());
         u = ip[2usize] as (usize);
         Buffer::put(
             STDOUT_BUFFER.as_mut_ptr(),
             strnum.as_mut_ptr() as (*const u8),
-            fmt_ulong(strnum.as_mut_ptr(), u),
+            ulong::fmt(strnum.as_mut_ptr(), u),
         );
         Buffer::puts(STDOUT_BUFFER.as_mut_ptr(), (*b".\0").as_ptr());
         u = ip[3usize] as (usize);
         Buffer::put(
             STDOUT_BUFFER.as_mut_ptr(),
             strnum.as_mut_ptr() as (*const u8),
-            fmt_ulong(strnum.as_mut_ptr(), u),
+            ulong::fmt(strnum.as_mut_ptr(), u),
         );
         Buffer::puts(STDOUT_BUFFER.as_mut_ptr(), (*b"\n\0").as_ptr());
     }

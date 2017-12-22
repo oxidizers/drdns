@@ -1,6 +1,7 @@
 use buffer::{Buffer, STDERR_BUFFER};
 use byte;
 use case;
+use ip4;
 use libc;
 use ndelay;
 use socket;
@@ -13,7 +14,6 @@ extern "C" {
     fn droproot(arg1: *const u8);
     static mut fatal: *mut u8;
     fn initialize();
-    fn ip4_scan(arg1: *const u8, arg2: *mut u8) -> u32;
     fn qlog(
         arg1: *const u8,
         arg2: u16,
@@ -222,7 +222,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             0i32 as (*const StrErr),
         );
     }
-    if ip4_scan(x as (*const u8), ip.as_mut_ptr()) == 0 {
+    if ip4::scan(x as (*const u8), ip.as_mut_ptr()) == 0 {
         StrErr::die(
             111i32,
             fatal as (*const u8),

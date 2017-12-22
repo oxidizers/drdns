@@ -2,6 +2,7 @@ use alloc;
 use buffer::{Buffer, STDOUT_BUFFER};
 use byte;
 use errno::{self, Errno};
+use ip4;
 use libc;
 use stralloc::StrAlloc;
 use strerr::StrErr;
@@ -32,7 +33,6 @@ extern "C" {
         arg6: *const u8,
     ) -> i32;
     fn iopause(arg1: *mut pollfd, arg2: u32, arg3: *mut TaiA, arg4: *mut TaiA);
-    fn ip4_fmt(arg1: *mut u8, arg2: *const u8) -> u32;
     fn parsetype(arg1: *mut u8, arg2: *mut u8) -> i32;
     fn printrecord(
         arg1: *mut StrAlloc,
@@ -801,7 +801,7 @@ pub unsafe extern "C" fn address_add(mut owner: *const u8, mut ip: *const u8) {
     Buffer::put(
         STDOUT_BUFFER.as_mut_ptr(),
         ipstr.as_mut_ptr() as (*const u8),
-        ip4_fmt(ipstr.as_mut_ptr(), ip),
+        ip4::fmt(ipstr.as_mut_ptr(), ip),
     );
     Buffer::puts(STDOUT_BUFFER.as_mut_ptr(), (*b"\n\0").as_ptr());
     i = 0i32;
@@ -1383,7 +1383,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
             if StrAlloc::catb(
                 &mut querystr as (*mut StrAlloc),
                 ipstr.as_mut_ptr() as (*const u8),
-                ip4_fmt(ipstr.as_mut_ptr(), ip.as_mut_ptr() as (*const u8)),
+                ip4::fmt(ipstr.as_mut_ptr(), ip.as_mut_ptr() as (*const u8)),
             ) == 0
             {
                 nomem();
