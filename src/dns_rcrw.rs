@@ -1,5 +1,6 @@
 use byte;
 use libc;
+use openreadclose::openreadclose;
 use stralloc::StrAlloc;
 use string;
 use tai::Tai;
@@ -7,7 +8,6 @@ use taia::TaiA;
 
 extern "C" {
     fn gethostname(arg1: *mut u8, arg2: usize) -> i32;
-    fn openreadclose(arg1: *const u8, arg2: *mut StrAlloc, arg3: u32) -> i32;
 }
 
 static mut data: StrAlloc = StrAlloc {

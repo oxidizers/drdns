@@ -1,13 +1,13 @@
 use byte;
 use case;
 use cdb::Cdb;
+use open;
 
 extern "C" {
     fn close(arg1: i32) -> i32;
     fn dns_domain_length(arg1: *const u8) -> u32;
     fn dns_random_init(arg1: *const u8);
     fn dns_sortip(arg1: *mut u8, arg2: u32);
-    fn open_read(arg1: *const u8) -> i32;
     static mut response: *mut u8;
     fn response_addbytes(arg1: *const u8, arg2: u32) -> i32;
     fn response_rfinish(arg1: i32);
@@ -185,7 +185,7 @@ unsafe extern "C" fn doit(mut q: *mut u8, mut qtype: *mut u8, mut ip: *mut u8) -
 pub unsafe extern "C" fn respond(mut q: *mut u8, mut qtype: *mut u8, mut ip: *mut u8) -> i32 {
     let mut fd: i32;
     let mut result: i32;
-    fd = open_read((*b"data.cdb\0").as_ptr());
+    fd = open::read((*b"data.cdb\0").as_ptr());
     if fd == -1i32 {
         0i32
     } else {

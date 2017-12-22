@@ -1,22 +1,23 @@
+//! `readclose.rs`: Read a fle into the buffer and then close it
+//!
+//! This is used exclusively by the `openreadclose` module, and can be
+//! replaced with `std::io`
+
 use errno::{errno, Errno};
 use libc;
 use stralloc::StrAlloc;
 
-extern "C" {
-    fn close(arg1: i32) -> i32;
-}
+pub unsafe extern "C" fn readclose(fd: i32, sa: *mut StrAlloc, bufsize: u32) -> i32 {
+    if StrAlloc::copys(sa, (*b"\0").as_ptr()) == 0 {
+        libc::close(fd);
+        return -1;
+    }
 
-#[no_mangle]
-pub unsafe extern "C" fn readclose_append(
-    mut fd: i32,
-    mut sa: *mut StrAlloc,
-    mut bufsize: u32,
-) -> i32 {
-    let mut _currentBlock;
-    let mut r: i32;
+    let current_block;
+    let mut r: i32 = 0;
     'loop1: loop {
         if StrAlloc::readyplus(sa, bufsize) == 0 {
-            _currentBlock = 7;
+            current_block = 7;
             break;
         }
         r = libc::read(
@@ -30,26 +31,16 @@ pub unsafe extern "C" fn readclose_append(
             }
         }
         if r <= 0i32 {
-            _currentBlock = 6;
+            current_block = 6;
             break;
         }
         (*sa).len = (*sa).len.wrapping_add(r as (u32));
     }
-    if _currentBlock == 6 {
-        close(fd);
+    if current_block == 6 {
+        libc::close(fd);
         r
     } else {
-        close(fd);
-        -1i32
-    }
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn readclose(mut fd: i32, mut sa: *mut StrAlloc, mut bufsize: u32) -> i32 {
-    if StrAlloc::copys(sa, (*b"\0").as_ptr()) == 0 {
-        close(fd);
-        -1i32
-    } else {
-        readclose_append(fd, sa, bufsize)
+        libc::close(fd);
+        -1
     }
 }

@@ -1,4 +1,5 @@
 use buffer::{self, Buffer};
+use open;
 use strerr::{StrErr, STRERR_SYS};
 
 extern "C" {
@@ -8,7 +9,6 @@ extern "C" {
     fn close(arg1: i32) -> i32;
     fn fsync(arg1: i32) -> i32;
     fn mkdir(arg1: *const u8, arg2: u16) -> i32;
-    fn open_trunc(arg1: *const u8) -> i32;
     fn umask(arg1: u16) -> u16;
 }
 
@@ -16,7 +16,7 @@ static mut fatal: *const u8 = 0 as (*const u8);
 
 static mut dir: *const u8 = 0 as (*const u8);
 
-static mut fn_: *const u8 = 0 as (*const u8);
+static mut filename: *const u8 = 0 as (*const u8);
 
 static mut fd: i32 = 0i32;
 
@@ -81,7 +81,7 @@ pub unsafe extern "C" fn fail() {
         (*b"unable to create \0").as_ptr(),
         dir,
         (*b"/\0").as_ptr(),
-        fn_,
+        filename,
         (*b": \0").as_ptr(),
         &mut STRERR_SYS as (*mut StrErr) as (*const StrErr),
     );
@@ -89,16 +89,16 @@ pub unsafe extern "C" fn fail() {
 
 #[no_mangle]
 pub unsafe extern "C" fn makedir(mut s: *const u8) {
-    fn_ = s;
-    if mkdir(fn_, 0o700u16) == -1i32 {
+    filename = s;
+    if mkdir(filename, 0o700u16) == -1i32 {
         fail();
     }
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn start(mut s: *const u8) {
-    fn_ = s;
-    fd = open_trunc(fn_);
+    filename = s;
+    fd = open::trunc(filename);
     if fd == -1i32 {
         fail();
     }
@@ -145,14 +145,14 @@ pub unsafe extern "C" fn finish() {
 
 #[no_mangle]
 pub unsafe extern "C" fn perm(mut mode: i32) {
-    if chmod(fn_, mode as (u16)) == -1i32 {
+    if chmod(filename, mode as (u16)) == -1i32 {
         fail();
     }
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn owner(mut uid: i32, mut gid: i32) {
-    if chown(fn_, uid as (u32), gid as (u32)) == -1i32 {
+    if chown(filename, uid as (u32), gid as (u32)) == -1i32 {
         fail();
     }
 }

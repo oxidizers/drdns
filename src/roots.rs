@@ -2,6 +2,8 @@ use byte;
 use errno::{self, Errno};
 use ip4;
 use libc;
+use open;
+use openreadclose::openreadclose;
 use stralloc::StrAlloc;
 use string;
 
@@ -13,9 +15,7 @@ extern "C" {
     fn dns_domain_fromdot(arg1: *mut *mut u8, arg2: *const u8, arg3: u32) -> i32;
     fn dns_domain_length(arg1: *const u8) -> u32;
     fn fchdir(arg1: i32) -> i32;
-    fn open_read(arg1: *const u8) -> i32;
     fn opendir(arg1: *const u8) -> *mut Struct1;
-    fn openreadclose(arg1: *const u8, arg2: *mut StrAlloc, arg3: u32) -> i32;
     fn readdir(arg1: *mut Struct1) -> *mut dirent;
 }
 
@@ -266,7 +266,7 @@ pub unsafe extern "C" fn roots_init() -> i32 {
     if StrAlloc::copys(&mut data as (*mut StrAlloc), (*b"\0").as_ptr()) == 0 {
         0i32
     } else {
-        fddir = open_read((*b".\0").as_ptr());
+        fddir = open::read((*b".\0").as_ptr());
         (if fddir == -1i32 {
              0i32
          } else {

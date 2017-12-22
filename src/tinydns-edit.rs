@@ -2,6 +2,7 @@ use buffer::{self, Buffer};
 use byte;
 use ip4;
 use libc;
+use open;
 use stralloc::StrAlloc;
 use strerr::{StrErr, STRERR_SYS};
 use string;
@@ -17,8 +18,6 @@ extern "C" {
     fn fstat(arg1: i32, arg2: *mut stat) -> i32;
     fn fsync(arg1: i32) -> i32;
     fn getln(arg1: *mut Buffer, arg2: *mut StrAlloc, arg3: *mut i32, arg4: i32) -> i32;
-    fn open_read(arg1: *const u8) -> i32;
-    fn open_trunc(arg1: *const u8) -> i32;
     fn rename(__old: *const u8, __new: *const u8) -> i32;
     fn umask(arg1: u16) -> u16;
 }
@@ -93,7 +92,7 @@ pub unsafe extern "C" fn __sputc(mut _c: i32, mut _p: *mut __sFILE) -> i32 {
 }
 
 #[no_mangle]
-pub static mut fn_: *mut u8 = 0 as (*mut u8);
+pub static mut filename: *mut u8 = 0 as (*mut u8);
 
 #[no_mangle]
 pub static mut fnnew: *mut u8 = 0 as (*mut u8);
@@ -133,7 +132,7 @@ pub unsafe extern "C" fn die_read() {
         100i32,
         (*b"tinydns-edit: fatal: \0").as_ptr(),
         (*b"tinydns-edit: fatal: unable to read \0").as_ptr(),
-        fn_ as (*const u8),
+        filename as (*const u8),
         (*b": \0").as_ptr(),
         0i32 as (*const u8),
         0i32 as (*const u8),
@@ -310,7 +309,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     {
         die_usage();
     }
-    fn_ = *argv;
+    filename = *argv;
     if (*{
             argv = argv.offset(1isize);
             argv
@@ -375,7 +374,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
         die_usage();
     }
     umask(0o77u16);
-    fd = open_read(fn_ as (*const u8));
+    fd = open::read(filename as (*const u8));
     if fd == -1i32 {
         die_read();
     }
@@ -389,7 +388,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
         bspace.as_mut_ptr(),
         ::std::mem::size_of::<[u8; 1024]>() as (u32),
     );
-    fdnew = open_trunc(fnnew as (*const u8));
+    fdnew = open::trunc(fnnew as (*const u8));
     if fdnew == -1i32 {
         die_write();
     }
@@ -776,14 +775,14 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     if close(fdnew) == -1i32 {
         die_write();
     }
-    if rename(fnnew as (*const u8), fn_ as (*const u8)) == -1i32 {
+    if rename(fnnew as (*const u8), filename as (*const u8)) == -1i32 {
         StrErr::die(
             111i32,
             (*b"tinydns-edit: fatal: \0").as_ptr(),
             (*b"unable to move \0").as_ptr(),
             fnnew as (*const u8),
             (*b" to \0").as_ptr(),
-            fn_ as (*const u8),
+            filename as (*const u8),
             (*b": \0").as_ptr(),
             &mut STRERR_SYS as (*mut StrErr) as (*const StrErr),
         );
