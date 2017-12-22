@@ -1,9 +1,9 @@
+use libc;
 use strerr::{StrErr, STRERR_SYS};
 
 extern "C" {
     fn chdir(arg1: *const u8) -> i32;
     fn chroot(arg1: *const u8) -> i32;
-    fn env_get(arg1: *const u8) -> *mut u8;
     fn prot_gid(arg1: i32) -> i32;
     fn prot_uid(arg1: i32) -> i32;
     fn scan_ulong(arg1: *const u8, arg2: *mut usize) -> u32;
@@ -13,7 +13,7 @@ extern "C" {
 pub unsafe extern "C" fn droproot(mut fatal: *const u8) {
     let mut x: *mut u8;
     let mut id: usize;
-    x = env_get((*b"ROOT\0").as_ptr());
+    x = libc::getenv((*b"ROOT\0").as_ptr() as *const libc::c_char);
     if x.is_null() {
         StrErr::die(
             111i32,
@@ -50,7 +50,7 @@ pub unsafe extern "C" fn droproot(mut fatal: *const u8) {
             &mut STRERR_SYS as (*mut strerr) as (*const strerr),
         );
     }
-    x = env_get((*b"GID\0").as_ptr());
+    x = libc::getenv((*b"GID\0").as_ptr() as *const libc::c_char);
     if x.is_null() {
         StrErr::die(
             111i32,
@@ -76,7 +76,7 @@ pub unsafe extern "C" fn droproot(mut fatal: *const u8) {
             &mut STRERR_SYS as (*mut strerr) as (*const strerr),
         );
     }
-    x = env_get((*b"UID\0").as_ptr());
+    x = libc::getenv((*b"UID\0").as_ptr() as *const libc::c_char);
     if x.is_null() {
         StrErr::die(
             111i32,

@@ -1,6 +1,7 @@
 use buffer::{Buffer, STDERR_BUFFER};
 use byte;
 use case;
+use libc;
 use strerr::{StrErr, STRERR_SYS};
 
 extern "C" {
@@ -8,7 +9,6 @@ extern "C" {
     fn dns_packet_copy(arg1: *const u8, arg2: u32, arg3: u32, arg4: *mut u8, arg5: u32) -> u32;
     fn dns_packet_getname(arg1: *const u8, arg2: u32, arg3: u32, arg4: *mut *mut u8) -> u32;
     fn droproot(arg1: *const u8);
-    fn env_get(arg1: *const u8) -> *mut u8;
     static mut fatal: *mut u8;
     fn initialize();
     fn ip4_scan(arg1: *const u8, arg2: *mut u8) -> u32;
@@ -213,7 +213,7 @@ unsafe extern "C" fn doit() -> i32 {
 pub unsafe extern "C" fn _c_main() -> i32 {
     let mut x: *mut u8;
     let mut udp53: i32;
-    x = env_get((*b"IP\0").as_ptr());
+    x = libc::getenv((*b"IP\0").as_ptr() as *const libc::c_char);
     if x.is_null() {
         StrErr::die(
             111i32,

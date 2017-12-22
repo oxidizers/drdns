@@ -1,10 +1,10 @@
 use byte;
+use libc;
 use stralloc::StrAlloc;
 use tai::Tai;
 use taia::TaiA;
 
 extern "C" {
-    fn env_get(arg1: *const u8) -> *mut u8;
     fn ip4_scan(arg1: *const u8, arg2: *mut u8) -> u32;
     fn openreadclose(arg1: *const u8, arg2: *mut StrAlloc, arg3: u32) -> i32;
 }
@@ -33,7 +33,7 @@ unsafe extern "C" fn init(mut ip: *mut u8) -> i32 {
     let mut j: i32;
     let mut iplen: i32 = 0i32;
     let mut x: *mut u8;
-    x = env_get((*b"DNSCACHEIP\0").as_ptr());
+    x = libc::getenv((*b"DNSCACHEIP\0").as_ptr() as *const libc::c_char);
     if !x.is_null() {
         _currentBlock = 1;
     } else {

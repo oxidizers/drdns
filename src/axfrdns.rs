@@ -19,7 +19,6 @@ extern "C" {
     fn dns_packet_getname(arg1: *const u8, arg2: u32, arg3: u32, arg4: *mut *mut u8) -> u32;
     fn dns_random_init(arg1: *const u8);
     fn droproot(arg1: *const u8);
-    fn env_get(arg1: *const u8) -> *mut u8;
     fn ip4_scan(arg1: *const u8, arg2: *mut u8) -> u32;
     fn open_read(arg1: *const u8) -> i32;
     fn qlog(
@@ -692,12 +691,12 @@ pub unsafe extern "C" fn _c_main() -> i32 {
     let mut x: *const u8;
     droproot((*b"axfrdns: fatal: \0").as_ptr());
     dns_random_init(seed.as_mut_ptr() as (*const u8));
-    axfr = env_get((*b"AXFR\0").as_ptr());
-    x = env_get((*b"TCPREMOTEIP\0").as_ptr()) as (*const u8);
+    axfr = libc::getenv((*b"AXFR\0" as *const libc::c_char).as_ptr());
+    x = libc::getenv((*b"TCPREMOTEIP\0").as_ptr() as *const libc::c_char) as (*const u8);
     if !(!x.is_null() && (ip4_scan(x, ip.as_mut_ptr()) != 0)) {
         byte::zero(ip.as_mut_ptr(), 4u32);
     }
-    x = env_get((*b"TCPREMOTEPORT\0").as_ptr()) as (*const u8);
+    x = libc::getenv((*b"TCPREMOTEPORT\0").as_ptr() as *const libc::c_char) as (*const u8);
     if x.is_null() {
         x = (*b"0\0").as_ptr();
     }

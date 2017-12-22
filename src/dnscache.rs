@@ -14,7 +14,6 @@ extern "C" {
     fn dns_packet_getname(arg1: *const u8, arg2: u32, arg3: u32, arg4: *mut *mut u8) -> u32;
     fn dns_random_init(arg1: *const u8);
     fn droproot(arg1: *const u8);
-    fn env_get(arg1: *const u8) -> *mut u8;
     fn iopause(arg1: *mut pollfd, arg2: u32, arg3: *mut TaiA, arg4: *mut TaiA);
     fn ip4_scan(arg1: *const u8, arg2: *mut u8) -> u32;
     fn log_query(
@@ -877,7 +876,7 @@ unsafe extern "C" fn doit() {
 pub unsafe extern "C" fn _c_main() -> i32 {
     let mut x: *mut u8;
     let mut cachesize: usize;
-    x = env_get((*b"IP\0").as_ptr());
+    x = libc::getenv((*b"IP\0").as_ptr() as *const libc::c_char);
     if x.is_null() {
         StrErr::die(
             111i32,
@@ -965,7 +964,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
     );
     dns_random_init(seed.as_mut_ptr() as (*const u8));
     close(0i32);
-    x = env_get((*b"IPSEND\0").as_ptr());
+    x = libc::getenv((*b"IPSEND\0").as_ptr() as *const libc::c_char);
     if x.is_null() {
         StrErr::die(
             111i32,
@@ -990,7 +989,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             0i32 as (*const StrErr),
         );
     }
-    x = env_get((*b"CACHESIZE\0").as_ptr());
+    x = libc::getenv((*b"CACHESIZE\0").as_ptr() as *const libc::c_char);
     if x.is_null() {
         StrErr::die(
             111i32,
@@ -1016,10 +1015,10 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             0i32 as (*const StrErr),
         );
     }
-    if !env_get((*b"HIDETTL\0").as_ptr()).is_null() {
+    if !libc::getenv((*b"HIDETTL\0").as_ptr() as *const libc::c_char).is_null() {
         response_hidettl();
     }
-    if !env_get((*b"FORWARDONLY\0").as_ptr()).is_null() {
+    if !libc::getenv((*b"FORWARDONLY\0").as_ptr() as *const libc::c_char).is_null() {
         query_forwardonly();
     }
     if roots_init() == 0 {

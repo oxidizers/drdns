@@ -1,11 +1,11 @@
 use byte;
+use libc;
 use stralloc::StrAlloc;
 use string;
 use tai::Tai;
 use taia::TaiA;
 
 extern "C" {
-    fn env_get(arg1: *const u8) -> *mut u8;
     fn gethostname(arg1: *mut u8, arg2: usize) -> i32;
     fn openreadclose(arg1: *const u8, arg2: *mut StrAlloc, arg3: u32) -> i32;
 }
@@ -42,7 +42,7 @@ unsafe extern "C" fn init(mut rules: *mut StrAlloc) -> i32 {
     if StrAlloc::copys(rules, (*b"\0").as_ptr()) == 0 {
         -1i32
     } else {
-        x = env_get((*b"DNSREWRITEFILE\0").as_ptr()) as (*const u8);
+        x = libc::getenv((*b"DNSREWRITEFILE\0").as_ptr() as *const libc::c_char) as (*const u8);
         if x.is_null() {
             x = (*b"/etc/dnsrewrite\0").as_ptr();
         }
@@ -111,7 +111,7 @@ unsafe extern "C" fn init(mut rules: *mut StrAlloc) -> i32 {
                    })
               })
          } else {
-             x = env_get((*b"LOCALDOMAIN\0").as_ptr()) as (*const u8);
+             x = libc::getenv((*b"LOCALDOMAIN\0").as_ptr() as *const libc::c_char) as (*const u8);
              (if !x.is_null() {
                   (if StrAlloc::copys(&mut data as (*mut StrAlloc), x) == 0 {
                        -1i32
