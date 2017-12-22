@@ -1,5 +1,6 @@
-#[no_mangle]
-pub unsafe extern "C" fn fmt_ulong(mut s: *mut u8, mut u: usize) -> u32 {
+//! `fmt_ulong.rs`: Format an unsigned long
+
+pub unsafe fn fmt_ulong(mut s: *mut u8, mut u: usize) -> u32 {
     let mut len: u32;
     let mut q: usize;
     len = 1u32;
