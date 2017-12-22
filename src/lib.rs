@@ -14,6 +14,8 @@ mod buffer;
 mod byte;
 mod case;
 mod cdb;
+mod ndelay;
+mod socket;
 mod stralloc;
 mod strerr;
 mod string;
