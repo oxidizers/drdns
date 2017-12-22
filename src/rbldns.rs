@@ -8,7 +8,6 @@ extern "C" {
     fn close(arg1: i32) -> i32;
     fn dd(arg1: *const u8, arg2: *const u8, arg3: *mut u8) -> i32;
     fn dns_domain_fromdot(arg1: *mut *mut u8, arg2: *const u8, arg3: u32) -> i32;
-    fn env_get(arg1: *const u8) -> *mut u8;
     fn ip4_fmt(arg1: *mut u8, arg2: *const u8) -> u32;
     fn open_read(arg1: *const u8) -> i32;
     static mut response: *mut u8;
@@ -223,7 +222,7 @@ pub static mut starting: *const u8 = (*b"starting rbldns\n\0").as_ptr();
 #[no_mangle]
 pub unsafe extern "C" fn initialize() {
     let mut x: *mut u8;
-    x = env_get((*b"BASE\0").as_ptr());
+    x = libc::getenv((*b"BASE\0").as_ptr() as *const libc::c_char);
     if x.is_null() {
         StrErr::die(
             111i32,
