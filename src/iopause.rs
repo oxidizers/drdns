@@ -3,12 +3,7 @@
 use libc;
 use taia::TaiA;
 
-pub unsafe fn iopause(
-    x: *mut libc::pollfd,
-    len: u32,
-    deadline: *mut TaiA,
-    stamp: *mut TaiA,
-) {
+pub unsafe fn iopause(x: *mut libc::pollfd, len: u32, deadline: *mut TaiA, stamp: *mut TaiA) {
     let mut t: TaiA;
     let millisecs: i32;
     let mut d: f64;

@@ -42,10 +42,7 @@ impl StrAlloc {
         StrAlloc::catb(sa, s, libc::strlen(s as *const i8) as u32)
     }
 
-    pub unsafe fn copy(
-        sato: *mut StrAlloc,
-        safrom: *const StrAlloc,
-    ) -> i32 {
+    pub unsafe fn copy(sato: *mut StrAlloc, safrom: *const StrAlloc) -> i32 {
         StrAlloc::copyb(sato, (*safrom).s as (*const u8), (*safrom).len)
     }
 
@@ -54,28 +51,28 @@ impl StrAlloc {
         if !(*x).s.is_null() {
             i = (*x).a;
             (if n > i {
-                (*x).a = 30u32.wrapping_add(n).wrapping_add(n >> 3i32);
-                (if alloc::alloc_re(
+                 (*x).a = 30u32.wrapping_add(n).wrapping_add(n >> 3i32);
+                 (if alloc::alloc_re(
                     &mut (*x).s as (*mut *mut u8),
                     (i as (usize)).wrapping_mul(::std::mem::size_of::<u8>()) as (u32),
                     ((*x).a as (usize)).wrapping_mul(::std::mem::size_of::<u8>()) as (u32),
                 ) != 0
                 {
-                    1i32
-                } else {
-                    (*x).a = i;
-                    0i32
-                })
-            } else {
-                1i32
-            })
+                      1i32
+                  } else {
+                      (*x).a = i;
+                      0i32
+                  })
+             } else {
+                 1i32
+             })
         } else {
             (*x).len = 0u32;
             !{
                 (*x).s = alloc::alloc(({
-                    (*x).a = n;
-                    (*x).a
-                } as (usize))
+                     (*x).a = n;
+                     (*x).a
+                 } as (usize))
                     .wrapping_mul(::std::mem::size_of::<u8>()) as
                     (u32));
                 (*x).s
@@ -89,28 +86,28 @@ impl StrAlloc {
             i = (*x).a;
             n = n.wrapping_add((*x).len);
             (if n > i {
-                (*x).a = 30u32.wrapping_add(n).wrapping_add(n >> 3i32);
-                (if alloc::alloc_re(
+                 (*x).a = 30u32.wrapping_add(n).wrapping_add(n >> 3i32);
+                 (if alloc::alloc_re(
                     &mut (*x).s as (*mut *mut u8),
                     (i as (usize)).wrapping_mul(::std::mem::size_of::<u8>()) as (u32),
                     ((*x).a as (usize)).wrapping_mul(::std::mem::size_of::<u8>()) as (u32),
                 ) != 0
                 {
-                    1i32
-                } else {
-                    (*x).a = i;
-                    0i32
-                })
-            } else {
-                1i32
-            })
+                      1i32
+                  } else {
+                      (*x).a = i;
+                      0i32
+                  })
+             } else {
+                 1i32
+             })
         } else {
             (*x).len = 0u32;
             !{
                 (*x).s = alloc::alloc(({
-                    (*x).a = n;
-                    (*x).a
-                } as (usize))
+                     (*x).a = n;
+                     (*x).a
+                 } as (usize))
                     .wrapping_mul(::std::mem::size_of::<u8>()) as
                     (u32));
                 (*x).s
@@ -118,11 +115,7 @@ impl StrAlloc {
         }
     }
 
-    pub unsafe fn catulong0(
-        sa: *mut StrAlloc,
-        mut u: usize,
-        n: u32,
-    ) -> i32 {
+    pub unsafe fn catulong0(sa: *mut StrAlloc, mut u: usize, n: u32) -> i32 {
         let mut len: u32;
         let mut q: usize;
         let s: *mut u8;
@@ -168,11 +161,7 @@ impl StrAlloc {
         StrAlloc::catulong0(sa, l as (usize), n)
     }
 
-    pub unsafe fn copyb(
-        sa: *mut StrAlloc,
-        s: *const u8,
-        n: u32,
-    ) -> i32 {
+    pub unsafe fn copyb(sa: *mut StrAlloc, s: *const u8, n: u32) -> i32 {
         if StrAlloc::ready(sa, n.wrapping_add(1u32)) == 0 {
             0i32
         } else {

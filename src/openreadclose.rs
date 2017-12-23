@@ -8,11 +8,7 @@ use open;
 use readclose::readclose;
 use stralloc::StrAlloc;
 
-pub unsafe fn openreadclose(
-    filename: *const u8,
-    sa: *mut StrAlloc,
-    bufsize: u32,
-) -> i32 {
+pub unsafe fn openreadclose(filename: *const u8, sa: *mut StrAlloc, bufsize: u32) -> i32 {
     let fd = open::read(filename);
 
     if fd == -1 {

@@ -37,11 +37,7 @@ pub unsafe fn copy(
     }
 }
 
-pub unsafe fn skipname(
-    buf: *const u8,
-    len: u32,
-    mut pos: u32,
-) -> u32 {
+pub unsafe fn skipname(buf: *const u8, len: u32, mut pos: u32) -> u32 {
     let current_block;
     let mut ch: u8;
     'loop1: loop {
@@ -78,12 +74,7 @@ pub unsafe fn skipname(
     }
 }
 
-pub unsafe fn getname(
-    buf: *const u8,
-    len: u32,
-    mut pos: u32,
-    d: *mut *mut u8,
-) -> u32 {
+pub unsafe fn getname(buf: *const u8, len: u32, mut pos: u32, d: *mut *mut u8) -> u32 {
     let current_block;
     let mut loopvar: u32 = 0u32;
     let mut state: u32 = 0u32;

@@ -148,8 +148,10 @@ unsafe fn init(rules: *mut StrAlloc) -> i32 {
              (if !x.is_null() {
                   (if StrAlloc::copys(&mut DATA as (*mut StrAlloc), x) == 0 {
                        -1i32
-                   } else if StrAlloc::append(&mut DATA as (*mut StrAlloc), (*b" \0").as_ptr()) ==
-                              0
+                   } else if StrAlloc::append(
+                    &mut DATA as (*mut StrAlloc),
+                    (*b" \0").as_ptr(),
+                ) == 0
                 {
                        -1i32
                    } else if StrAlloc::copys(rules, (*b"?:\0").as_ptr()) == 0 {
@@ -307,13 +309,16 @@ unsafe fn init(rules: *mut StrAlloc) -> i32 {
                            }
                        }
                        host[0usize] = 0u8;
-                       (if libc::gethostname(host.as_mut_ptr() as *mut i8, ::std::mem::size_of::<[u8; 256]>()) ==
-                            -1i32
+                       (if libc::gethostname(
+                        host.as_mut_ptr() as *mut i8,
+                        ::std::mem::size_of::<[u8; 256]>(),
+                    ) == -1i32
                     {
                             -1i32
                         } else {
                             host[::std::mem::size_of::<[u8; 256]>().wrapping_sub(1usize)] = 0u8;
-                            i = string::chr(host.as_mut_ptr() as (*const u8), b'.' as (i32)) as (i32);
+                            i = string::chr(host.as_mut_ptr() as (*const u8), b'.' as (i32)) as
+                                (i32);
                             if host[i as (usize)] != 0 {
                                 if StrAlloc::copys(rules, (*b"?:\0").as_ptr()) == 0 {
                                     return -1i32;

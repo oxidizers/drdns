@@ -31,10 +31,7 @@ impl Clone for Cdb {
 impl Cdb {
     pub unsafe fn free(c: *mut Cdb) {
         if !(*c).map.is_null() {
-            libc::munmap(
-                (*c).map as *mut libc::c_void,
-                (*c).size as usize,
-            );
+            libc::munmap((*c).map as *mut libc::c_void, (*c).size as usize);
             (*c).map = 0i32 as *mut u8;
         }
     }
@@ -68,12 +65,7 @@ impl Cdb {
         }
     }
 
-    pub unsafe fn read(
-        c: *mut Cdb,
-        mut buf: *mut u8,
-        mut len: u32,
-        pos: u32,
-    ) -> i32 {
+    pub unsafe fn read(c: *mut Cdb, mut buf: *mut u8, mut len: u32, pos: u32) -> i32 {
         let current_block;
         if !(*c).map.is_null() {
             if pos > (*c).size || (*c).size.wrapping_sub(pos) < len {
@@ -92,11 +84,7 @@ impl Cdb {
                 }
                 let mut r: i32;
                 'loop4: loop {
-                    r = libc::read(
-                        (*c).fd,
-                        buf as *mut libc::c_void,
-                        len as (usize),
-                    ) as (i32);
+                    r = libc::read((*c).fd, buf as *mut libc::c_void, len as (usize)) as (i32);
                     if !(r == -1i32 && (errno::errno() == Errno(libc::EINTR))) {
                         break;
                     }
@@ -224,12 +212,7 @@ impl Cdb {
         Cdb::findnext(c, key, len)
     }
 
-    unsafe fn switch(
-        c: *mut Cdb,
-        mut key: *const u8,
-        mut len: u32,
-        mut pos: u32,
-    ) -> i32 {
+    unsafe fn switch(c: *mut Cdb, mut key: *const u8, mut len: u32, mut pos: u32) -> i32 {
         let current_block;
         let mut buf = [0u8; 32];
         let mut n: i32;

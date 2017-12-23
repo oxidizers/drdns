@@ -27,9 +27,10 @@ impl Tai {
     }
 
     pub unsafe fn now(t: *mut Tai) {
-        (*t).x =
-            4611686018427387914u64.wrapping_add(libc::time(0i32 as (*mut i64)) as (usize) as (u64)) as
-                (usize);
+        (*t).x = 4611686018427387914u64.wrapping_add(
+            libc::time(0i32 as (*mut i64)) as
+                (usize) as (u64),
+        ) as (usize);
     }
 
     pub unsafe fn pack(s: *mut u8, t: *const Tai) {

@@ -6,11 +6,7 @@ use super::{domain, packet, resolve};
 use super::DnsTransmit;
 use uint16;
 
-pub unsafe fn packet(
-    out: *mut StrAlloc,
-    buf: *const u8,
-    len: u32,
-) -> i32 {
+pub unsafe fn packet(out: *mut StrAlloc, buf: *const u8, len: u32) -> i32 {
     let current_block;
     let mut pos: u32;
     let mut header: [u8; 12] = [0u8; 12];
