@@ -1,19 +1,17 @@
-extern "C" {
-    fn setgid(arg1: u32) -> i32;
-    fn setgroups(arg1: i32, arg2: *const u32) -> i32;
-    fn setuid(arg1: u32) -> i32;
-}
+//! `prot.rs`: UID/GID protection
+//!
+//! Replace this with Rust standard library functionality
 
-#[no_mangle]
-pub unsafe extern "C" fn prot_gid(mut gid: i32) -> i32 {
-    if setgroups(1i32, &mut gid as (*mut i32) as (*const u32)) == -1i32 {
+use libc;
+
+pub unsafe fn gid(mut g: i32) -> i32 {
+    if libc::setgroups(1, &mut g as (*mut i32) as (*const u32)) == -1i32 {
         -1i32
     } else {
-        setgid(gid as (u32))
+        libc::setgid(g as (u32))
     }
 }
 
-#[no_mangle]
-pub unsafe extern "C" fn prot_uid(mut uid: i32) -> i32 {
-    setuid(uid as (u32))
+pub unsafe fn uid(u: i32) -> i32 {
+    libc::setuid(u as (u32))
 }

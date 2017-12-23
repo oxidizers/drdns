@@ -3,6 +3,7 @@ use byte;
 use case;
 use cdb::Cdb;
 use dns;
+use droproot::droproot;
 use ip4;
 use libc;
 use open;
@@ -14,7 +15,6 @@ use uint32;
 use ulong;
 
 extern "C" {
-    fn droproot(arg1: *const u8);
     fn qlog(
         arg1: *const u8,
         arg2: u16,
