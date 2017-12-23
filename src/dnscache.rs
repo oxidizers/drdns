@@ -15,7 +15,6 @@ use ulong;
 
 extern "C" {
     fn cache_init(arg1: u32) -> i32;
-    fn close(arg1: i32) -> i32;
     fn droproot(arg1: *const u8);
     fn log_query(
         arg1: *mut usize,
@@ -462,7 +461,7 @@ pub unsafe extern "C" fn t_close(mut j: i32) {
             t[j as (usize)].ip.as_mut_ptr() as (*const u8),
             t[j as (usize)].port as (u32),
         );
-        close(t[j as (usize)].tcp);
+        libc::close(t[j as (usize)].tcp);
         t[j as (usize)].active = 0usize;
         tactive = tactive - 1;
     }
@@ -644,14 +643,14 @@ pub unsafe extern "C" fn t_new() {
     } else {
         if (*x).port as (i32) < 1024i32 {
             if (*x).port as (i32) != 53i32 {
-                close((*x).tcp);
+                libc::close((*x).tcp);
                 return;
             }
         }
         (if okclient((*x).ip.as_mut_ptr()) == 0 {
-             close((*x).tcp);
+             libc::close((*x).tcp);
          } else if ndelay::on((*x).tcp) == -1i32 {
-             close((*x).tcp);
+             libc::close((*x).tcp);
          } else {
              (*x).active = 1usize;
              tactive = tactive + 1;
@@ -930,7 +929,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
         ::std::mem::size_of::<[u8; 128]>(),
     );
     dns::random::init(seed.as_mut_ptr() as (*const u8));
-    close(0i32);
+    libc::close(0i32);
     x = libc::getenv((*b"IPSEND\0").as_ptr() as *const libc::c_char);
     if x.is_null() {
         StrErr::die(

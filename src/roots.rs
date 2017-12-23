@@ -10,7 +10,6 @@ use string;
 
 extern "C" {
     fn chdir(arg1: *const u8) -> i32;
-    fn close(arg1: i32) -> i32;
     fn closedir(arg1: *mut Struct1) -> i32;
     fn fchdir(arg1: i32) -> i32;
     fn opendir(arg1: *const u8) -> *mut Struct1;
@@ -272,7 +271,7 @@ pub unsafe extern "C" fn roots_init() -> i32 {
              if fchdir(fddir) == -1i32 {
                  r = 0i32;
              }
-             close(fddir);
+             libc::close(fddir);
              r
          })
     }

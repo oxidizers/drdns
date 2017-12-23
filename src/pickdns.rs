@@ -5,7 +5,6 @@ use dns;
 use open;
 
 extern "C" {
-    fn close(arg1: i32) -> i32;
     static mut response: *mut u8;
     fn response_addbytes(arg1: *const u8, arg2: u32) -> i32;
     fn response_rfinish(arg1: i32);
@@ -190,7 +189,7 @@ pub unsafe extern "C" fn respond(mut q: *mut u8, mut qtype: *mut u8, mut ip: *mu
         Cdb::init(&mut c as (*mut Cdb), fd);
         result = doit(q, qtype, ip);
         Cdb::free(&mut c as (*mut Cdb));
-        close(fd);
+        libc::close(fd);
         result
     }
 }

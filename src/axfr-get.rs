@@ -13,7 +13,6 @@ use ulong;
 
 extern "C" {
     fn __swbuf(arg1: i32, arg2: *mut __sFILE) -> i32;
-    fn close(arg1: i32) -> i32;
     fn fsync(arg1: i32) -> i32;
     fn getln(arg1: *mut Buffer, arg2: *mut StrAlloc, arg3: *mut i32, arg4: i32) -> i32;
     fn rename(__old: *const u8, __new: *const u8) -> i32;
@@ -856,7 +855,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
             ulong::scan(line.s.offset(1isize) as (*const u8), &mut u as (*mut usize));
             oldserial = u as (u32);
         }
-        close(fd);
+        libc::close(fd);
     }
     if StrAlloc::copyb(
         &mut packet as (*mut StrAlloc),
@@ -1028,7 +1027,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     if fsync(fd) == -1i32 {
         die_write();
     }
-    if close(fd) == -1i32 {
+    if libc::close(fd) == -1i32 {
         die_write();
     }
     if rename(fntmp as (*const u8), filename as (*const u8)) == -1i32 {

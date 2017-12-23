@@ -13,7 +13,6 @@ use ulong;
 
 extern "C" {
     fn __swbuf(arg1: i32, arg2: *mut __sFILE) -> i32;
-    fn close(arg1: i32) -> i32;
     fn fsync(arg1: i32) -> i32;
     fn getln(arg1: *mut Buffer, arg2: *mut StrAlloc, arg3: *mut i32, arg4: i32) -> i32;
     fn rename(__old: *const u8, __new: *const u8) -> i32;
@@ -588,7 +587,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             syntaxerror((*b": unrecognized leading character\0").as_ptr());
         }
     }
-    close(fd);
+    libc::close(fd);
     address_sort(x.s, x.len);
     i = 0i32;
     'loop10: loop {
@@ -665,7 +664,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
     if fsync(fdcdb) == -1i32 {
         die_datatmp();
     }
-    if close(fdcdb) == -1i32 {
+    if libc::close(fdcdb) == -1i32 {
         die_datatmp();
     }
     if rename((*b"data.tmp\0").as_ptr(), (*b"data.cdb\0").as_ptr()) == -1i32 {
