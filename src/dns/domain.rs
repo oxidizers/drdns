@@ -113,11 +113,7 @@ pub unsafe fn suffixpos(mut big: *const u8, little: *const u8) -> u32 {
     }
 }
 
-pub unsafe fn fromdot(
-    out: *mut *mut u8,
-    mut buf: *const u8,
-    mut n: u32,
-) -> i32 {
+pub unsafe fn fromdot(out: *mut *mut u8, mut buf: *const u8, mut n: u32) -> i32 {
     let current_block;
     let mut label: [u8; 63] = [0u8; 63];
     let mut labellen: u32 = 0u32;

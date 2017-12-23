@@ -18,7 +18,11 @@ pub unsafe fn accept4(s: i32, ip: *mut u8, port: *mut u16) -> i32 {
     if fd == -1i32 {
         -1i32
     } else {
-        byte::copy(ip, 4u32, &mut sa.sin_addr as (*mut libc::in_addr) as (*mut u8));
+        byte::copy(
+            ip,
+            4u32,
+            &mut sa.sin_addr as (*mut libc::in_addr) as (*mut u8),
+        );
         uint16::unpack_big(
             &mut sa.sin_port as (*mut u16) as (*mut u8) as (*const u8),
             port,
@@ -31,7 +35,11 @@ pub unsafe fn bind4(s: i32, ip: *mut u8, port: u16) -> i32 {
     let mut sa: libc::sockaddr_in = ::std::mem::zeroed();
     sa.sin_family = 2;
     uint16::pack_big(&mut sa.sin_port as (*mut u16) as (*mut u8), port);
-    byte::copy(&mut sa.sin_addr as (*mut libc::in_addr) as (*mut u8), 4u32, ip);
+    byte::copy(
+        &mut sa.sin_addr as (*mut libc::in_addr) as (*mut u8),
+        4u32,
+        ip,
+    );
     libc::bind(
         s,
         &mut sa as (*mut libc::sockaddr_in) as (*mut libc::sockaddr) as (*const libc::sockaddr),
@@ -101,24 +109,14 @@ pub unsafe fn connected(s: i32) -> i32 {
         &mut dummy as (*mut i32) as (*mut u32),
     ) == -1i32
     {
-        libc::read(
-            s,
-            &mut ch as (*mut u8) as (*mut libc::c_void),
-            1usize,
-        );
+        libc::read(s, &mut ch as (*mut u8) as (*mut libc::c_void), 1usize);
         0i32
     } else {
         1i32
     }
 }
 
-pub unsafe fn recv4(
-    s: i32,
-    buf: *mut u8,
-    len: i32,
-    ip: *mut u8,
-    port: *mut u16,
-) -> i32 {
+pub unsafe fn recv4(s: i32, buf: *mut u8, len: i32, ip: *mut u8, port: *mut u16) -> i32 {
     let mut sa: libc::sockaddr_in = ::std::mem::zeroed();
     let mut dummy: i32 = ::std::mem::size_of::<libc::sockaddr_in>() as (i32);
     let r = libc::recvfrom(
@@ -132,7 +130,11 @@ pub unsafe fn recv4(
     if r == -1i32 {
         -1i32
     } else {
-        byte::copy(ip, 4u32, &mut sa.sin_addr as (*mut libc::in_addr) as (*mut u8));
+        byte::copy(
+            ip,
+            4u32,
+            &mut sa.sin_addr as (*mut libc::in_addr) as (*mut u8),
+        );
         uint16::unpack_big(
             &mut sa.sin_port as (*mut u16) as (*mut u8) as (*const u8),
             port,
@@ -141,13 +143,7 @@ pub unsafe fn recv4(
     }
 }
 
-pub unsafe fn send4(
-    s: i32,
-    buf: *const u8,
-    len: i32,
-    ip: *const u8,
-    port: u16,
-) -> i32 {
+pub unsafe fn send4(s: i32, buf: *const u8, len: i32, ip: *const u8, port: u16) -> i32 {
     let mut sa: libc::sockaddr_in = ::std::mem::zeroed();
     sa.sin_family = 2;
     uint16::pack_big(&mut sa.sin_port as (*mut u16) as (*mut u8), port);

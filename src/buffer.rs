@@ -25,13 +25,7 @@ impl Clone for Buffer {
 }
 
 impl Buffer {
-    pub unsafe fn init(
-        s: *mut Buffer,
-        op: Op,
-        fd: i32,
-        buf: *mut u8,
-        len: u32,
-    ) {
+    pub unsafe fn init(s: *mut Buffer, op: Op, fd: i32, buf: *mut u8, len: u32) {
         (*s).x = buf;
         (*s).fd = fd;
         (*s).op = Some(op);
@@ -79,22 +73,17 @@ impl Buffer {
         if (*s).p != 0 {
             (*s).p as (i32)
         } else {
-            r = oneread(
-                (*s).op,
-                (*s).fd,
-                (*s).x,
-                (*s).n,
-            );
+            r = oneread((*s).op, (*s).fd, (*s).x, (*s).n);
             (if r <= 0i32 {
-                r
-            } else {
-                (*s).p = r as (u32);
-                (*s).n = (*s).n.wrapping_sub(r as (u32));
-                if (*s).n > 0u32 {
-                    byte::copyr((*s).x.offset((*s).n as (isize)), r as (u32), (*s).x);
-                }
-                r
-            })
+                 r
+             } else {
+                 (*s).p = r as (u32);
+                 (*s).n = (*s).n.wrapping_sub(r as (u32));
+                 if (*s).n > 0u32 {
+                     byte::copyr((*s).x.offset((*s).n as (isize)), r as (u32), (*s).x);
+                 }
+                 r
+             })
         }
     }
 
@@ -103,15 +92,14 @@ impl Buffer {
         if (*s).p > 0u32 {
             Buffer::getthis(s, buf, len)
         } else if (*s).n <= len {
-            oneread(
-                (*s).op,
-                (*s).fd,
-                buf,
-                len,
-            )
+            oneread((*s).op, (*s).fd, buf, len)
         } else {
             r = Buffer::feed(s);
-            (if r <= 0i32 { r } else { Buffer::getthis(s, buf, len) })
+            (if r <= 0i32 {
+                 r
+             } else {
+                 Buffer::getthis(s, buf, len)
+             })
         }
     }
 
@@ -131,28 +119,19 @@ impl Buffer {
             0i32
         } else {
             (*s).p = 0u32;
-            allwrite(
-                (*s).op,
-                (*s).fd,
-                (*s).x as (*const u8),
-                p as (u32),
-            )
+            allwrite((*s).op, (*s).fd, (*s).x as (*const u8), p as (u32))
         }
     }
 
-    pub unsafe fn putalign(
-        s: *mut Buffer,
-        mut buf: *const u8,
-        mut len: u32,
-    ) -> i32 {
+    pub unsafe fn putalign(s: *mut Buffer, mut buf: *const u8, mut len: u32) -> i32 {
         let current_block;
         let mut n: u32;
         'loop1: loop {
             if !(len >
-                    {
-                        n = (*s).n.wrapping_sub((*s).p);
-                        n
-                    })
+                     {
+                         n = (*s).n.wrapping_sub((*s).p);
+                         n
+                     })
             {
                 current_block = 2;
                 break;
@@ -194,13 +173,7 @@ impl Buffer {
                     if n > len {
                         n = len;
                     }
-                    if allwrite(
-                        (*s).op,
-                        (*s).fd,
-                        buf,
-                        n,
-                    ) == -1i32
-                    {
+                    if allwrite((*s).op, (*s).fd, buf, n) == -1i32 {
                         current_block = 10;
                         break;
                     }
@@ -218,20 +191,11 @@ impl Buffer {
         0i32
     }
 
-    pub unsafe fn putflush(
-        s: *mut Buffer,
-        buf: *const u8,
-        len: u32,
-    ) -> i32 {
+    pub unsafe fn putflush(s: *mut Buffer, buf: *const u8, len: u32) -> i32 {
         if Buffer::flush(s) == -1i32 {
             -1i32
         } else {
-            allwrite(
-                (*s).op,
-                (*s).fd,
-                buf,
-                len,
-            )
+            allwrite((*s).op, (*s).fd, buf, len)
         }
     }
 
@@ -266,12 +230,7 @@ pub unsafe fn unixwrite(fd: i32, buf: *const u8, len: u32) -> i32 {
     libc::write(fd, buf as (*const libc::c_void), len as (usize)) as (i32)
 }
 
-unsafe fn allwrite(
-    maybe_op: Option<Op>,
-    fd: i32,
-    mut buf: *const u8,
-    mut len: u32,
-) -> i32 {
+unsafe fn allwrite(maybe_op: Option<Op>, fd: i32, mut buf: *const u8, mut len: u32) -> i32 {
     let op = maybe_op.expect("allwrite with None op");
     let current_block;
     let mut w: i32;
@@ -295,12 +254,7 @@ unsafe fn allwrite(
     if current_block == 2 { 0i32 } else { -1i32 }
 }
 
-unsafe fn oneread(
-    maybe_op: Option<Op>,
-    fd: i32,
-    buf: *mut u8,
-    len: u32,
-) -> i32 {
+unsafe fn oneread(maybe_op: Option<Op>, fd: i32, buf: *mut u8, len: u32) -> i32 {
     let op = maybe_op.expect("oneread with None op");
     let mut r: i32;
     'loop1: loop {

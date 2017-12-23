@@ -64,7 +64,7 @@ impl TaiA {
     pub unsafe fn now(t: *mut TaiA) {
         let mut now: libc::timeval = libc::timeval {
             tv_sec: 0,
-            tv_usec: 0
+            tv_usec: 0,
         };
 
         libc::gettimeofday(

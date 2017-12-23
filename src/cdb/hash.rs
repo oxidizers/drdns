@@ -21,6 +21,9 @@ fn test_cdb_hash() {
     unsafe {
         assert_eq!(hash(b"".as_ptr(), 0), 0x0001505);
         assert_eq!(hash(b"Hello, world!".as_ptr(), 13), 0x564369e8);
-        assert_eq!(hash(b"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa".as_ptr(), 32), 0x40032705);
+        assert_eq!(
+            hash(b"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa".as_ptr(), 32),
+            0x40032705
+        );
     }
 }

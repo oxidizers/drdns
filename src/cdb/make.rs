@@ -72,12 +72,7 @@ impl CdbMake {
         libc::lseek(fd, (*c).pos as i64, 0) as i32
     }
 
-    pub unsafe fn addend(
-        c: *mut CdbMake,
-        keylen: u32,
-        datalen: u32,
-        h: u32,
-    ) -> i32 {
+    pub unsafe fn addend(c: *mut CdbMake, keylen: u32, datalen: u32, h: u32) -> i32 {
         let mut head: *mut CdbHpList;
         head = (*c).head;
         if head.is_null() || (*head).num >= 1000i32 {
@@ -105,11 +100,7 @@ impl CdbMake {
         }
     }
 
-    pub unsafe fn addbegin(
-        c: *mut CdbMake,
-        keylen: u32,
-        datalen: u32,
-    ) -> i32 {
+    pub unsafe fn addbegin(c: *mut CdbMake, keylen: u32, datalen: u32) -> i32 {
         let mut buf = [0u8; 8];
         uint32::pack(buf.as_mut_ptr(), keylen);
         uint32::pack(buf.as_mut_ptr().offset(4isize), datalen);
@@ -197,56 +188,57 @@ impl CdbMake {
                 ::std::mem::size_of::<CdbHp>(),
             ) as (u32)) as (*mut CdbHp);
             (if (*c).split.is_null() {
-                -1i32
-            } else {
-                (*c).hash = (*c).split.offset((*c).numentries as (isize));
-                u = 0u32;
-                i = 0i32;
-                'loop9: loop {
-                    if !(i < 256i32) {
-                        break;
-                    }
-                    u = u.wrapping_add((*c).count[i as (usize)]);
-                    (*c).start[i as (usize)] = u;
-                    i = i + 1;
-                }
-                x = (*c).head;
-                'loop11: loop {
-                    if x.is_null() {
-                        break;
-                    }
-                    i = (*x).num;
-                    'loop40: loop {
-                        if {
-                            let _old = i;
-                            i = i - 1;
-                            _old
-                        } == 0
+                 -1i32
+             } else {
+                 (*c).hash = (*c).split.offset((*c).numentries as (isize));
+                 u = 0u32;
+                 i = 0i32;
+                 'loop9: loop {
+                     if !(i < 256i32) {
+                         break;
+                     }
+                     u = u.wrapping_add((*c).count[i as (usize)]);
+                     (*c).start[i as (usize)] = u;
+                     i = i + 1;
+                 }
+                 x = (*c).head;
+                 'loop11: loop {
+                     if x.is_null() {
+                         break;
+                     }
+                     i = (*x).num;
+                     'loop40: loop {
+                         if {
+                             let _old = i;
+                             i = i - 1;
+                             _old
+                         } == 0
                         {
-                            break;
-                        }
-                        *(*c).split.offset({
+                             break;
+                         }
+                         *(*c).split.offset({
                             let _rhs = 1;
-                            let _lhs = &mut (*c).start[(255u32 & (*x).hp[i as (usize)].h) as (usize)];
+                            let _lhs = &mut (*c).start[(255u32 & (*x).hp[i as (usize)].h) as
+                                                           (usize)];
                             *_lhs = (*_lhs).wrapping_sub(_rhs as (u32));
                             *_lhs
                         } as (isize)) = (*x).hp[i as (usize)];
-                    }
-                    x = (*x).next as (*mut CdbHpList);
-                }
-                i = 0i32;
-                'loop13: loop {
-                    if !(i < 256i32) {
-                        current_block = 14;
-                        break;
-                    }
-                    count = (*c).count[i as (usize)];
-                    len = count.wrapping_add(count);
-                    uint32::pack(
+                     }
+                     x = (*x).next as (*mut CdbHpList);
+                 }
+                 i = 0i32;
+                 'loop13: loop {
+                     if !(i < 256i32) {
+                         current_block = 14;
+                         break;
+                     }
+                     count = (*c).count[i as (usize)];
+                     len = count.wrapping_add(count);
+                     uint32::pack(
                         (*c).final_.as_mut_ptr().offset((8i32 * i) as (isize)),
                         (*c).pos,
                     );
-                    uint32::pack(
+                     uint32::pack(
                         (*c)
                             .final_
                             .as_mut_ptr()
@@ -254,91 +246,91 @@ impl CdbMake {
                             .offset(4isize),
                         len,
                     );
-                    u = 0u32;
-                    'loop20: loop {
-                        if !(u < len) {
-                            break;
-                        }
-                        (*(*c).hash.offset(u as (isize))).h = {
-                            let _rhs = 0i32;
-                            let _lhs = &mut (*(*c).hash.offset(u as (isize))).p;
-                            *_lhs = _rhs as (u32);
-                            *_lhs
-                        };
-                        u = u.wrapping_add(1u32);
-                    }
-                    hp = (*c).split.offset((*c).start[i as (usize)] as (isize));
-                    u = 0u32;
-                    'loop22: loop {
-                        if !(u < count) {
-                            break;
-                        }
-                        where_ = ((*hp).h >> 8i32).wrapping_rem(len);
-                        'loop32: loop {
-                            if (*(*c).hash.offset(where_ as (isize))).p == 0 {
-                                break;
-                            }
-                            if !({
-                                    where_ = where_.wrapping_add(1u32);
-                                    where_
-                                } == len)
+                     u = 0u32;
+                     'loop20: loop {
+                         if !(u < len) {
+                             break;
+                         }
+                         (*(*c).hash.offset(u as (isize))).h = {
+                             let _rhs = 0i32;
+                             let _lhs = &mut (*(*c).hash.offset(u as (isize))).p;
+                             *_lhs = _rhs as (u32);
+                             *_lhs
+                         };
+                         u = u.wrapping_add(1u32);
+                     }
+                     hp = (*c).split.offset((*c).start[i as (usize)] as (isize));
+                     u = 0u32;
+                     'loop22: loop {
+                         if !(u < count) {
+                             break;
+                         }
+                         where_ = ((*hp).h >> 8i32).wrapping_rem(len);
+                         'loop32: loop {
+                             if (*(*c).hash.offset(where_ as (isize))).p == 0 {
+                                 break;
+                             }
+                             if !({
+                                      where_ = where_.wrapping_add(1u32);
+                                      where_
+                                  } == len)
                             {
-                                continue;
-                            }
-                            where_ = 0u32;
-                        }
-                        *(*c).hash.offset(where_ as (isize)) = *{
-                            let _old = hp;
-                            hp = hp.offset(1isize);
-                            _old
-                        };
-                        u = u.wrapping_add(1u32);
-                    }
-                    u = 0u32;
-                    'loop24: loop {
-                        if !(u < len) {
-                            break;
-                        }
-                        uint32::pack(buf.as_mut_ptr(), (*(*c).hash.offset(u as (isize))).h);
-                        uint32::pack(
+                                 continue;
+                             }
+                             where_ = 0u32;
+                         }
+                         *(*c).hash.offset(where_ as (isize)) = *{
+                             let _old = hp;
+                             hp = hp.offset(1isize);
+                             _old
+                         };
+                         u = u.wrapping_add(1u32);
+                     }
+                     u = 0u32;
+                     'loop24: loop {
+                         if !(u < len) {
+                             break;
+                         }
+                         uint32::pack(buf.as_mut_ptr(), (*(*c).hash.offset(u as (isize))).h);
+                         uint32::pack(
                             buf.as_mut_ptr().offset(4isize),
                             (*(*c).hash.offset(u as (isize))).p,
                         );
-                        if Buffer::putalign(
+                         if Buffer::putalign(
                             &mut (*c).b as (*mut Buffer),
                             buf.as_mut_ptr() as (*const u8),
                             8u32,
                         ) == -1i32
                         {
-                            current_block = 30;
-                            break 'loop13;
-                        }
-                        if Self::posplus(c, 8u32) == -1i32 {
-                            current_block = 29;
-                            break 'loop13;
-                        }
-                        u = u.wrapping_add(1u32);
-                    }
-                    i = i + 1;
-                }
-                (if current_block == 14 {
-                    (if Buffer::flush(&mut (*c).b as (*mut Buffer)) == -1i32 {
-                        -1i32
-                    } else if libc::lseek((*c).fd, 0, 0) == -1 {
-                        -1i32
-                    } else {
-                        Buffer::putflush(
+                             current_block = 30;
+                             break 'loop13;
+                         }
+                         if Self::posplus(c, 8u32) == -1i32 {
+                             current_block = 29;
+                             break 'loop13;
+                         }
+                         u = u.wrapping_add(1u32);
+                     }
+                     i = i + 1;
+                 }
+                 (if current_block == 14 {
+                      (if Buffer::flush(&mut (*c).b as (*mut Buffer)) == -1i32 {
+                           -1i32
+                       } else if libc::lseek((*c).fd, 0, 0) == -1 {
+                           -1i32
+                       } else {
+                           Buffer::putflush(
                             &mut (*c).b as (*mut Buffer),
                             (*c).final_.as_mut_ptr() as (*const u8),
                             ::std::mem::size_of::<[u8; 2048]>() as (u32),
                         )
-                    })
-                } else if current_block == 29 {
-                    -1i32
-                } else {
-                    -1i32
-                })
-            })
+                       })
+                  } else if current_block == 29 {
+                      -1i32
+                  } else {
+                      -1i32
+                  })
+             })
         }
     }
 

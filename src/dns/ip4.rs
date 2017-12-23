@@ -5,11 +5,7 @@ use string;
 use super::{DnsTransmit, domain, packet, rcrw, resolve, sortip};
 use uint16;
 
-pub unsafe fn packet(
-    out: *mut StrAlloc,
-    buf: *const u8,
-    len: u32,
-) -> i32 {
+pub unsafe fn packet(out: *mut StrAlloc, buf: *const u8, len: u32) -> i32 {
     let current_block;
     let mut pos: u32;
     let mut header: [u8; 12] = [0u8; 12];
@@ -68,9 +64,7 @@ pub unsafe fn packet(
                         ) == 0
                         {
                               if datalen as (i32) == 4i32 {
-                                  if packet::copy(buf, len, pos, header.as_mut_ptr(), 4u32) ==
-                                      0
-                                {
+                                  if packet::copy(buf, len, pos, header.as_mut_ptr(), 4u32) == 0 {
                                       current_block = 15;
                                       break;
                                   }
@@ -312,11 +306,7 @@ static mut RULES: StrAlloc = StrAlloc {
     a: 0u32,
 };
 
-pub unsafe fn qualify(
-    out: *mut StrAlloc,
-    fqdn: *mut StrAlloc,
-    input: *const StrAlloc,
-) -> i32 {
+pub unsafe fn qualify(out: *mut StrAlloc, fqdn: *mut StrAlloc, input: *const StrAlloc) -> i32 {
     if rcrw::resolvconfrewrite(&mut RULES as (*mut StrAlloc)) == -1i32 {
         -1i32
     } else {
