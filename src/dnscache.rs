@@ -1,5 +1,6 @@
 use alloc;
 use byte;
+use cache;
 use dns::{self, DnsTransmit};
 use droproot::droproot;
 use errno::{self, Errno};
@@ -15,7 +16,6 @@ use uint16;
 use ulong;
 
 extern "C" {
-    fn cache_init(arg1: u32) -> i32;
     fn log_query(
         arg1: *mut usize,
         arg2: *const u8,
@@ -969,7 +969,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
         );
     }
     ulong::scan(x as (*const u8), &mut cachesize as (*mut usize));
-    if cache_init(cachesize as (u32)) == 0 {
+    if cache::init(cachesize as (u32)) == 0 {
         StrErr::die(
             111i32,
             (*b"dnscache: fatal: \0").as_ptr(),

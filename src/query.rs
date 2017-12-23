@@ -1,5 +1,6 @@
 use alloc;
 use byte;
+use cache;
 use case;
 use dns::{self, DnsTransmit};
 use errno::{self, Errno};
@@ -10,8 +11,6 @@ use uint16;
 use uint32;
 
 extern "C" {
-    fn cache_get(arg1: *const u8, arg2: u32, arg3: *mut u32, arg4: *mut u32) -> *mut u8;
-    fn cache_set(arg1: *const u8, arg2: u32, arg3: *const u8, arg4: u32, arg5: u32);
     fn dd(arg1: *const u8, arg2: *const u8, arg3: *mut u8) -> i32;
     fn log_cachedanswer(arg1: *const u8, arg2: *const u8);
     fn log_cachedcname(arg1: *const u8, arg2: *const u8);
@@ -305,7 +304,7 @@ unsafe extern "C" fn cachegeneric(
         byte::copy(key.as_mut_ptr(), 2u32, type_ as (*mut u8));
         byte::copy(key.as_mut_ptr().offset(2isize), len, d as (*mut u8));
         case::lowerb(key.as_mut_ptr().offset(2isize), len);
-        cache_set(
+        cache::set(
             key.as_mut_ptr() as (*const u8),
             len.wrapping_add(2u32),
             data,
@@ -2057,7 +2056,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                     byte::copy(key.as_mut_ptr(), 2u32, (*b"\0\xFF\0").as_ptr() as (*mut u8));
                     byte::copy(key.as_mut_ptr().offset(2isize), dlen, d);
                     case::lowerb(key.as_mut_ptr().offset(2isize), dlen);
-                    cached = cache_get(
+                    cached = cache::get(
                         key.as_mut_ptr() as (*const u8),
                         dlen.wrapping_add(2u32),
                         &mut cachedlen as (*mut u32),
@@ -2069,7 +2068,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                         continue;
                     } else {
                         byte::copy(key.as_mut_ptr(), 2u32, (*b"\0\x05\0").as_ptr() as (*mut u8));
-                        cached = cache_get(
+                        cached = cache::get(
                             key.as_mut_ptr() as (*const u8),
                             dlen.wrapping_add(2u32),
                             &mut cachedlen as (*mut u32),
@@ -2115,7 +2114,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                     2u32,
                                     (*b"\0\x02\0").as_ptr() as (*mut u8),
                                 );
-                                cached = cache_get(
+                                cached = cache::get(
                                     key.as_mut_ptr() as (*const u8),
                                     dlen.wrapping_add(2u32),
                                     &mut cachedlen as (*mut u32),
@@ -2172,7 +2171,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                     2u32,
                                     (*b"\0\x0C\0").as_ptr() as (*mut u8),
                                 );
-                                cached = cache_get(
+                                cached = cache::get(
                                     key.as_mut_ptr() as (*const u8),
                                     dlen.wrapping_add(2u32),
                                     &mut cachedlen as (*mut u32),
@@ -2229,7 +2228,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                     2u32,
                                     (*b"\0\x0F\0").as_ptr() as (*mut u8),
                                 );
-                                cached = cache_get(
+                                cached = cache::get(
                                     key.as_mut_ptr() as (*const u8),
                                     dlen.wrapping_add(2u32),
                                     &mut cachedlen as (*mut u32),
@@ -2305,7 +2304,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                     2u32,
                                     (*b"\0\x01\0").as_ptr() as (*mut u8),
                                 );
-                                cached = cache_get(
+                                cached = cache::get(
                                     key.as_mut_ptr() as (*const u8),
                                     dlen.wrapping_add(2u32),
                                     &mut cachedlen as (*mut u32),
@@ -2400,7 +2399,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                 (typematch((*b"\0\x0F\0").as_ptr(), dtype) == 0)
                             {
                                 byte::copy(key.as_mut_ptr(), 2u32, dtype as (*mut u8));
-                                cached = cache_get(
+                                cached = cache::get(
                                     key.as_mut_ptr() as (*const u8),
                                     dlen.wrapping_add(2u32),
                                     &mut cachedlen as (*mut u32),
@@ -2465,7 +2464,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                             byte::copy(key.as_mut_ptr(), 2u32, (*b"\0\x02\0").as_ptr() as (*mut u8));
                             byte::copy(key.as_mut_ptr().offset(2isize), dlen, d);
                             case::lowerb(key.as_mut_ptr().offset(2isize), dlen);
-                            cached = cache_get(
+                            cached = cache::get(
                                 key.as_mut_ptr() as (*const u8),
                                 dlen.wrapping_add(2u32),
                                 &mut cachedlen as (*mut u32),

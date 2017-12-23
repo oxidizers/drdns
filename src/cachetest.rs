@@ -1,12 +1,7 @@
 use buffer::{Buffer, STDOUT_BUFFER};
+use cache;
 use libc;
 use string;
-
-extern "C" {
-    fn cache_get(arg1: *const u8, arg2: u32, arg3: *mut u32, arg4: *mut u32) -> *mut u8;
-    fn cache_init(arg1: u32) -> i32;
-    fn cache_set(arg1: *const u8, arg2: u32, arg3: *const u8, arg4: u32, arg5: u32);
-}
 
 fn main() {
     use std::os::unix::ffi::OsStringExt;
@@ -33,7 +28,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     let mut y: *mut u8;
     let mut u: u32;
     let mut ttl: u32;
-    if cache_init(200u32) == 0 {
+    if cache::init(200u32) == 0 {
         libc::_exit(111i32);
     }
     if !(*argv).is_null() {
@@ -53,7 +48,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
         }
         i = string::chr(x as (*const u8), b':' as (i32)) as (i32);
         if *x.offset(i as (isize)) != 0 {
-            cache_set(
+            cache::set(
                 x as (*const u8),
                 i as (u32),
                 x.offset(i as (isize)).offset(1isize) as (*const u8),
@@ -63,7 +58,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
                 86400u32,
             );
         } else {
-            y = cache_get(
+            y = cache::get(
                 x as (*const u8),
                 i as (u32),
                 &mut u as (*mut u32),
