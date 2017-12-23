@@ -11,7 +11,6 @@ use ulong;
 
 extern "C" {
     fn __swbuf(arg1: i32, arg2: *mut __sFILE) -> i32;
-    fn close(arg1: i32) -> i32;
     fn fchmod(arg1: i32, arg2: u16) -> i32;
     fn fstat(arg1: i32, arg2: *mut stat) -> i32;
     fn fsync(arg1: i32) -> i32;
@@ -770,7 +769,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     if fsync(fdnew) == -1i32 {
         die_write();
     }
-    if close(fdnew) == -1i32 {
+    if libc::close(fdnew) == -1i32 {
         die_write();
     }
     if rename(fnnew as (*const u8), filename as (*const u8)) == -1i32 {

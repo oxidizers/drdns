@@ -2,13 +2,13 @@ use byte;
 use case;
 use cdb::Cdb;
 use dns;
+use libc;
 use open;
 use tai::Tai;
 use uint16;
 use uint32;
 
 extern "C" {
-    fn close(arg1: i32) -> i32;
     static mut response: *mut u8;
     fn response_addbytes(arg1: *const u8, arg2: u32) -> i32;
     fn response_addname(arg1: *const u8) -> i32;
@@ -815,7 +815,7 @@ pub unsafe extern "C" fn respond(mut q: *mut u8, mut qtype: *mut u8, mut ip: *mu
              }
              r = doit(q, qtype);
              Cdb::free(&mut c as (*mut Cdb));
-             close(fd);
+             libc::close(fd);
              r
          })
     }

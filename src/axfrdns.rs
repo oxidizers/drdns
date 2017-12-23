@@ -14,7 +14,6 @@ use uint32;
 use ulong;
 
 extern "C" {
-    fn close(arg1: i32) -> i32;
     fn droproot(arg1: *const u8);
     fn qlog(
         arg1: *const u8,
@@ -820,7 +819,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
                 die_cdbread();
             }
             doaxfr(header.as_mut_ptr());
-            close(fdcdb);
+            libc::close(fdcdb);
         } else {
             if response_query(
                 zone as (*const u8),

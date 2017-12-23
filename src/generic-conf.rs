@@ -6,7 +6,6 @@ extern "C" {
     fn chdir(arg1: *const u8) -> i32;
     fn chmod(arg1: *const u8, arg2: u16) -> i32;
     fn chown(arg1: *const u8, arg2: u32, arg3: u32) -> i32;
-    fn close(arg1: i32) -> i32;
     fn fsync(arg1: i32) -> i32;
     fn mkdir(arg1: *const u8, arg2: u16) -> i32;
     fn umask(arg1: u16) -> u16;
@@ -140,7 +139,7 @@ pub unsafe extern "C" fn finish() {
     if fsync(fd) == -1i32 {
         fail();
     }
-    close(fd);
+    libc::close(fd);
 }
 
 #[no_mangle]
