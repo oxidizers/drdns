@@ -12,6 +12,7 @@ extern crate libc;
 mod alloc;
 mod buffer;
 mod byte;
+mod cache;
 mod case;
 mod cdb;
 mod dns;

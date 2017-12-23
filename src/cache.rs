@@ -4,70 +4,57 @@ use libc;
 use tai::Tai;
 use uint32;
 
-#[no_mangle]
-pub static mut cache_motion: usize = 0usize;
+pub static mut MOTION: usize = 0usize;
 
-static mut x: *mut u8 = 0i32 as (*mut u8);
+static mut X: *mut u8 = 0i32 as (*mut u8);
+static mut SIZE: u32 = 0u32;
+static mut HSIZE: u32 = 0u32;
+static mut WRITER: u32 = 0u32;
+static mut OLDEST: u32 = 0u32;
+static mut UNUSED: u32 = 0u32;
 
-static mut size: u32 = 0u32;
-
-static mut hsize: u32 = 0u32;
-
-static mut writer: u32 = 0u32;
-
-static mut oldest: u32 = 0u32;
-
-static mut unused: u32 = 0u32;
-
-unsafe extern "C" fn hash(mut key: *const u8, mut keylen: u32) -> u32 {
-    let mut result: u32 = 5381u32;
-    'loop1: loop {
-        if keylen == 0 {
+pub unsafe fn init(mut cachesize: u32) -> i32 {
+    if !X.is_null() {
+        alloc::free(X);
+        X = 0i32 as (*mut u8);
+    }
+    if cachesize > 1000000000u32 {
+        cachesize = 1000000000u32;
+    }
+    if cachesize < 100u32 {
+        cachesize = 100u32;
+    }
+    SIZE = cachesize;
+    HSIZE = 4u32;
+    'loop7: loop {
+        if !(HSIZE <= SIZE >> 5i32) {
             break;
         }
-        result = (result << 5i32).wrapping_add(result);
-        result = result ^ *key as (u32);
-        key = key.offset(1isize);
-        keylen = keylen.wrapping_sub(1u32);
+        HSIZE = HSIZE << 1i32;
     }
-    result = result << 2i32;
-    result = result & hsize.wrapping_sub(4u32);
-    result
-}
-
-unsafe extern "C" fn cache_impossible() {
-    libc::_exit(111i32);
-}
-
-unsafe extern "C" fn get4(mut pos: u32) -> u32 {
-    let mut result: u32;
-    if pos > size.wrapping_sub(4u32) {
-        cache_impossible();
+    X = alloc::alloc(SIZE);
+    if X.is_null() {
+        0i32
+    } else {
+        byte::zero(X, SIZE);
+        WRITER = HSIZE;
+        OLDEST = SIZE;
+        UNUSED = SIZE;
+        1i32
     }
-    uint32::unpack(
-        x.offset(pos as (isize)) as (*const u8),
-        &mut result as (*mut u32),
-    );
-    result
 }
 
-#[no_mangle]
-pub unsafe extern "C" fn cache_get(
-    mut key: *const u8,
-    mut keylen: u32,
-    mut datalen: *mut u32,
-    mut ttl: *mut u32,
-) -> *mut u8 {
-    let mut _currentBlock;
-    let mut expire: Tai;
-    let mut now: Tai;
+pub unsafe fn get(key: *const u8, keylen: u32, datalen: *mut u32, ttl: *mut u32) -> *mut u8 {
+    let current_block;
+    let mut expire: Tai = ::std::mem::zeroed();
+    let mut now: Tai = ::std::mem::zeroed();
     let mut pos: u32;
     let mut prevpos: u32;
     let mut nextpos: u32;
-    let mut u: u32;
+    let u: u32;
     let mut loopvar: u32;
     let mut d: f64;
-    if x.is_null() {
+    if X.is_null() {
         0i32 as (*mut u8)
     } else if keylen > 1000u32 {
         0i32 as (*mut u8)
@@ -77,20 +64,20 @@ pub unsafe extern "C" fn cache_get(
         loopvar = 0u32;
         'loop3: loop {
             if pos == 0 {
-                _currentBlock = 4;
+                current_block = 4;
                 break;
             }
             if get4(pos.wrapping_add(4u32)) == keylen {
-                if pos.wrapping_add(20u32).wrapping_add(keylen) > size {
-                    cache_impossible();
+                if pos.wrapping_add(20u32).wrapping_add(keylen) > SIZE {
+                    impossible();
                 }
                 if byte::diff(
                     key as (*mut u8),
                     keylen,
-                    x.offset(pos as (isize)).offset(20isize),
+                    X.offset(pos as (isize)).offset(20isize),
                 ) == 0
                 {
-                    _currentBlock = 11;
+                    current_block = 11;
                     break;
                 }
             }
@@ -102,17 +89,17 @@ pub unsafe extern "C" fn cache_get(
                 loopvar
             } > 100u32
             {
-                _currentBlock = 10;
+                current_block = 10;
                 break;
             }
         }
-        (if _currentBlock == 4 {
+        (if current_block == 4 {
              0i32 as (*mut u8)
-         } else if _currentBlock == 10 {
+         } else if current_block == 10 {
              0i32 as (*mut u8)
          } else {
              Tai::unpack(
-                x.offset(pos as (isize)).offset(12isize) as (*const u8),
+                X.offset(pos as (isize)).offset(12isize) as (*const u8),
                 &mut expire as (*mut Tai),
             );
              Tai::now(&mut now as (*mut Tai));
@@ -131,14 +118,14 @@ pub unsafe extern "C" fn cache_get(
                   *ttl = d as (u32);
                   u = get4(pos.wrapping_add(8u32));
                   if u >
-                      size.wrapping_sub(pos).wrapping_sub(20u32).wrapping_sub(
+                      SIZE.wrapping_sub(pos).wrapping_sub(20u32).wrapping_sub(
                         keylen,
                     )
                 {
-                      cache_impossible();
+                      impossible();
                   }
                   *datalen = u;
-                  x.offset(pos as (isize)).offset(20isize).offset(
+                  X.offset(pos as (isize)).offset(20isize).offset(
                     keylen as (isize),
                 )
               })
@@ -146,28 +133,14 @@ pub unsafe extern "C" fn cache_get(
     }
 }
 
-unsafe extern "C" fn set4(mut pos: u32, mut u: u32) {
-    if pos > size.wrapping_sub(4u32) {
-        cache_impossible();
-    }
-    uint32::pack(x.offset(pos as (isize)), u);
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn cache_set(
-    mut key: *const u8,
-    mut keylen: u32,
-    mut data: *const u8,
-    mut datalen: u32,
-    mut ttl: u32,
-) {
-    let mut _currentBlock;
-    let mut now: Tai;
-    let mut expire: Tai;
-    let mut entrylen: u32;
-    let mut keyhash: u32;
+pub unsafe fn set(key: *const u8, keylen: u32, data: *const u8, datalen: u32, mut ttl: u32) {
+    let current_block;
+    let mut now: Tai = ::std::mem::zeroed();
+    let mut expire: Tai = ::std::mem::zeroed();
+    let entrylen: u32;
+    let keyhash: u32;
     let mut pos: u32;
-    if x.is_null() {
+    if X.is_null() {
     } else if keylen > 1000u32 {
     } else if datalen > 1000000u32 {
     } else if ttl == 0 {
@@ -177,36 +150,36 @@ pub unsafe extern "C" fn cache_set(
         }
         entrylen = keylen.wrapping_add(datalen).wrapping_add(20u32);
         'loop7: loop {
-            if !(writer.wrapping_add(entrylen) > oldest) {
-                _currentBlock = 8;
+            if !(WRITER.wrapping_add(entrylen) > OLDEST) {
+                current_block = 8;
                 break;
             }
-            if oldest == unused {
-                if writer <= hsize {
-                    _currentBlock = 18;
+            if OLDEST == UNUSED {
+                if WRITER <= HSIZE {
+                    current_block = 18;
                     break;
                 }
-                unused = writer;
-                oldest = hsize;
-                writer = hsize;
+                UNUSED = WRITER;
+                OLDEST = HSIZE;
+                WRITER = HSIZE;
             }
-            pos = get4(oldest);
-            set4(pos, get4(pos) ^ oldest);
-            oldest = oldest.wrapping_add(
-                get4(oldest.wrapping_add(4u32))
-                    .wrapping_add(get4(oldest.wrapping_add(8u32)))
+            pos = get4(OLDEST);
+            set4(pos, get4(pos) ^ OLDEST);
+            OLDEST = OLDEST.wrapping_add(
+                get4(OLDEST.wrapping_add(4u32))
+                    .wrapping_add(get4(OLDEST.wrapping_add(8u32)))
                     .wrapping_add(20u32),
             );
-            if oldest > unused {
-                cache_impossible();
+            if OLDEST > UNUSED {
+                impossible();
             }
-            if !(oldest == unused) {
+            if !(OLDEST == UNUSED) {
                 continue;
             }
-            unused = size;
-            oldest = size;
+            UNUSED = SIZE;
+            OLDEST = SIZE;
         }
-        (if _currentBlock == 8 {
+        (if current_block == 8 {
              keyhash = hash(key, keylen);
              Tai::now(&mut now as (*mut Tai));
              Tai::uint(&mut expire as (*mut Tai), ttl);
@@ -217,62 +190,69 @@ pub unsafe extern "C" fn cache_set(
             );
              pos = get4(keyhash);
              if pos != 0 {
-                 set4(pos, get4(pos) ^ keyhash ^ writer);
+                 set4(pos, get4(pos) ^ keyhash ^ WRITER);
              }
-             set4(writer, pos ^ keyhash);
-             set4(writer.wrapping_add(4u32), keylen);
-             set4(writer.wrapping_add(8u32), datalen);
+             set4(WRITER, pos ^ keyhash);
+             set4(WRITER.wrapping_add(4u32), keylen);
+             set4(WRITER.wrapping_add(8u32), datalen);
              Tai::pack(
-                x.offset(writer as (isize)).offset(12isize),
+                X.offset(WRITER as (isize)).offset(12isize),
                 &mut expire as (*mut Tai) as (*const Tai),
             );
              byte::copy(
-                x.offset(writer as (isize)).offset(20isize),
+                X.offset(WRITER as (isize)).offset(20isize),
                 keylen,
                 key as (*mut u8),
             );
              byte::copy(
-                x.offset(writer as (isize)).offset(20isize).offset(
+                X.offset(WRITER as (isize)).offset(20isize).offset(
                     keylen as (isize),
                 ),
                 datalen,
                 data as (*mut u8),
             );
-             set4(keyhash, writer);
-             writer = writer.wrapping_add(entrylen);
-             cache_motion = cache_motion.wrapping_add(entrylen as (usize));
+             set4(keyhash, WRITER);
+             WRITER = WRITER.wrapping_add(entrylen);
+             MOTION = MOTION.wrapping_add(entrylen as (usize));
          })
     }
 }
 
-#[no_mangle]
-pub unsafe extern "C" fn cache_init(mut cachesize: u32) -> i32 {
-    if !x.is_null() {
-        alloc::free(x);
-        x = 0i32 as (*mut u8);
-    }
-    if cachesize > 1000000000u32 {
-        cachesize = 1000000000u32;
-    }
-    if cachesize < 100u32 {
-        cachesize = 100u32;
-    }
-    size = cachesize;
-    hsize = 4u32;
-    'loop7: loop {
-        if !(hsize <= size >> 5i32) {
+unsafe fn hash(mut key: *const u8, mut keylen: u32) -> u32 {
+    let mut result: u32 = 5381u32;
+    'loop1: loop {
+        if keylen == 0 {
             break;
         }
-        hsize = hsize << 1i32;
+        result = (result << 5i32).wrapping_add(result);
+        result = result ^ *key as (u32);
+        key = key.offset(1isize);
+        keylen = keylen.wrapping_sub(1u32);
     }
-    x = alloc::alloc(size);
-    if x.is_null() {
-        0i32
-    } else {
-        byte::zero(x, size);
-        writer = hsize;
-        oldest = size;
-        unused = size;
-        1i32
+    result = result << 2i32;
+    result = result & HSIZE.wrapping_sub(4u32);
+    result
+}
+
+unsafe fn impossible() {
+    libc::_exit(111);
+}
+
+unsafe fn get4(pos: u32) -> u32 {
+    let mut result: u32 = 0;
+    if pos > SIZE.wrapping_sub(4u32) {
+        impossible();
     }
+    uint32::unpack(
+        X.offset(pos as (isize)) as (*const u8),
+        &mut result as (*mut u32),
+    );
+    result
+}
+
+unsafe fn set4(pos: u32, u: u32) {
+    if pos > SIZE.wrapping_sub(4u32) {
+        impossible();
+    }
+    uint32::pack(X.offset(pos as (isize)), u);
 }

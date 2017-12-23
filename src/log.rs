@@ -1,12 +1,12 @@
 use buffer::{Buffer, STDERR_BUFFER};
 use byte;
+use cache;
 use errno::{self, Errno};
 use libc;
 use uint16;
 use uint32;
 
 extern "C" {
-    static mut cache_motion: usize;
     static mut numqueries: usize;
     static mut tactive: i32;
     static mut uactive: i32;
@@ -498,7 +498,7 @@ pub unsafe extern "C" fn log_stats() {
     u64 = numqueries;
     u64_print();
     space();
-    u64 = cache_motion;
+    u64 = cache::MOTION;
     u64_print();
     space();
     u64 = uactive as (usize);
