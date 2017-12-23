@@ -2,6 +2,7 @@ use buffer::{self, Buffer};
 use byte;
 use case;
 use cdb::CdbMake;
+use dns;
 use ip4;
 use libc;
 use open;
@@ -14,9 +15,6 @@ use ulong;
 extern "C" {
     fn __swbuf(arg1: i32, arg2: *mut __sFILE) -> i32;
     fn close(arg1: i32) -> i32;
-    fn dns_domain_fromdot(arg1: *mut *mut u8, arg2: *const u8, arg3: u32) -> i32;
-    fn dns_domain_length(arg1: *const u8) -> u32;
-    fn dns_name4_domain(arg1: *mut u8, arg2: *const u8);
     fn fstat(arg1: i32, arg2: *mut stat) -> i32;
     fn fsync(arg1: i32) -> i32;
     fn getln(arg1: *mut Buffer, arg2: *mut StrAlloc, arg3: *mut i32, arg4: i32) -> i32;
@@ -368,7 +366,7 @@ pub unsafe extern "C" fn rr_add(mut buf: *const u8, mut len: u32) {
 
 #[no_mangle]
 pub unsafe extern "C" fn rr_addname(mut d: *const u8) {
-    rr_add(d, dns_domain_length(d));
+    rr_add(d, dns::domain::length(d));
 }
 
 #[no_mangle]
@@ -406,7 +404,7 @@ pub unsafe extern "C" fn rr_finish(mut owner: *const u8) {
         let _lhs = &mut *result.s.offset(2isize);
         *_lhs = (*_lhs as (i32) - _rhs) as (u8);
     }
-    if StrAlloc::copyb(&mut key as (*mut StrAlloc), owner, dns_domain_length(owner)) == 0 {
+    if StrAlloc::copyb(&mut key as (*mut StrAlloc), owner, dns::domain::length(owner)) == 0 {
         nomem();
     }
     case::lowerb(key.s, key.len);
@@ -600,7 +598,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
         }
         let switch1 = *line.s.offset(0isize);
         if switch1 as (i32) == b':' as (i32) {
-            if dns_domain_fromdot(
+            if dns::domain::fromdot(
                 &mut d1 as (*mut *mut u8),
                 f[0usize].s as (*const u8),
                 f[0usize].len,
@@ -682,7 +680,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             rr_add(f[2usize].s as (*const u8), f[2usize].len);
             rr_finish(d1 as (*const u8));
         } else if switch1 as (i32) == b'\'' as (i32) {
-            if dns_domain_fromdot(
+            if dns::domain::fromdot(
                 &mut d1 as (*mut *mut u8),
                 f[0usize].s as (*const u8),
                 f[0usize].len,
@@ -721,7 +719,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             }
             rr_finish(d1 as (*const u8));
         } else if switch1 as (i32) == b'C' as (i32) || switch1 as (i32) == b'^' as (i32) {
-            if dns_domain_fromdot(
+            if dns::domain::fromdot(
                 &mut d1 as (*mut *mut u8),
                 f[0usize].s as (*const u8),
                 f[0usize].len,
@@ -729,7 +727,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             {
                 nomem();
             }
-            if dns_domain_fromdot(
+            if dns::domain::fromdot(
                 &mut d2 as (*mut *mut u8),
                 f[1usize].s as (*const u8),
                 f[1usize].len,
@@ -763,7 +761,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             rr_addname(d2 as (*const u8));
             rr_finish(d1 as (*const u8));
         } else if switch1 as (i32) == b'@' as (i32) {
-            if dns_domain_fromdot(
+            if dns::domain::fromdot(
                 &mut d1 as (*mut *mut u8),
                 f[0usize].s as (*const u8),
                 f[0usize].len,
@@ -795,7 +793,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
                     nomem();
                 }
             }
-            if dns_domain_fromdot(
+            if dns::domain::fromdot(
                 &mut d2 as (*mut *mut u8),
                 f[2usize].s as (*const u8),
                 f[2usize].len,
@@ -831,7 +829,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             rr_add(ip.as_mut_ptr() as (*const u8), 4u32);
             rr_finish(d2 as (*const u8));
         } else if switch1 as (i32) == b'=' as (i32) || switch1 as (i32) == b'+' as (i32) {
-            if dns_domain_fromdot(
+            if dns::domain::fromdot(
                 &mut d1 as (*mut *mut u8),
                 f[0usize].s as (*const u8),
                 f[0usize].len,
@@ -864,7 +862,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             if !(*line.s.offset(0isize) as (i32) == b'=' as (i32)) {
                 continue;
             }
-            dns_name4_domain(dptr.as_mut_ptr(), ip.as_mut_ptr() as (*const u8));
+            dns::name::domain(dptr.as_mut_ptr(), ip.as_mut_ptr() as (*const u8));
             rr_start(
                 (*b"\0\x0C\0").as_ptr(),
                 ttl,
@@ -874,7 +872,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             rr_addname(d1 as (*const u8));
             rr_finish(dptr.as_mut_ptr() as (*const u8));
         } else if switch1 as (i32) == b'&' as (i32) || switch1 as (i32) == b'.' as (i32) {
-            if dns_domain_fromdot(
+            if dns::domain::fromdot(
                 &mut d1 as (*mut *mut u8),
                 f[0usize].s as (*const u8),
                 f[0usize].len,
@@ -906,7 +904,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
                     nomem();
                 }
             }
-            if dns_domain_fromdot(
+            if dns::domain::fromdot(
                 &mut d2 as (*mut *mut u8),
                 f[2usize].s as (*const u8),
                 f[2usize].len,
@@ -947,7 +945,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             rr_add(ip.as_mut_ptr() as (*const u8), 4u32);
             rr_finish(d2 as (*const u8));
         } else if switch1 as (i32) == b'Z' as (i32) {
-            if dns_domain_fromdot(
+            if dns::domain::fromdot(
                 &mut d1 as (*mut *mut u8),
                 f[0usize].s as (*const u8),
                 f[0usize].len,
@@ -1019,7 +1017,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
                 ttd.as_mut_ptr() as (*const u8),
                 loc.as_mut_ptr() as (*const u8),
             );
-            if dns_domain_fromdot(
+            if dns::domain::fromdot(
                 &mut d2 as (*mut *mut u8),
                 f[1usize].s as (*const u8),
                 f[1usize].len,
@@ -1028,7 +1026,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
                 nomem();
             }
             rr_addname(d2 as (*const u8));
-            if dns_domain_fromdot(
+            if dns::domain::fromdot(
                 &mut d2 as (*mut *mut u8),
                 f[2usize].s as (*const u8),
                 f[2usize].len,

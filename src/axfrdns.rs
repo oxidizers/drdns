@@ -2,6 +2,7 @@ use buffer::{self, Buffer};
 use byte;
 use case;
 use cdb::Cdb;
+use dns;
 use ip4;
 use libc;
 use open;
@@ -14,13 +15,6 @@ use ulong;
 
 extern "C" {
     fn close(arg1: i32) -> i32;
-    fn dns_domain_equal(arg1: *const u8, arg2: *const u8) -> i32;
-    fn dns_domain_fromdot(arg1: *mut *mut u8, arg2: *const u8, arg3: u32) -> i32;
-    fn dns_domain_length(arg1: *const u8) -> u32;
-    fn dns_domain_suffix(arg1: *const u8, arg2: *const u8) -> i32;
-    fn dns_packet_copy(arg1: *const u8, arg2: u32, arg3: u32, arg4: *mut u8, arg5: u32) -> u32;
-    fn dns_packet_getname(arg1: *const u8, arg2: u32, arg3: u32, arg4: *mut *mut u8) -> u32;
-    fn dns_random_init(arg1: *const u8);
     fn droproot(arg1: *const u8);
     fn qlog(
         arg1: *const u8,
@@ -193,7 +187,7 @@ pub unsafe extern "C" fn axfrcheck(mut q: *mut u8) {
                 *axfr.offset(i as (isize)) as (i32) == b'/' as (i32)
             {
                 if i > j {
-                    if dns_domain_fromdot(
+                    if dns::domain::fromdot(
                         &mut axfrok as (*mut *mut u8),
                         axfr.offset(j as (isize)) as (*const u8),
                         (i - j) as (u32),
@@ -201,7 +195,7 @@ pub unsafe extern "C" fn axfrcheck(mut q: *mut u8) {
                     {
                         nomem();
                     }
-                    if dns_domain_equal(q as (*const u8), axfrok as (*const u8)) != 0 {
+                    if dns::domain::equal(q as (*const u8), axfrok as (*const u8)) != 0 {
                         _currentBlock = 11;
                         break;
                     }
@@ -294,7 +288,7 @@ pub static mut dpos: u32 = 0u32;
 
 #[no_mangle]
 pub unsafe extern "C" fn copy(mut buf: *mut u8, mut len: u32) {
-    dpos = dns_packet_copy(data.as_mut_ptr() as (*const u8), dlen, dpos, buf, len);
+    dpos = dns::packet::copy(data.as_mut_ptr() as (*const u8), dlen, dpos, buf, len);
     if dpos == 0 {
         die_cdbread();
     }
@@ -303,7 +297,7 @@ pub unsafe extern "C" fn copy(mut buf: *mut u8, mut len: u32) {
 #[no_mangle]
 pub unsafe extern "C" fn doname(mut sa: *mut StrAlloc) {
     static mut d: *mut u8 = 0 as (*mut u8);
-    dpos = dns_packet_getname(
+    dpos = dns::packet::getname(
         data.as_mut_ptr() as (*const u8),
         dlen,
         dpos,
@@ -312,7 +306,7 @@ pub unsafe extern "C" fn doname(mut sa: *mut StrAlloc) {
     if dpos == 0 {
         die_cdbread();
     }
-    if StrAlloc::catb(sa, d as (*const u8), dns_domain_length(d as (*const u8))) == 0 {
+    if StrAlloc::catb(sa, d as (*const u8), dns::domain::length(d as (*const u8))) == 0 {
         nomem();
     }
 }
@@ -378,7 +372,7 @@ pub unsafe extern "C" fn build(
             nomem();
         }
     }
-    if StrAlloc::catb(sa, q as (*const u8), dns_domain_length(q as (*const u8))) == 0 {
+    if StrAlloc::catb(sa, q as (*const u8), dns::domain::length(q as (*const u8))) == 0 {
         nomem();
     }
     if StrAlloc::catb(sa, type_.as_mut_ptr() as (*const u8), 2u32) == 0 {
@@ -627,7 +621,7 @@ pub unsafe extern "C" fn doaxfr(mut id: *mut u8) {
         if klen < 1u32 {
             die_cdbformat();
         }
-        if dns_packet_getname(
+        if dns::packet::getname(
             key.as_mut_ptr() as (*const u8),
             klen,
             0u32,
@@ -636,7 +630,7 @@ pub unsafe extern "C" fn doaxfr(mut id: *mut u8) {
         {
             die_cdbformat();
         }
-        if dns_domain_suffix(q as (*const u8), zone as (*const u8)) == 0 {
+        if dns::domain::suffix(q as (*const u8), zone as (*const u8)) == 0 {
             continue;
         }
         if build(&mut message as (*mut StrAlloc), q, 0i32, id) == 0 {
@@ -690,7 +684,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
     let mut qclass: [u8; 2];
     let mut x: *const u8;
     droproot((*b"axfrdns: fatal: \0").as_ptr());
-    dns_random_init(seed.as_mut_ptr() as (*const u8));
+    dns::random::init(seed.as_mut_ptr() as (*const u8));
     axfr = libc::getenv((*b"AXFR\0" as *const libc::c_char).as_ptr());
     x = libc::getenv((*b"TCPREMOTEIP\0").as_ptr() as *const libc::c_char) as (*const u8);
     if !(!x.is_null() && (ip4::scan(x, ip.as_mut_ptr()) != 0)) {
@@ -720,7 +714,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             );
         }
         netread(buf.as_mut_ptr(), len as (u32));
-        pos = dns_packet_copy(
+        pos = dns::packet::copy(
             buf.as_mut_ptr() as (*const u8),
             len as (u32),
             0u32,
@@ -754,7 +748,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
                 0i32 as (*const StrErr),
             );
         }
-        pos = dns_packet_getname(
+        pos = dns::packet::getname(
             buf.as_mut_ptr() as (*const u8),
             len as (u32),
             pos,
@@ -763,8 +757,8 @@ pub unsafe extern "C" fn _c_main() -> i32 {
         if pos == 0 {
             die_truncated();
         }
-        zonelen = dns_domain_length(zone as (*const u8));
-        pos = dns_packet_copy(
+        zonelen = dns::domain::length(zone as (*const u8));
+        pos = dns::packet::copy(
             buf.as_mut_ptr() as (*const u8),
             len as (u32),
             pos,
@@ -774,7 +768,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
         if pos == 0 {
             die_truncated();
         }
-        pos = dns_packet_copy(
+        pos = dns::packet::copy(
             buf.as_mut_ptr() as (*const u8),
             len as (u32),
             pos,

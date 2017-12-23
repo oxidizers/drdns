@@ -1,11 +1,8 @@
 use errno::{self, Errno};
+use iopause::iopause;
 use libc;
 use tai::Tai;
 use taia::TaiA;
-
-extern "C" {
-    fn iopause(arg1: *mut pollfd, arg2: u32, arg3: *mut TaiA, arg4: *mut TaiA);
-}
 
 #[derive(Copy)]
 #[repr(C)]

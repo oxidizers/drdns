@@ -1,17 +1,11 @@
 use buffer::{Buffer, STDOUT_BUFFER};
 use byte;
+use dns;
 use libc;
 use stralloc::StrAlloc;
 use strerr::{StrErr, STRERR_SYS};
 use uint16;
 use ulong;
-
-extern "C" {
-    fn dns_domain_fromdot(arg1: *mut *mut u8, arg2: *const u8, arg3: u32) -> i32;
-    fn dns_domain_todot_cat(arg1: *mut StrAlloc, arg2: *const u8) -> i32;
-    fn dns_mx(arg1: *mut StrAlloc, arg2: *const StrAlloc) -> i32;
-    fn dns_random_init(arg1: *const u8);
-}
 
 #[no_mangle]
 pub unsafe extern "C" fn nomem() {
@@ -69,7 +63,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     let mut i: i32;
     let mut j: i32;
     let mut pref: u16;
-    dns_random_init(seed.as_mut_ptr() as (*const u8));
+    dns::random::init(seed.as_mut_ptr() as (*const u8));
     if !(*argv).is_null() {
         argv = argv.offset(1isize);
     }
@@ -80,7 +74,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
         if StrAlloc::copys(&mut fqdn as (*mut StrAlloc), *argv as (*const u8)) == 0 {
             nomem();
         }
-        if dns_mx(
+        if dns::mx::mx(
             &mut out as (*mut StrAlloc),
             &mut fqdn as (*mut StrAlloc) as (*const StrAlloc),
         ) == -1i32
@@ -97,7 +91,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
             );
         }
         if out.len == 0 {
-            if dns_domain_fromdot(
+            if dns::domain::fromdot(
                 &mut q as (*mut *mut u8),
                 *argv as (*const u8),
                 libc::strlen(*argv as *const i8) as u32,
@@ -108,7 +102,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
             if StrAlloc::copys(&mut out as (*mut StrAlloc), (*b"0 \0").as_ptr()) == 0 {
                 nomem();
             }
-            if dns_domain_todot_cat(&mut out as (*mut StrAlloc), q as (*const u8)) == 0 {
+            if dns::domain::todot_cat(&mut out as (*mut StrAlloc), q as (*const u8)) == 0 {
                 nomem();
             }
             if StrAlloc::cats(&mut out as (*mut StrAlloc), (*b"\n\0").as_ptr()) == 0 {

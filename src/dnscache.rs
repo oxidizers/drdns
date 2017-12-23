@@ -1,7 +1,9 @@
 use alloc;
 use byte;
+use dns::{self, DnsTransmit};
 use errno::{self, Errno};
 use ip4;
+use iopause::iopause;
 use libc;
 use ndelay;
 use socket;
@@ -14,11 +16,7 @@ use ulong;
 extern "C" {
     fn cache_init(arg1: u32) -> i32;
     fn close(arg1: i32) -> i32;
-    fn dns_packet_copy(arg1: *const u8, arg2: u32, arg3: u32, arg4: *mut u8, arg5: u32) -> u32;
-    fn dns_packet_getname(arg1: *const u8, arg2: u32, arg3: u32, arg4: *mut *mut u8) -> u32;
-    fn dns_random_init(arg1: *const u8);
     fn droproot(arg1: *const u8);
-    fn iopause(arg1: *mut pollfd, arg2: u32, arg3: *mut TaiA, arg4: *mut TaiA);
     fn log_query(
         arg1: *mut usize,
         arg2: *const u8,
@@ -64,30 +62,6 @@ static mut udp53: i32 = 0i32;
 
 #[derive(Copy)]
 #[repr(C)]
-pub struct dns_transmit {
-    pub query: *mut u8,
-    pub querylen: u32,
-    pub packet: *mut u8,
-    pub packetlen: u32,
-    pub s1: i32,
-    pub tcpstate: i32,
-    pub udploop: u32,
-    pub curserver: u32,
-    pub deadline: TaiA,
-    pub pos: u32,
-    pub servers: *const u8,
-    pub localip: [u8; 4],
-    pub qtype: [u8; 2],
-}
-
-impl Clone for dns_transmit {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
-#[derive(Copy)]
-#[repr(C)]
 pub struct query {
     pub loopvar: u32,
     pub level: u32,
@@ -100,7 +74,7 @@ pub struct query {
     pub localip: [u8; 4],
     pub type_: [u8; 2],
     pub class: [u8; 2],
-    pub dt: dns_transmit,
+    pub dt: DnsTransmit,
 }
 
 impl Clone for query {
@@ -154,7 +128,7 @@ static mut u: [udpclient; 200] = [udpclient {
         localip: [0u8; 4],
         type_: [0u8; 2],
         class: [0u8; 2],
-        dt: dns_transmit {
+        dt: DnsTransmit {
             query: 0 as (*mut u8),
             querylen: 0u32,
             packet: 0 as (*mut u8),
@@ -231,7 +205,7 @@ unsafe extern "C" fn packetquery(
     let mut pos: u32;
     let mut header: [u8; 12];
     errno::set_errno(Errno(libc::EPROTO));
-    pos = dns_packet_copy(buf as (*const u8), len, 0u32, header.as_mut_ptr(), 12u32);
+    pos = dns::packet::copy(buf as (*const u8), len, 0u32, header.as_mut_ptr(), 12u32);
     if pos == 0 {
         0i32
     } else if header[2usize] as (i32) & 128i32 != 0 {
@@ -250,15 +224,15 @@ unsafe extern "C" fn packetquery(
     {
         0i32
     } else {
-        pos = dns_packet_getname(buf as (*const u8), len, pos, q);
+        pos = dns::packet::getname(buf as (*const u8), len, pos, q);
         (if pos == 0 {
              0i32
          } else {
-             pos = dns_packet_copy(buf as (*const u8), len, pos, qtype, 2u32);
+             pos = dns::packet::copy(buf as (*const u8), len, pos, qtype, 2u32);
              (if pos == 0 {
                   0i32
               } else {
-                  pos = dns_packet_copy(buf as (*const u8), len, pos, qclass, 2u32);
+                  pos = dns::packet::copy(buf as (*const u8), len, pos, qclass, 2u32);
                   (if pos == 0 {
                        0i32
                    } else if byte::diff(qclass, 2u32, (*b"\0\x01\0").as_ptr() as (*mut u8)) != 0 &&
@@ -410,7 +384,7 @@ pub static mut t: [tcpclient; 20] = [tcpclient {
         localip: [0u8; 4],
         type_: [0u8; 2],
         class: [0u8; 2],
-        dt: dns_transmit {
+        dt: DnsTransmit {
             query: 0 as (*mut u8),
             querylen: 0u32,
             packet: 0 as (*mut u8),
@@ -955,7 +929,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
         seed.as_mut_ptr() as (*mut libc::c_void),
         ::std::mem::size_of::<[u8; 128]>(),
     );
-    dns_random_init(seed.as_mut_ptr() as (*const u8));
+    dns::random::init(seed.as_mut_ptr() as (*const u8));
     close(0i32);
     x = libc::getenv((*b"IPSEND\0").as_ptr() as *const libc::c_char);
     if x.is_null() {

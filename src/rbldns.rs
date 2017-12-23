@@ -1,5 +1,6 @@
 use byte;
 use cdb::Cdb;
+use dns;
 use ip4;
 use libc;
 use open;
@@ -9,7 +10,6 @@ use strerr::StrErr;
 extern "C" {
     fn close(arg1: i32) -> i32;
     fn dd(arg1: *const u8, arg2: *const u8, arg3: *mut u8) -> i32;
-    fn dns_domain_fromdot(arg1: *mut *mut u8, arg2: *const u8, arg3: u32) -> i32;
     static mut response: *mut u8;
     fn response_addbytes(arg1: *const u8, arg2: u32) -> i32;
     fn response_nxdomain();
@@ -235,7 +235,7 @@ pub unsafe extern "C" fn initialize() {
             0i32 as (*const StrErr),
         );
     }
-    if dns_domain_fromdot(
+    if dns::domain::fromdot(
         &mut base as (*mut *mut u8),
         x as (*const u8),
         libc::strlen(x as *const i8) as u32,

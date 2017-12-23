@@ -1,6 +1,7 @@
 use alloc;
 use byte;
 use case;
+use dns::{self, DnsTransmit};
 use errno::{self, Errno};
 use libc;
 use tai::Tai;
@@ -12,27 +13,6 @@ extern "C" {
     fn cache_get(arg1: *const u8, arg2: u32, arg3: *mut u32, arg4: *mut u32) -> *mut u8;
     fn cache_set(arg1: *const u8, arg2: u32, arg3: *const u8, arg4: u32, arg5: u32);
     fn dd(arg1: *const u8, arg2: *const u8, arg3: *mut u8) -> i32;
-    fn dns_domain_copy(arg1: *mut *mut u8, arg2: *const u8) -> i32;
-    fn dns_domain_equal(arg1: *const u8, arg2: *const u8) -> i32;
-    fn dns_domain_free(arg1: *mut *mut u8);
-    fn dns_domain_length(arg1: *const u8) -> u32;
-    fn dns_domain_suffix(arg1: *const u8, arg2: *const u8) -> i32;
-    fn dns_domain_suffixpos(arg1: *const u8, arg2: *const u8) -> u32;
-    fn dns_packet_copy(arg1: *const u8, arg2: u32, arg3: u32, arg4: *mut u8, arg5: u32) -> u32;
-    fn dns_packet_getname(arg1: *const u8, arg2: u32, arg3: u32, arg4: *mut *mut u8) -> u32;
-    fn dns_packet_skipname(arg1: *const u8, arg2: u32, arg3: u32) -> u32;
-    fn dns_sortip(arg1: *mut u8, arg2: u32);
-    fn dns_transmit_free(arg1: *mut dns_transmit);
-    fn dns_transmit_get(arg1: *mut dns_transmit, arg2: *const pollfd, arg3: *const TaiA) -> i32;
-    fn dns_transmit_io(arg1: *mut dns_transmit, arg2: *mut pollfd, arg3: *mut TaiA);
-    fn dns_transmit_start(
-        arg1: *mut dns_transmit,
-        arg2: *const u8,
-        arg3: i32,
-        arg4: *const u8,
-        arg5: *const u8,
-        arg6: *const u8,
-    ) -> i32;
     fn log_cachedanswer(arg1: *const u8, arg2: *const u8);
     fn log_cachedcname(arg1: *const u8, arg2: *const u8);
     fn log_cachedns(arg1: *const u8, arg2: *const u8);
@@ -102,30 +82,6 @@ static mut records: *mut u32 = 0i32 as (*mut u32);
 
 #[derive(Copy)]
 #[repr(C)]
-pub struct dns_transmit {
-    pub query: *mut u8,
-    pub querylen: u32,
-    pub packet: *mut u8,
-    pub packetlen: u32,
-    pub s1: i32,
-    pub tcpstate: i32,
-    pub udploop: u32,
-    pub curserver: u32,
-    pub deadline: TaiA,
-    pub pos: u32,
-    pub servers: *const u8,
-    pub localip: [u8; 4],
-    pub qtype: [u8; 2],
-}
-
-impl Clone for dns_transmit {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
-#[derive(Copy)]
-#[repr(C)]
 pub struct query {
     pub loopvar: u32,
     pub level: u32,
@@ -138,7 +94,7 @@ pub struct query {
     pub localip: [u8; 4],
     pub type_: [u8; 2],
     pub class: [u8; 2],
-    pub dt: dns_transmit,
+    pub dt: DnsTransmit,
 }
 
 impl Clone for query {
@@ -150,13 +106,13 @@ impl Clone for query {
 unsafe extern "C" fn cleanup(mut z: *mut query) {
     let mut j: i32;
     let mut k: i32;
-    dns_transmit_free(&mut (*z).dt as (*mut dns_transmit));
+    DnsTramsit::free(&mut (*z).dt as (*mut DnsTransmit));
     j = 0i32;
     'loop1: loop {
         if !(j < 16i32) {
             break;
         }
-        dns_domain_free(&mut (*z).alias[j as (usize)] as (*mut *mut u8));
+        dns::domain::free(&mut (*z).alias[j as (usize)] as (*mut *mut u8));
         j = j + 1;
     }
     j = 0i32;
@@ -164,13 +120,13 @@ unsafe extern "C" fn cleanup(mut z: *mut query) {
         if !(j < 5i32) {
             break;
         }
-        dns_domain_free(&mut (*z).name[j as (usize)] as (*mut *mut u8));
+        dns::domain::free(&mut (*z).name[j as (usize)] as (*mut *mut u8));
         k = 0i32;
         'loop6: loop {
             if !(k < 16i32) {
                 break;
             }
-            dns_domain_free(&mut (*z).ns[j as (usize)][k as (usize)] as (*mut *mut u8));
+            dns::domain::free(&mut (*z).ns[j as (usize)][k as (usize)] as (*mut *mut u8));
             k = k + 1;
         }
         j = j + 1;
@@ -178,7 +134,7 @@ unsafe extern "C" fn cleanup(mut z: *mut query) {
 }
 
 unsafe extern "C" fn globalip(mut d: *mut u8, mut ip: *mut u8) -> i32 {
-    if dns_domain_equal(d as (*const u8), (*b"\tlocalhost\0\0").as_ptr()) != 0 {
+    if dns::domain::equal(d as (*const u8), (*b"\tlocalhost\0\0").as_ptr()) != 0 {
         byte::copy(ip, 4u32, (*b"\x7F\0\0\x01\0").as_ptr() as (*mut u8));
         1i32
     } else if dd(d as (*const u8), (*b"\0").as_ptr(), ip) == 4i32 {
@@ -282,18 +238,18 @@ unsafe extern "C" fn smaller(mut buf: *mut u8, mut len: u32, mut pos1: u32, mut 
     let mut r: i32;
     let mut len1: u32;
     let mut len2: u32;
-    pos1 = dns_packet_getname(buf as (*const u8), len, pos1, &mut t1 as (*mut *mut u8));
-    dns_packet_copy(buf as (*const u8), len, pos1, header1.as_mut_ptr(), 10u32);
-    pos2 = dns_packet_getname(buf as (*const u8), len, pos2, &mut t2 as (*mut *mut u8));
-    dns_packet_copy(buf as (*const u8), len, pos2, header2.as_mut_ptr(), 10u32);
+    pos1 = dns::packet::getname(buf as (*const u8), len, pos1, &mut t1 as (*mut *mut u8));
+    dns::packet::copy(buf as (*const u8), len, pos1, header1.as_mut_ptr(), 10u32);
+    pos2 = dns::packet::getname(buf as (*const u8), len, pos2, &mut t2 as (*mut *mut u8));
+    dns::packet::copy(buf as (*const u8), len, pos2, header2.as_mut_ptr(), 10u32);
     r = byte::diff(header1.as_mut_ptr(), 4u32, header2.as_mut_ptr());
     if r < 0i32 {
         1i32
     } else if r > 0i32 {
         0i32
     } else {
-        len1 = dns_domain_length(t1 as (*const u8));
-        len2 = dns_domain_length(t2 as (*const u8));
+        len1 = dns::domain::length(t1 as (*const u8));
+        len2 = dns::domain::length(t2 as (*const u8));
         (if len1 < len2 {
              1i32
          } else if len1 > len2 {
@@ -343,7 +299,7 @@ unsafe extern "C" fn cachegeneric(
 ) {
     let mut len: u32;
     let mut key: [u8; 257];
-    len = dns_domain_length(d);
+    len = dns::domain::length(d);
     if len > 255u32 {
     } else {
         byte::copy(key.as_mut_ptr(), 2u32, type_ as (*mut u8));
@@ -430,11 +386,11 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
             } else {
                 (*z).type_.as_mut_ptr() as (*const u8)
             };
-            pos = dns_packet_copy(buf as (*const u8), len, 0u32, header.as_mut_ptr(), 12u32);
+            pos = dns::packet::copy(buf as (*const u8), len, 0u32, header.as_mut_ptr(), 12u32);
             if pos == 0 {
                 _currentBlock = 348;
             } else {
-                pos = dns_packet_skipname(buf as (*const u8), len, pos);
+                pos = dns::packet::skipname(buf as (*const u8), len, pos);
                 if pos == 0 {
                     _currentBlock = 348;
                 } else {
@@ -468,7 +424,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                 _currentBlock = 9;
                                 break;
                             }
-                            pos = dns_packet_getname(
+                            pos = dns::packet::getname(
                                 buf as (*const u8),
                                 len,
                                 pos,
@@ -478,7 +434,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                 _currentBlock = 348;
                                 break;
                             }
-                            pos = dns_packet_copy(
+                            pos = dns::packet::copy(
                                 buf as (*const u8),
                                 len,
                                 pos,
@@ -489,7 +445,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                 _currentBlock = 348;
                                 break;
                             }
-                            if dns_domain_equal(t1 as (*const u8), d as (*const u8)) != 0 {
+                            if dns::domain::equal(t1 as (*const u8), d as (*const u8)) != 0 {
                                 if byte::diff(
                                     header.as_mut_ptr().offset(2isize),
                                     2u32,
@@ -503,7 +459,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                         (*b"\0\x05\0").as_ptr(),
                                     ) != 0
                                     {
-                                        if dns_packet_getname(
+                                        if dns::packet::getname(
                                             buf as (*const u8),
                                             len,
                                             pos,
@@ -534,7 +490,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                     _currentBlock = 11;
                                     break;
                                 }
-                                pos = dns_packet_getname(
+                                pos = dns::packet::getname(
                                     buf as (*const u8),
                                     len,
                                     pos,
@@ -544,7 +500,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                     _currentBlock = 348;
                                     break;
                                 }
-                                pos = dns_packet_copy(
+                                pos = dns::packet::copy(
                                     buf as (*const u8),
                                     len,
                                     pos,
@@ -571,7 +527,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                 ) != 0
                                 {
                                     flagreferral = 1i32;
-                                    if dns_domain_copy(
+                                    if dns::domain::copy(
                                         &mut referral as (*mut *mut u8),
                                         t1 as (*const u8),
                                     ) == 0
@@ -594,11 +550,11 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                     (flagreferral != 0) &&
                                     (flagsoa == 0)
                                 {
-                                    if dns_domain_equal(
+                                    if dns::domain::equal(
                                         referral as (*const u8),
                                         control as (*const u8),
                                     ) != 0 ||
-                                        dns_domain_suffix(
+                                        dns::domain::suffix(
                                             referral as (*const u8),
                                             control as (*const u8),
                                         ) == 0
@@ -639,7 +595,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                 break;
                                             }
                                             *records.offset(j as (isize)) = pos;
-                                            pos = dns_packet_getname(
+                                            pos = dns::packet::getname(
                                                 buf as (*const u8),
                                                 len,
                                                 pos,
@@ -649,7 +605,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                 _currentBlock = 348;
                                                 break;
                                             }
-                                            pos = dns_packet_copy(
+                                            pos = dns::packet::copy(
                                                 buf as (*const u8),
                                                 len,
                                                 pos,
@@ -747,7 +703,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                     break;
                                                 }
                                                 let mut type_ : [u8; 2];
-                                                pos = dns_packet_getname(
+                                                pos = dns::packet::getname(
                                                     buf as (*const u8),
                                                     len,
                                                     *records.offset(i as (isize)),
@@ -757,7 +713,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                     _currentBlock = 348;
                                                     break;
                                                 }
-                                                pos = dns_packet_copy(
+                                                pos = dns::packet::copy(
                                                     buf as (*const u8),
                                                     len,
                                                     pos,
@@ -788,7 +744,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                         if !(j < k) {
                                                             break;
                                                         }
-                                                        pos = dns_packet_getname(
+                                                        pos = dns::packet::getname(
                                                             buf as (*const u8),
                                                             len,
                                                             *records.offset(j as (isize)),
@@ -798,7 +754,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                             _currentBlock = 348;
                                                             break 'loop21;
                                                         }
-                                                        pos = dns_packet_copy(
+                                                        pos = dns::packet::copy(
                                                             buf as (*const u8),
                                                             len,
                                                             pos,
@@ -809,7 +765,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                             _currentBlock = 348;
                                                             break 'loop21;
                                                         }
-                                                        if dns_domain_equal(
+                                                        if dns::domain::equal(
                                                             t1 as (*const u8),
                                                             t2 as (*const u8),
                                                         ) ==
@@ -837,7 +793,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                         }
                                                         j = j + 1;
                                                     }
-                                                    if dns_domain_suffix(
+                                                    if dns::domain::suffix(
                                                         t1 as (*const u8),
                                                         control as (*const u8),
                                                     ) ==
@@ -874,7 +830,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                                         if !(i < j) {
                                                                             break;
                                                                         }
-                                                                        pos = dns_packet_skipname(
+                                                                        pos = dns::packet::skipname(
                                                                             buf as (*const u8),
                                                                             len,
                                                                             *records.offset(
@@ -885,7 +841,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                                             _currentBlock = 348;
                                                                             break 'loop21;
                                                                         }
-                                                                        pos = dns_packet_getname(
+                                                                        pos = dns::packet::getname(
                                                                             buf as (*const u8),
                                                                             len,
                                                                             pos.wrapping_add(
@@ -898,7 +854,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                                             _currentBlock = 348;
                                                                             break 'loop21;
                                                                         }
-                                                                        pos = dns_packet_getname(
+                                                                        pos = dns::packet::getname(
                                                                             buf as (*const u8),
                                                                             len,
                                                                             pos,
@@ -909,7 +865,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                                             _currentBlock = 348;
                                                                             break 'loop21;
                                                                         }
-                                                                        pos = dns_packet_copy(
+                                                                        pos = dns::packet::copy(
                                                                             buf as (*const u8),
                                                                             len,
                                                                             pos,
@@ -945,7 +901,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                                 ) ==
                                                                            0
                                                                 {
-                                                                    pos = dns_packet_skipname(
+                                                                    pos = dns::packet::skipname(
                                                                         buf as (*const u8),
                                                                         len,
                                                                         *records.offset(
@@ -957,7 +913,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                                         _currentBlock = 348;
                                                                         break;
                                                                     }
-                                                                    pos = dns_packet_getname(
+                                                                    pos = dns::packet::getname(
                                                                         buf as (*const u8),
                                                                         len,
                                                                         pos.wrapping_add(10u32),
@@ -977,7 +933,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                                         (*b"\0\x05\0").as_ptr(),
                                                                         t1 as (*const u8),
                                                                         t2 as (*const u8),
-                                                                        dns_domain_length(
+                                                                        dns::domain::length(
                                                                             t2 as (*const u8),
                                                                         ),
                                                                         ttl,
@@ -995,7 +951,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                                         if !(i < j) {
                                                                             break;
                                                                         }
-                                                                        pos = dns_packet_skipname(
+                                                                        pos = dns::packet::skipname(
                                                                             buf as (*const u8),
                                                                             len,
                                                                             *records.offset(
@@ -1006,7 +962,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                                             _currentBlock = 348;
                                                                             break 'loop21;
                                                                         }
-                                                                        pos = dns_packet_getname(
+                                                                        pos = dns::packet::getname(
                                                                             buf as (*const u8),
                                                                             len,
                                                                             pos.wrapping_add(
@@ -1027,7 +983,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                                         );
                                                                         save_data(
                                                                             t2 as (*const u8),
-                                                                            dns_domain_length(
+                                                                            dns::domain::length(
                                                                                 t2 as (*const u8),
                                                                             ),
                                                                         );
@@ -1051,7 +1007,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                                         if !(i < j) {
                                                                             break;
                                                                         }
-                                                                        pos = dns_packet_skipname(
+                                                                        pos = dns::packet::skipname(
                                                                             buf as (*const u8),
                                                                             len,
                                                                             *records.offset(
@@ -1062,7 +1018,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                                             _currentBlock = 348;
                                                                             break 'loop21;
                                                                         }
-                                                                        pos = dns_packet_getname(
+                                                                        pos = dns::packet::getname(
                                                                             buf as (*const u8),
                                                                             len,
                                                                             pos.wrapping_add(
@@ -1083,7 +1039,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                                         );
                                                                         save_data(
                                                                             t2 as (*const u8),
-                                                                            dns_domain_length(
+                                                                            dns::domain::length(
                                                                                 t2 as (*const u8),
                                                                             ),
                                                                         );
@@ -1107,7 +1063,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                                         if !(i < j) {
                                                                             break;
                                                                         }
-                                                                        pos = dns_packet_skipname(
+                                                                        pos = dns::packet::skipname(
                                                                             buf as (*const u8),
                                                                             len,
                                                                             *records.offset(
@@ -1118,7 +1074,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                                             _currentBlock = 348;
                                                                             break 'loop21;
                                                                         }
-                                                                        pos = dns_packet_copy(
+                                                                        pos = dns::packet::copy(
                                                                             buf as (*const u8),
                                                                             len,
                                                                             pos.wrapping_add(
@@ -1131,7 +1087,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                                             _currentBlock = 348;
                                                                             break 'loop21;
                                                                         }
-                                                                        pos = dns_packet_getname(
+                                                                        pos = dns::packet::getname(
                                                                             buf as (*const u8),
                                                                             len,
                                                                             pos,
@@ -1157,7 +1113,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                                         );
                                                                         save_data(
                                                                             t2 as (*const u8),
-                                                                            dns_domain_length(
+                                                                            dns::domain::length(
                                                                                 t2 as (*const u8),
                                                                             ),
                                                                         );
@@ -1181,7 +1137,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                                         if !(i < j) {
                                                                             break;
                                                                         }
-                                                                        pos = dns_packet_skipname(
+                                                                        pos = dns::packet::skipname(
                                                                             buf as (*const u8),
                                                                             len,
                                                                             *records.offset(
@@ -1192,7 +1148,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                                             _currentBlock = 348;
                                                                             break 'loop21;
                                                                         }
-                                                                        pos = dns_packet_copy(
+                                                                        pos = dns::packet::copy(
                                                                             buf as (*const u8),
                                                                             len,
                                                                             pos,
@@ -1214,7 +1170,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                                         ) ==
                                                                             0
                                                                         {
-                                                                            pos = dns_packet_copy(
+                                                                            pos = dns::packet::copy(
                                                                                 buf as
                                                                                     (*const u8),
                                                                                 len,
@@ -1258,7 +1214,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                                         if !(i < j) {
                                                                             break;
                                                                         }
-                                                                        pos = dns_packet_skipname(
+                                                                        pos = dns::packet::skipname(
                                                                             buf as (*const u8),
                                                                             len,
                                                                             *records.offset(
@@ -1269,7 +1225,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                                             _currentBlock = 348;
                                                                             break 'loop21;
                                                                         }
-                                                                        pos = dns_packet_copy(
+                                                                        pos = dns::packet::copy(
                                                                             buf as (*const u8),
                                                                             len,
                                                                             pos,
@@ -1408,7 +1364,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                                     _currentBlock = 323;
                                                                     break;
                                                                 }
-                                                                pos = dns_packet_getname(
+                                                                pos = dns::packet::getname(
                                                                     buf as (*const u8),
                                                                     len,
                                                                     pos,
@@ -1418,7 +1374,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                                     _currentBlock = 348;
                                                                     break;
                                                                 }
-                                                                pos = dns_packet_copy(
+                                                                pos = dns::packet::copy(
                                                                     buf as (*const u8),
                                                                     len,
                                                                     pos,
@@ -1436,7 +1392,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                                         (*const u8),
                                                                     &mut datalen as (*mut u16),
                                                                 );
-                                                                if dns_domain_equal(
+                                                                if dns::domain::equal(
                                                                     t1 as (*const u8),
                                                                     d as (*const u8),
                                                                 ) !=
@@ -1490,7 +1446,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                                                     k = k + 4i32;
                                                                                 }
                                                                                 if _currentBlock == 90 {
-                                                                                } else if dns_packet_copy(
+                                                                                } else if dns::packet::copy(
                                                                                               buf as (*const u8),
                                                                                               len,
                                                                                               pos,
@@ -1526,7 +1482,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                                     _currentBlock = 50;
                                                                     break;
                                                                 }
-                                                                pos = dns_packet_getname(
+                                                                pos = dns::packet::getname(
                                                                     buf as (*const u8),
                                                                     len,
                                                                     pos,
@@ -1536,7 +1492,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                                     _currentBlock = 348;
                                                                     break;
                                                                 }
-                                                                pos = dns_packet_copy(
+                                                                pos = dns::packet::copy(
                                                                     buf as (*const u8),
                                                                     len,
                                                                     pos,
@@ -1559,7 +1515,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                                         (*const u8),
                                                                     &mut datalen as (*mut u16),
                                                                 );
-                                                                if dns_domain_equal(
+                                                                if dns::domain::equal(
                                                                     t1 as (*const u8),
                                                                     d as (*const u8),
                                                                 ) !=
@@ -1610,7 +1566,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                                                                        (*b"\0\x0C\0").as_ptr(
                                                                                                        )
                                                                                                    ) != 0 {
-                                                                                if dns_packet_getname(
+                                                                                if dns::packet::getname(
                                                                                        buf as (*const u8),
                                                                                        len,
                                                                                        pos,
@@ -1631,7 +1587,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                                                           (*b"\0\x0F\0").as_ptr(
                                                                                           )
                                                                                       ) != 0 {
-                                                                                pos2 = dns_packet_copy(
+                                                                                pos2 = dns::packet::copy(
                                                                                            buf as (*const u8),
                                                                                            len,
                                                                                            pos,
@@ -1651,7 +1607,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                                                     _currentBlock = 348;
                                                                                     break;
                                                                                 }
-                                                                                if dns_packet_getname(
+                                                                                if dns::packet::getname(
                                                                                        buf as (*const u8),
                                                                                        len,
                                                                                        pos2,
@@ -1672,7 +1628,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                                                           (*b"\0\x06\0").as_ptr(
                                                                                           )
                                                                                       ) != 0 {
-                                                                                pos2 = dns_packet_getname(
+                                                                                pos2 = dns::packet::getname(
                                                                                            buf as (*const u8),
                                                                                            len,
                                                                                            pos,
@@ -1688,7 +1644,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                                                     _currentBlock = 348;
                                                                                     break;
                                                                                 }
-                                                                                pos2 = dns_packet_getname(
+                                                                                pos2 = dns::packet::getname(
                                                                                            buf as (*const u8),
                                                                                            len,
                                                                                            pos2,
@@ -1704,7 +1660,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                                                     _currentBlock = 348;
                                                                                     break;
                                                                                 }
-                                                                                pos2 = dns_packet_copy(
+                                                                                pos2 = dns::packet::copy(
                                                                                            buf as (*const u8),
                                                                                            len,
                                                                                            pos2,
@@ -1756,7 +1712,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                                 return 1i32;
                                                             }
                                                         }
-                                                    } else if dns_domain_suffix(
+                                                    } else if dns::domain::suffix(
                                                         d as (*const u8),
                                                         referral as (*const u8),
                                                     ) ==
@@ -1764,7 +1720,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                     {
                                                         _currentBlock = 348;
                                                     } else {
-                                                        control = d.offset(dns_domain_suffixpos(
+                                                        control = d.offset(dns::domain::suffixpos(
                                                             d as (*const u8),
                                                             referral as (*const u8),
                                                         ) as
@@ -1781,7 +1737,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                             if !(j < 16i32) {
                                                                 break;
                                                             }
-                                                            dns_domain_free(
+                                                            dns::domain::free(
                                                                 &mut (*z).ns[(*z).level as
                                                                                  (usize)]
                                                                     [j as (usize)] as
@@ -1797,7 +1753,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                                 _currentBlock = 183;
                                                                 break;
                                                             }
-                                                            pos = dns_packet_getname(
+                                                            pos = dns::packet::getname(
                                                                 buf as (*const u8),
                                                                 len,
                                                                 pos,
@@ -1807,7 +1763,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                                 _currentBlock = 348;
                                                                 break;
                                                             }
-                                                            pos = dns_packet_copy(
+                                                            pos = dns::packet::copy(
                                                                 buf as (*const u8),
                                                                 len,
                                                                 pos,
@@ -1825,7 +1781,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                                     (*const u8),
                                                                 &mut datalen as (*mut u16),
                                                             );
-                                                            if dns_domain_equal(
+                                                            if dns::domain::equal(
                                                                 referral as (*const u8),
                                                                 t1 as (*const u8),
                                                             ) !=
@@ -1849,7 +1805,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                                                         0
                                                                     {
                                                                         if k < 16i32 {
-                                                                            if dns_packet_getname(
+                                                                            if dns::packet::getname(
                                                                                    buf as (*const u8),
                                                                                    len,
                                                                                    pos,
@@ -1905,7 +1861,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                         _currentBlock = 201;
                         break;
                     }
-                    dns_domain_free(
+                    dns::domain::free(
                         &mut (*z).ns[(*z).level as (usize)][j as (usize)] as (*mut *mut u8),
                     );
                 }
@@ -1933,7 +1889,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                     _currentBlock = 194;
                     continue;
                 }
-                dns_sortip((*z).servers[(*z).level as (usize)].as_mut_ptr(), 64u32);
+                dns::sortip::sortip((*z).servers[(*z).level as (usize)].as_mut_ptr(), 64u32);
                 if (*z).level != 0 {
                     log_tx(
                         (*z).name[(*z).level as (usize)] as (*const u8),
@@ -1942,8 +1898,8 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                         (*z).servers[(*z).level as (usize)].as_mut_ptr() as (*const u8),
                         (*z).level,
                     );
-                    if dns_transmit_start(
-                        &mut (*z).dt as (*mut dns_transmit),
+                    if DnsTramsit::start(
+                        &mut (*z).dt as (*mut DnsTransmit),
                         (*z).servers[(*z).level as (usize)].as_mut_ptr() as (*const u8),
                         flagforwardonly,
                         (*z).name[(*z).level as (usize)] as (*const u8),
@@ -1964,8 +1920,8 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                         (*z).servers[0usize].as_mut_ptr() as (*const u8),
                         0u32,
                     );
-                    if dns_transmit_start(
-                        &mut (*z).dt as (*mut dns_transmit),
+                    if DnsTramsit::start(
+                        &mut (*z).dt as (*mut DnsTransmit),
                         (*z).servers[0usize].as_mut_ptr() as (*const u8),
                         flagforwardonly,
                         (*z).name[0usize] as (*const u8),
@@ -1980,7 +1936,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                     }
                 }
             } else {
-                if dns_domain_copy(
+                if dns::domain::copy(
                     &mut (*z).name[(*z).level.wrapping_add(1u32) as (usize)] as (*mut *mut u8),
                     (*z).ns[(*z).level as (usize)][j as (usize)] as (*const u8),
                 ) == 0
@@ -1988,7 +1944,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                     _currentBlock = 348;
                     continue;
                 }
-                dns_domain_free(
+                dns::domain::free(
                     &mut (*z).ns[(*z).level as (usize)][j as (usize)] as (*mut *mut u8),
                 );
                 (*z).level = (*z).level.wrapping_add(1u32);
@@ -2020,7 +1976,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
             } else {
                 (*z).type_.as_mut_ptr() as (*const u8)
             };
-            dlen = dns_domain_length(d as (*const u8));
+            dlen = dns::domain::length(d as (*const u8));
             if globalip(d, misc.as_mut_ptr()) != 0 {
                 if (*z).level != 0 {
                     k = 0i32;
@@ -2069,7 +2025,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                         break;
                     }
                 }
-            } else if dns_domain_equal(
+            } else if dns::domain::equal(
                 d as (*const u8),
                 (*b"\x011\x010\x010\x03127\x07in-addr\x04arpa\0\0").as_ptr(),
             ) != 0
@@ -2140,7 +2096,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                 }
                             } else {
                                 log_cachedcname(d as (*const u8), cached as (*const u8));
-                                if dns_domain_copy(
+                                if dns::domain::copy(
                                     &mut cname as (*mut *mut u8),
                                     cached as (*const u8),
                                 ) == 0
@@ -2181,7 +2137,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                     pos = 0u32;
                                     'loop278: loop {
                                         if {
-                                            pos = dns_packet_getname(
+                                            pos = dns::packet::getname(
                                                 cached as (*const u8),
                                                 cachedlen,
                                                 pos,
@@ -2238,7 +2194,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                     pos = 0u32;
                                     'loop271: loop {
                                         if {
-                                            pos = dns_packet_getname(
+                                            pos = dns::packet::getname(
                                                 cached as (*const u8),
                                                 cachedlen,
                                                 pos,
@@ -2295,7 +2251,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                     pos = 0u32;
                                     'loop262: loop {
                                         if {
-                                            pos = dns_packet_copy(
+                                            pos = dns::packet::copy(
                                                 cached as (*const u8),
                                                 cachedlen,
                                                 pos,
@@ -2308,7 +2264,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                                             _currentBlock = 268;
                                             break 'loop183;
                                         }
-                                        pos = dns_packet_getname(
+                                        pos = dns::packet::getname(
                                             cached as (*const u8),
                                             cachedlen,
                                             pos,
@@ -2537,7 +2493,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                         if !(j < 16i32) {
                             break;
                         }
-                        dns_domain_free(
+                        dns::domain::free(
                             &mut (*z).ns[(*z).level as (usize)][j as (usize)] as (*mut *mut u8),
                         );
                         j = j + 1;
@@ -2546,7 +2502,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                     j = 0i32;
                     'loop228: loop {
                         if {
-                            pos = dns_packet_getname(
+                            pos = dns::packet::getname(
                                 cached as (*const u8),
                                 cachedlen,
                                 pos,
@@ -2562,7 +2518,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                         if !(j < 16i32) {
                             continue;
                         }
-                        if dns_domain_copy(
+                        if dns::domain::copy(
                             &mut (*z).ns[(*z).level as (usize)][{
                                                                     let _old = j;
                                                                     j = j + 1;
@@ -2583,7 +2539,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                         if !(j < 16i32) {
                             break;
                         }
-                        dns_domain_free(
+                        dns::domain::free(
                             &mut (*z).ns[(*z).level as (usize)][j as (usize)] as (*mut *mut u8),
                         );
                         j = j + 1;
@@ -2618,7 +2574,7 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                 (*z).aliasttl[0usize] = ttl;
                 (*z).name[0usize] = 0i32 as (*mut u8);
             }
-            if dns_domain_copy(
+            if dns::domain::copy(
                 &mut (*z).name[(*z).level as (usize)] as (*mut *mut u8),
                 cname as (*const u8),
             ) == 0
@@ -2639,13 +2595,13 @@ unsafe extern "C" fn doit(mut z: *mut query, mut state: i32) -> i32 {
                 break;
             }
         } else if _currentBlock == 323 {
-            dns_domain_free(&mut (*z).name[(*z).level as (usize)] as (*mut *mut u8));
+            dns::domain::free(&mut (*z).name[(*z).level as (usize)] as (*mut *mut u8));
             j = 0i32;
             'loop324: loop {
                 if !(j < 16i32) {
                     break;
                 }
-                dns_domain_free(
+                dns::domain::free(
                     &mut (*z).ns[(*z).level as (usize)][j as (usize)] as (*mut *mut u8),
                 );
                 j = j + 1;
@@ -2729,7 +2685,7 @@ pub unsafe extern "C" fn query_start(
         cleanup(z);
         (*z).level = 0u32;
         (*z).loopvar = 0u32;
-        (if dns_domain_copy(&mut (*z).name[0usize] as (*mut *mut u8), dn as (*const u8)) == 0 {
+        (if dns::domain::copy(&mut (*z).name[0usize] as (*mut *mut u8), dn as (*const u8)) == 0 {
              -1i32
          } else {
              byte::copy((*z).type_.as_mut_ptr(), 2u32, type_);
@@ -2760,8 +2716,8 @@ pub unsafe extern "C" fn query_get(
     mut x: *mut pollfd,
     mut stamp: *mut TaiA,
 ) -> i32 {
-    let switch1 = dns_transmit_get(
-        &mut (*z).dt as (*mut dns_transmit),
+    let switch1 = DnsTramsit::get(
+        &mut (*z).dt as (*mut DnsTransmit),
         x as (*const pollfd),
         stamp as (*const TaiA),
     );
@@ -2776,5 +2732,5 @@ pub unsafe extern "C" fn query_get(
 
 #[no_mangle]
 pub unsafe extern "C" fn query_io(mut z: *mut query, mut x: *mut pollfd, mut deadline: *mut TaiA) {
-    dns_transmit_io(&mut (*z).dt as (*mut dns_transmit), x, deadline);
+    DnsTramsit::io(&mut (*z).dt as (*mut DnsTransmit), x, deadline);
 }

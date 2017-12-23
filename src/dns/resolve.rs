@@ -1,47 +1,10 @@
+use super::{rcip, DnsTransmit};
+use iopause::iopause;
+use libc;
 use tai::Tai;
 use taia::TaiA;
 
-extern "C" {
-    fn dns_resolvconfip(arg1: *mut u8) -> i32;
-    fn dns_transmit_get(arg1: *mut dns_transmit, arg2: *const pollfd, arg3: *const TaiA) -> i32;
-    fn dns_transmit_io(arg1: *mut dns_transmit, arg2: *mut pollfd, arg3: *mut TaiA);
-    fn dns_transmit_start(
-        arg1: *mut dns_transmit,
-        arg2: *const u8,
-        arg3: i32,
-        arg4: *const u8,
-        arg5: *const u8,
-        arg6: *const u8,
-    ) -> i32;
-    fn iopause(arg1: *mut pollfd, arg2: u32, arg3: *mut TaiA, arg4: *mut TaiA);
-}
-
-#[derive(Copy)]
-#[repr(C)]
-pub struct dns_transmit {
-    pub query: *mut u8,
-    pub querylen: u32,
-    pub packet: *mut u8,
-    pub packetlen: u32,
-    pub s1: i32,
-    pub tcpstate: i32,
-    pub udploop: u32,
-    pub curserver: u32,
-    pub deadline: TaiA,
-    pub pos: u32,
-    pub servers: *const u8,
-    pub localip: [u8; 4],
-    pub qtype: [u8; 2],
-}
-
-impl Clone for dns_transmit {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
-#[no_mangle]
-pub static mut dns_resolve_tx: dns_transmit = dns_transmit {
+pub static mut TX: DnsTransmit = DnsTransmit {
     query: 0i32 as (*mut u8),
     querylen: 0u32,
     packet: 0 as (*mut u8),
@@ -61,32 +24,17 @@ pub static mut dns_resolve_tx: dns_transmit = dns_transmit {
     qtype: [0u8; 2],
 };
 
-#[derive(Copy)]
-#[repr(C)]
-pub struct pollfd {
-    pub fd: i32,
-    pub events: i16,
-    pub revents: i16,
-}
-
-impl Clone for pollfd {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn dns_resolve(mut q: *const u8, mut qtype: *const u8) -> i32 {
-    let mut _currentBlock;
-    let mut stamp: TaiA;
-    let mut deadline: TaiA;
-    let mut servers: [u8; 64];
-    let mut x: [pollfd; 1];
+pub unsafe fn resolve(q: *const u8, qtype: *const u8) -> i32 {
+    let current_block;
+    let mut stamp: TaiA = ::std::mem::zeroed();
+    let mut deadline: TaiA = ::std::mem::zeroed();
+    let mut servers: [u8; 64] = [0u8; 64];
+    let mut x: [libc::pollfd; 1] = ::std::mem::zeroed();
     let mut r: i32;
-    if dns_resolvconfip(servers.as_mut_ptr()) == -1i32 {
+    if rcip::resolvconfip(servers.as_mut_ptr()) == -1i32 {
         -1i32
-    } else if dns_transmit_start(
-        &mut dns_resolve_tx as (*mut dns_transmit),
+    } else if DnsTransmit::start(
+        &mut TX as (*mut DnsTransmit),
         servers.as_mut_ptr() as (*const u8),
         1i32,
         q,
@@ -104,8 +52,8 @@ pub unsafe extern "C" fn dns_resolve(mut q: *const u8, mut qtype: *const u8) -> 
                 &mut deadline as (*mut TaiA) as (*const TaiA),
                 &mut stamp as (*mut TaiA) as (*const TaiA),
             );
-            dns_transmit_io(
-                &mut dns_resolve_tx as (*mut dns_transmit),
+            DnsTransmit::io(
+                &mut TX as (*mut DnsTransmit),
                 x.as_mut_ptr(),
                 &mut deadline as (*mut TaiA),
             );
@@ -115,20 +63,20 @@ pub unsafe extern "C" fn dns_resolve(mut q: *const u8, mut qtype: *const u8) -> 
                 &mut deadline as (*mut TaiA),
                 &mut stamp as (*mut TaiA),
             );
-            r = dns_transmit_get(
-                &mut dns_resolve_tx as (*mut dns_transmit),
-                x.as_mut_ptr() as (*const pollfd),
+            r = DnsTransmit::get(
+                &mut TX as (*mut DnsTransmit),
+                x.as_mut_ptr() as (*const libc::pollfd),
                 &mut stamp as (*mut TaiA) as (*const TaiA),
             );
             if r == -1i32 {
-                _currentBlock = 5;
+                current_block = 5;
                 break;
             }
             if r == 1i32 {
-                _currentBlock = 4;
+                current_block = 4;
                 break;
             }
         }
-        (if _currentBlock == 4 { 0i32 } else { -1i32 })
+        (if current_block == 4 { 0i32 } else { -1i32 })
     }
 }

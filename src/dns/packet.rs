@@ -1,26 +1,24 @@
+//! `dns/packet.rs`: DNS packet utilities
+
 use errno::{self, Errno};
 use libc;
+use super::domain;
 
-extern "C" {
-    fn dns_domain_copy(arg1: *mut *mut u8, arg2: *const u8) -> i32;
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn dns_packet_copy(
-    mut buf: *const u8,
-    mut len: u32,
+pub unsafe fn copy(
+    buf: *const u8,
+    len: u32,
     mut pos: u32,
     mut out: *mut u8,
     mut outlen: u32,
 ) -> u32 {
-    let mut _currentBlock;
+    let current_block;
     'loop0: loop {
         if outlen == 0 {
-            _currentBlock = 1;
+            current_block = 1;
             break;
         }
         if pos >= len {
-            _currentBlock = 4;
+            current_block = 4;
             break;
         }
         *out = *buf.offset({
@@ -31,7 +29,7 @@ pub unsafe extern "C" fn dns_packet_copy(
         out = out.offset(1isize);
         outlen = outlen.wrapping_sub(1u32);
     }
-    if _currentBlock == 1 {
+    if current_block == 1 {
         pos
     } else {
         errno::set_errno(Errno(libc::EPROTO));
@@ -39,17 +37,16 @@ pub unsafe extern "C" fn dns_packet_copy(
     }
 }
 
-#[no_mangle]
-pub unsafe extern "C" fn dns_packet_skipname(
-    mut buf: *const u8,
-    mut len: u32,
+pub unsafe fn skipname(
+    buf: *const u8,
+    len: u32,
     mut pos: u32,
 ) -> u32 {
-    let mut _currentBlock;
+    let current_block;
     let mut ch: u8;
     'loop1: loop {
         if pos >= len {
-            _currentBlock = 8;
+            current_block = 8;
             break;
         }
         ch = *buf.offset({
@@ -58,22 +55,22 @@ pub unsafe extern "C" fn dns_packet_skipname(
             _old
         } as (isize));
         if ch as (i32) >= 192i32 {
-            _currentBlock = 7;
+            current_block = 7;
             break;
         }
         if ch as (i32) >= 64i32 {
-            _currentBlock = 8;
+            current_block = 8;
             break;
         }
         if ch == 0 {
-            _currentBlock = 6;
+            current_block = 6;
             break;
         }
         pos = pos.wrapping_add(ch as (u32));
     }
-    if _currentBlock == 6 {
+    if current_block == 6 {
         pos
-    } else if _currentBlock == 7 {
+    } else if current_block == 7 {
         pos.wrapping_add(1u32)
     } else {
         errno::set_errno(Errno(libc::EPROTO));
@@ -81,24 +78,23 @@ pub unsafe extern "C" fn dns_packet_skipname(
     }
 }
 
-#[no_mangle]
-pub unsafe extern "C" fn dns_packet_getname(
-    mut buf: *const u8,
-    mut len: u32,
+pub unsafe fn getname(
+    buf: *const u8,
+    len: u32,
     mut pos: u32,
-    mut d: *mut *mut u8,
+    d: *mut *mut u8,
 ) -> u32 {
-    let mut _currentBlock;
+    let current_block;
     let mut loopvar: u32 = 0u32;
     let mut state: u32 = 0u32;
     let mut firstcompress: u32 = 0u32;
     let mut where_: u32;
     let mut ch: u8;
-    let mut name: [u8; 255];
+    let mut name: [u8; 255] = [0u8; 255];
     let mut namelen: u32 = 0u32;
     'loop1: loop {
         if pos >= len {
-            _currentBlock = 21;
+            current_block = 21;
             break;
         }
         ch = *buf.offset({
@@ -111,12 +107,12 @@ pub unsafe extern "C" fn dns_packet_getname(
             loopvar
         } >= 1000u32
         {
-            _currentBlock = 21;
+            current_block = 21;
             break;
         }
         if state != 0 {
             if namelen.wrapping_add(1u32) as (usize) > ::std::mem::size_of::<[u8; 255]>() {
-                _currentBlock = 21;
+                current_block = 21;
                 break;
             }
             name[{
@@ -134,7 +130,7 @@ pub unsafe extern "C" fn dns_packet_getname(
                 where_ = where_.wrapping_sub(192u32);
                 where_ = where_ << 8i32;
                 if pos >= len {
-                    _currentBlock = 21;
+                    current_block = 21;
                     break 'loop1;
                 }
                 ch = *buf.offset({
@@ -147,7 +143,7 @@ pub unsafe extern "C" fn dns_packet_getname(
                 }
                 pos = where_.wrapping_add(ch as (u32));
                 if pos >= len {
-                    _currentBlock = 21;
+                    current_block = 21;
                     break 'loop1;
                 }
                 ch = *buf.offset({
@@ -160,16 +156,16 @@ pub unsafe extern "C" fn dns_packet_getname(
                     loopvar
                 } >= 1000u32
                 {
-                    _currentBlock = 21;
+                    current_block = 21;
                     break 'loop1;
                 }
             }
             if ch as (i32) >= 64i32 {
-                _currentBlock = 21;
+                current_block = 21;
                 break;
             }
             if namelen.wrapping_add(1u32) as (usize) > ::std::mem::size_of::<[u8; 255]>() {
-                _currentBlock = 21;
+                current_block = 21;
                 break;
             }
             name[{
@@ -178,14 +174,14 @@ pub unsafe extern "C" fn dns_packet_getname(
                      _old
                  } as (usize)] = ch;
             if ch == 0 {
-                _currentBlock = 9;
+                current_block = 9;
                 break;
             }
             state = ch as (u32);
         }
     }
-    if _currentBlock == 9 {
-        (if dns_domain_copy(d, name.as_mut_ptr() as (*const u8)) == 0 {
+    if current_block == 9 {
+        (if domain::copy(d, name.as_mut_ptr() as (*const u8)) == 0 {
              0u32
          } else if firstcompress != 0 {
              firstcompress

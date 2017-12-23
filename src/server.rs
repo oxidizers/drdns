@@ -1,6 +1,7 @@
 use buffer::{Buffer, STDERR_BUFFER};
 use byte;
 use case;
+use dns;
 use ip4;
 use libc;
 use ndelay;
@@ -8,9 +9,6 @@ use socket;
 use strerr::{StrErr, STRERR_SYS};
 
 extern "C" {
-    fn dns_domain_length(arg1: *const u8) -> u32;
-    fn dns_packet_copy(arg1: *const u8, arg2: u32, arg3: u32, arg4: *mut u8, arg5: u32) -> u32;
-    fn dns_packet_getname(arg1: *const u8, arg2: u32, arg3: u32, arg4: *mut *mut u8) -> u32;
     fn droproot(arg1: *const u8);
     static mut fatal: *mut u8;
     fn initialize();
@@ -52,7 +50,7 @@ unsafe extern "C" fn doit() -> i32 {
     let mut qtype: [u8; 2];
     let mut qclass: [u8; 2];
     if !(len as (usize) >= ::std::mem::size_of::<[u8; 513]>()) {
-        pos = dns_packet_copy(
+        pos = dns::packet::copy(
             buf.as_mut_ptr() as (*const u8),
             len as (u32),
             0u32,
@@ -63,14 +61,14 @@ unsafe extern "C" fn doit() -> i32 {
             if header[2usize] as (i32) & 128i32 == 0 {
                 if header[4usize] == 0 {
                     if !(header[5usize] as (i32) != 1i32) {
-                        pos = dns_packet_getname(
+                        pos = dns::packet::getname(
                             buf.as_mut_ptr() as (*const u8),
                             len as (u32),
                             pos,
                             &mut q as (*mut *mut u8),
                         );
                         if !(pos == 0) {
-                            pos = dns_packet_copy(
+                            pos = dns::packet::copy(
                                 buf.as_mut_ptr() as (*const u8),
                                 len as (u32),
                                 pos,
@@ -78,7 +76,7 @@ unsafe extern "C" fn doit() -> i32 {
                                 2u32,
                             );
                             if !(pos == 0) {
-                                pos = dns_packet_copy(
+                                pos = dns::packet::copy(
                                     buf.as_mut_ptr() as (*const u8),
                                     len as (u32),
                                     pos,
@@ -140,7 +138,7 @@ unsafe extern "C" fn doit() -> i32 {
                                             ) ==
                                                      0)
                                             {
-                                                case::lowerb(q, dns_domain_length(q as (*const u8)));
+                                                case::lowerb(q, dns::domain::length(q as (*const u8)));
                                                 if respond(
                                                     q,
                                                     qtype.as_mut_ptr(),

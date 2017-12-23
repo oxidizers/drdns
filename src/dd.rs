@@ -1,6 +1,4 @@
-extern "C" {
-    fn dns_domain_equal(arg1: *const u8, arg2: *const u8) -> i32;
-}
+use dns;
 
 #[no_mangle]
 pub unsafe extern "C" fn dd(mut q: *const u8, mut base: *const u8, mut ip: *mut u8) -> i32 {
@@ -9,7 +7,7 @@ pub unsafe extern "C" fn dd(mut q: *const u8, mut base: *const u8, mut ip: *mut 
     let mut x: u32;
     j = 0i32;
     'loop1: loop {
-        if dns_domain_equal(q, base) != 0 {
+        if dns::domain::equal(q, base) != 0 {
             _currentBlock = 24;
             break;
         }

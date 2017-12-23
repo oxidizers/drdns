@@ -1,15 +1,9 @@
 use byte;
+use dns;
 use errno::{self, Errno};
 use libc;
 use uint16;
 use uint32;
-
-extern "C" {
-    fn dns_domain_equal(arg1: *const u8, arg2: *const u8) -> i32;
-    fn dns_domain_todot_cat(arg1: *mut StrAlloc, arg2: *const u8) -> i32;
-    fn dns_packet_copy(arg1: *const u8, arg2: u32, arg3: u32, arg4: *mut u8, arg5: u32) -> u32;
-    fn dns_packet_getname(arg1: *const u8, arg2: u32, arg3: u32, arg4: *mut *mut u8) -> u32;
-}
 
 static mut d: *mut u8 = 0 as (*mut u8);
 
@@ -31,11 +25,11 @@ pub unsafe extern "C" fn printrecord_cat(
     let mut newpos: u32;
     let mut i: i32;
     let mut ch: u8;
-    pos = dns_packet_getname(buf, len, pos, &mut d as (*mut *mut u8));
+    pos = dns::packet::getname(buf, len, pos, &mut d as (*mut *mut u8));
     if pos == 0 {
         0u32
     } else {
-        pos = dns_packet_copy(buf, len, pos, misc.as_mut_ptr(), 10u32);
+        pos = dns::packet::copy(buf, len, pos, misc.as_mut_ptr(), 10u32);
         (if pos == 0 {
              0u32
          } else {
@@ -45,7 +39,7 @@ pub unsafe extern "C" fn printrecord_cat(
             );
              newpos = pos.wrapping_add(datalen as (u32));
              if !q.is_null() {
-                 if dns_domain_equal(d as (*const u8), q) == 0 {
+                 if dns::domain::equal(d as (*const u8), q) == 0 {
                      return newpos;
                  } else if byte::diff(qtype as (*mut u8), 2u32, misc.as_mut_ptr()) != 0 &&
                             (byte::diff(
@@ -57,7 +51,7 @@ pub unsafe extern "C" fn printrecord_cat(
                      return newpos;
                  }
              }
-             (if dns_domain_todot_cat(out, d as (*const u8)) == 0 {
+             (if dns::domain::todot_cat(out, d as (*const u8)) == 0 {
                   0u32
               } else if StrAlloc::cats(out, (*b" \0").as_ptr()) == 0 {
                   0u32
@@ -106,12 +100,12 @@ pub unsafe extern "C" fn printrecord_cat(
                            x = (*b" CNAME \0").as_ptr();
                        }
                        if !x.is_null() {
-                           pos = dns_packet_getname(buf, len, pos, &mut d as (*mut *mut u8));
+                           pos = dns::packet::getname(buf, len, pos, &mut d as (*mut *mut u8));
                            if pos == 0 {
                                return 0u32;
                            } else if StrAlloc::cats(out, x) == 0 {
                                return 0u32;
-                           } else if dns_domain_todot_cat(out, d as (*const u8)) == 0 {
+                           } else if dns::domain::todot_cat(out, d as (*const u8)) == 0 {
                                return 0u32;
                            }
                        } else if byte::diff(
@@ -123,12 +117,12 @@ pub unsafe extern "C" fn printrecord_cat(
                            if StrAlloc::cats(out, (*b" MX \0").as_ptr()) == 0 {
                                return 0u32;
                            } else {
-                               pos = dns_packet_copy(buf, len, pos, misc.as_mut_ptr(), 2u32);
+                               pos = dns::packet::copy(buf, len, pos, misc.as_mut_ptr(), 2u32);
                                if pos == 0 {
                                    return 0u32;
                                } else {
                                    pos =
-                                       dns_packet_getname(buf, len, pos, &mut d as (*mut *mut u8));
+                                       dns::packet::getname(buf, len, pos, &mut d as (*mut *mut u8));
                                    if pos == 0 {
                                        return 0u32;
                                    } else {
@@ -140,7 +134,7 @@ pub unsafe extern "C" fn printrecord_cat(
                                            return 0u32;
                                        } else if StrAlloc::cats(out, (*b" \0").as_ptr()) == 0 {
                                            return 0u32;
-                                       } else if dns_domain_todot_cat(out, d as (*const u8)) == 0 {
+                                       } else if dns::domain::todot_cat(out, d as (*const u8)) == 0 {
                                            return 0u32;
                                        }
                                    }
@@ -155,23 +149,23 @@ pub unsafe extern "C" fn printrecord_cat(
                            if StrAlloc::cats(out, (*b" SOA \0").as_ptr()) == 0 {
                                return 0u32;
                            } else {
-                               pos = dns_packet_getname(buf, len, pos, &mut d as (*mut *mut u8));
+                               pos = dns::packet::getname(buf, len, pos, &mut d as (*mut *mut u8));
                                if pos == 0 {
                                    return 0u32;
-                               } else if dns_domain_todot_cat(out, d as (*const u8)) == 0 {
+                               } else if dns::domain::todot_cat(out, d as (*const u8)) == 0 {
                                    return 0u32;
                                } else if StrAlloc::cats(out, (*b" \0").as_ptr()) == 0 {
                                    return 0u32;
                                } else {
                                    pos =
-                                       dns_packet_getname(buf, len, pos, &mut d as (*mut *mut u8));
+                                       dns::packet::getname(buf, len, pos, &mut d as (*mut *mut u8));
                                    if pos == 0 {
                                        return 0u32;
-                                   } else if dns_domain_todot_cat(out, d as (*const u8)) == 0 {
+                                   } else if dns::domain::todot_cat(out, d as (*const u8)) == 0 {
                                        return 0u32;
                                    } else {
                                        pos =
-                                           dns_packet_copy(buf, len, pos, misc.as_mut_ptr(), 20u32);
+                                           dns::packet::copy(buf, len, pos, misc.as_mut_ptr(), 20u32);
                                        if pos == 0 {
                                            return 0u32;
                                        } else {
@@ -220,7 +214,7 @@ pub unsafe extern "C" fn printrecord_cat(
                            } else if StrAlloc::cats(out, (*b" A \0").as_ptr()) == 0 {
                                return 0u32;
                            } else {
-                               pos = dns_packet_copy(buf, len, pos, misc.as_mut_ptr(), 4u32);
+                               pos = dns::packet::copy(buf, len, pos, misc.as_mut_ptr(), 4u32);
                                if pos == 0 {
                                    return 0u32;
                                } else {
@@ -273,7 +267,7 @@ pub unsafe extern "C" fn printrecord_cat(
                                        _currentBlock = 83;
                                        break;
                                    }
-                                   pos = dns_packet_copy(buf, len, pos, misc.as_mut_ptr(), 1u32);
+                                   pos = dns::packet::copy(buf, len, pos, misc.as_mut_ptr(), 1u32);
                                    if pos == 0 {
                                        _currentBlock = 29;
                                        break;
