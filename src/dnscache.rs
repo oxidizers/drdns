@@ -1,6 +1,7 @@
 use alloc;
 use byte;
 use dns::{self, DnsTransmit};
+use droproot::droproot;
 use errno::{self, Errno};
 use ip4;
 use iopause::iopause;
@@ -15,7 +16,6 @@ use ulong;
 
 extern "C" {
     fn cache_init(arg1: u32) -> i32;
-    fn droproot(arg1: *const u8);
     fn log_query(
         arg1: *mut usize,
         arg2: *const u8,

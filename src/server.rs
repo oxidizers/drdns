@@ -2,6 +2,7 @@ use buffer::{Buffer, STDERR_BUFFER};
 use byte;
 use case;
 use dns;
+use droproot::droproot;
 use ip4;
 use libc;
 use ndelay;
@@ -9,7 +10,6 @@ use socket;
 use strerr::{StrErr, STRERR_SYS};
 
 extern "C" {
-    fn droproot(arg1: *const u8);
     static mut fatal: *mut u8;
     fn initialize();
     fn qlog(
