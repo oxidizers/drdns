@@ -1,15 +1,13 @@
 use byte;
 use buffer::{Buffer, STDOUT_BUFFER};
 use case;
+use dns;
 use ip4;
 use libc;
 use stralloc::StrAlloc;
 use uint16;
 
 extern "C" {
-    fn dns_domain_fromdot(arg1: *mut *mut u8, arg2: *const u8, arg3: u32) -> i32;
-    fn dns_domain_length(arg1: *const u8) -> u32;
-    fn dns_domain_todot_cat(arg1: *mut StrAlloc, arg2: *const u8) -> i32;
     fn parsetype(arg1: *mut u8, arg2: *mut u8) -> i32;
     fn printpacket_cat(arg1: *mut StrAlloc, arg2: *mut u8, arg3: u32) -> u32;
     fn respond(arg1: *mut u8, arg2: *mut u8, arg3: *mut u8) -> i32;
@@ -100,7 +98,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     {
         usage();
     }
-    if dns_domain_fromdot(
+    if dns::domain::fromdot(
         &mut q as (*mut *mut u8),
         *argv as (*const u8),
         libc::strlen(*argv as *const i8) as u32,
@@ -127,7 +125,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     if StrAlloc::cats(&mut out as (*mut StrAlloc), (*b" \0").as_ptr()) == 0 {
         oops();
     }
-    if dns_domain_todot_cat(&mut out as (*mut StrAlloc), q as (*const u8)) == 0 {
+    if dns::domain::todot_cat(&mut out as (*mut StrAlloc), q as (*const u8)) == 0 {
         oops();
     }
     if StrAlloc::cats(&mut out as (*mut StrAlloc), (*b":\n\0").as_ptr()) == 0 {
@@ -150,7 +148,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     let _rhs = 4i32;
     let _lhs = &mut *response.offset(2isize);
     *_lhs = (*_lhs as (i32) | _rhs) as (u8);
-    case::lowerb(q, dns_domain_length(q as (*const u8)));
+    case::lowerb(q, dns::domain::length(q as (*const u8)));
     if byte::diff(
         type_.as_mut_ptr(),
         2u32,

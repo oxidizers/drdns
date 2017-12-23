@@ -1,11 +1,7 @@
 use byte;
+use dns;
 use uint16;
 use uint32;
-
-extern "C" {
-    fn dns_domain_equal(arg1: *const u8, arg2: *const u8) -> i32;
-    fn dns_domain_length(arg1: *const u8) -> u32;
-}
 
 #[no_mangle]
 pub static mut response: [u8; 65535] = [0u8; 65535];
@@ -42,7 +38,7 @@ pub unsafe extern "C" fn response_addname(mut d: *const u8) -> i32 {
     let mut dlen: u32;
     let mut i: u32;
     let mut buf: [u8; 2];
-    dlen = dns_domain_length(d);
+    dlen = dns::domain::length(d);
     'loop1: loop {
         if *d == 0 {
             _currentBlock = 2;
@@ -53,7 +49,7 @@ pub unsafe extern "C" fn response_addname(mut d: *const u8) -> i32 {
             if !(i < name_num) {
                 break;
             }
-            if dns_domain_equal(d, name[i as (usize)].as_mut_ptr() as (*const u8)) != 0 {
+            if dns::domain::equal(d, name[i as (usize)].as_mut_ptr() as (*const u8)) != 0 {
                 _currentBlock = 13;
                 break 'loop1;
             }

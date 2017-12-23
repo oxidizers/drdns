@@ -1,13 +1,11 @@
 use byte;
 use case;
 use cdb::Cdb;
+use dns;
 use open;
 
 extern "C" {
     fn close(arg1: i32) -> i32;
-    fn dns_domain_length(arg1: *const u8) -> u32;
-    fn dns_random_init(arg1: *const u8);
-    fn dns_sortip(arg1: *mut u8, arg2: u32);
     static mut response: *mut u8;
     fn response_addbytes(arg1: *const u8, arg2: u32) -> i32;
     fn response_rfinish(arg1: i32);
@@ -24,7 +22,7 @@ static mut seed: [u8; 128] = [0u8; 128];
 
 #[no_mangle]
 pub unsafe extern "C" fn initialize() {
-    dns_random_init(seed.as_mut_ptr() as (*const u8));
+    dns::random::init(seed.as_mut_ptr() as (*const u8));
 }
 
 static mut c: Cdb = Cdb {
@@ -51,7 +49,7 @@ unsafe extern "C" fn doit(mut q: *mut u8, mut qtype: *mut u8, mut ip: *mut u8) -
     let mut qlen: u32;
     let mut flaga: i32;
     let mut flagmx: i32;
-    qlen = dns_domain_length(q as (*const u8));
+    qlen = dns::domain::length(q as (*const u8));
     if qlen > 255u32 {
         0i32
     } else {
@@ -125,7 +123,7 @@ unsafe extern "C" fn doit(mut q: *mut u8, mut qtype: *mut u8, mut ip: *mut u8) -
                             return 0i32;
                         } else {
                             if flaga != 0 {
-                                dns_sortip(data.as_mut_ptr(), dlen);
+                                dns::sortip::sortip(data.as_mut_ptr(), dlen);
                                 if dlen > 12u32 {
                                     dlen = 12u32;
                                 }

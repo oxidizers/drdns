@@ -1,6 +1,8 @@
 use byte;
 use buffer::{Buffer, STDOUT_BUFFER};
+use dns::{self, DnsTransmit};
 use errno::errno;
+use iopause::iopause;
 use libc;
 use stralloc::StrAlloc;
 use strerr::{StrErr, STRERR_SYS};
@@ -9,21 +11,6 @@ use taia::TaiA;
 use uint16;
 
 extern "C" {
-    fn dns_domain_fromdot(arg1: *mut *mut u8, arg2: *const u8, arg3: u32) -> i32;
-    fn dns_domain_todot_cat(arg1: *mut StrAlloc, arg2: *const u8) -> i32;
-    fn dns_ip4_qualify(arg1: *mut StrAlloc, arg2: *mut StrAlloc, arg3: *const StrAlloc) -> i32;
-    fn dns_random_init(arg1: *const u8);
-    fn dns_transmit_get(arg1: *mut dns_transmit, arg2: *const pollfd, arg3: *const TaiA) -> i32;
-    fn dns_transmit_io(arg1: *mut dns_transmit, arg2: *mut pollfd, arg3: *mut TaiA);
-    fn dns_transmit_start(
-        arg1: *mut dns_transmit,
-        arg2: *const u8,
-        arg3: i32,
-        arg4: *const u8,
-        arg5: *const u8,
-        arg6: *const u8,
-    ) -> i32;
-    fn iopause(arg1: *mut pollfd, arg2: u32, arg3: *mut TaiA, arg4: *mut TaiA);
     fn parsetype(arg1: *mut u8, arg2: *mut u8) -> i32;
     fn printpacket_cat(arg1: *mut StrAlloc, arg2: *mut u8, arg3: u32) -> u32;
 }
@@ -56,31 +43,7 @@ pub unsafe extern "C" fn oops() {
     );
 }
 
-#[derive(Copy)]
-#[repr(C)]
-pub struct dns_transmit {
-    pub query: *mut u8,
-    pub querylen: u32,
-    pub packet: *mut u8,
-    pub packetlen: u32,
-    pub s1: i32,
-    pub tcpstate: i32,
-    pub udploop: u32,
-    pub curserver: u32,
-    pub deadline: TaiA,
-    pub pos: u32,
-    pub servers: *const u8,
-    pub localip: [u8; 4],
-    pub qtype: [u8; 2],
-}
-
-impl Clone for dns_transmit {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
-static mut tx: dns_transmit = dns_transmit {
+static mut tx: DnsTransmit = DnsTransmit {
     query: 0 as (*mut u8),
     querylen: 0u32,
     packet: 0 as (*mut u8),
@@ -121,8 +84,8 @@ pub unsafe extern "C" fn resolve(mut q: *mut u8, mut qtype: *mut u8, mut servers
     let mut deadline: TaiA;
     let mut x: [pollfd; 1];
     let mut r: i32;
-    if dns_transmit_start(
-        &mut tx as (*mut dns_transmit),
+    if DnsTramsit::start(
+        &mut tx as (*mut DnsTransmit),
         servers as (*const u8),
         0i32,
         q as (*const u8),
@@ -140,8 +103,8 @@ pub unsafe extern "C" fn resolve(mut q: *mut u8, mut qtype: *mut u8, mut servers
                 &mut deadline as (*mut TaiA) as (*const TaiA),
                 &mut stamp as (*mut TaiA) as (*const TaiA),
             );
-            dns_transmit_io(
-                &mut tx as (*mut dns_transmit),
+            DnsTramsit::io(
+                &mut tx as (*mut DnsTransmit),
                 x.as_mut_ptr(),
                 &mut deadline as (*mut TaiA),
             );
@@ -151,8 +114,8 @@ pub unsafe extern "C" fn resolve(mut q: *mut u8, mut qtype: *mut u8, mut servers
                 &mut deadline as (*mut TaiA),
                 &mut stamp as (*mut TaiA),
             );
-            r = dns_transmit_get(
-                &mut tx as (*mut dns_transmit),
+            r = DnsTramsit::get(
+                &mut tx as (*mut DnsTransmit),
                 x.as_mut_ptr() as (*const pollfd),
                 &mut stamp as (*mut TaiA) as (*const TaiA),
             );
@@ -218,7 +181,7 @@ fn main() {
 #[no_mangle]
 pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     let mut u16: u16;
-    dns_random_init(seed.as_mut_ptr() as (*const u8));
+    dns::random::init(seed.as_mut_ptr() as (*const u8));
     if (*argv).is_null() {
         usage();
     }
@@ -239,7 +202,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     {
         usage();
     }
-    if dns_domain_fromdot(
+    if dns::domain::fromdot(
         &mut q as (*mut *mut u8),
         *argv as (*const u8),
         libc::strlen(*argv as *const i8) as u32,
@@ -257,7 +220,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     if StrAlloc::copys(&mut out as (*mut StrAlloc), *argv as (*const u8)) == 0 {
         oops();
     }
-    if dns_ip4_qualify(
+    if dns::ip4::qualify(
         &mut ip as (*mut StrAlloc),
         &mut fqdn as (*mut StrAlloc),
         &mut out as (*mut StrAlloc) as (*const StrAlloc),
@@ -280,7 +243,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     if StrAlloc::cats(&mut out as (*mut StrAlloc), (*b" \0").as_ptr()) == 0 {
         oops();
     }
-    if dns_domain_todot_cat(&mut out as (*mut StrAlloc), q as (*const u8)) == 0 {
+    if dns::domain::todot_cat(&mut out as (*mut StrAlloc), q as (*const u8)) == 0 {
         oops();
     }
     if StrAlloc::cats(&mut out as (*mut StrAlloc), (*b":\n\0").as_ptr()) == 0 {

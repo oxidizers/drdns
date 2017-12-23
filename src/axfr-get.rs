@@ -1,5 +1,6 @@
 use byte;
 use buffer::{self, Buffer};
+use dns;
 use errno::{self, Errno};
 use ip4;
 use libc;
@@ -13,14 +14,6 @@ use ulong;
 extern "C" {
     fn __swbuf(arg1: i32, arg2: *mut __sFILE) -> i32;
     fn close(arg1: i32) -> i32;
-    fn dns_domain_equal(arg1: *const u8, arg2: *const u8) -> i32;
-    fn dns_domain_fromdot(arg1: *mut *mut u8, arg2: *const u8, arg3: u32) -> i32;
-    fn dns_domain_length(arg1: *const u8) -> u32;
-    fn dns_domain_suffix(arg1: *const u8, arg2: *const u8) -> i32;
-    fn dns_domain_todot_cat(arg1: *mut StrAlloc, arg2: *const u8) -> i32;
-    fn dns_packet_copy(arg1: *const u8, arg2: u32, arg3: u32, arg4: *mut u8, arg5: u32) -> u32;
-    fn dns_packet_getname(arg1: *const u8, arg2: u32, arg3: u32, arg4: *mut *mut u8) -> u32;
-    fn dns_packet_skipname(arg1: *const u8, arg2: u32, arg3: u32) -> u32;
     fn fsync(arg1: i32) -> i32;
     fn getln(arg1: *mut Buffer, arg2: *mut StrAlloc, arg3: *mut i32, arg4: i32) -> i32;
     fn rename(__old: *const u8, __new: *const u8) -> i32;
@@ -147,7 +140,7 @@ pub unsafe extern "C" fn x_copy(
     mut out: *mut u8,
     mut outlen: u32,
 ) -> u32 {
-    pos = dns_packet_copy(buf as (*const u8), len, pos, out, outlen);
+    pos = dns::packet::copy(buf as (*const u8), len, pos, out, outlen);
     if pos == 0 {
         die_parse();
     }
@@ -161,7 +154,7 @@ pub unsafe extern "C" fn x_getname(
     mut pos: u32,
     mut out: *mut *mut u8,
 ) -> u32 {
-    pos = dns_packet_getname(buf as (*const u8), len, pos, out);
+    pos = dns::packet::getname(buf as (*const u8), len, pos, out);
     if pos == 0 {
         die_parse();
     }
@@ -170,7 +163,7 @@ pub unsafe extern "C" fn x_getname(
 
 #[no_mangle]
 pub unsafe extern "C" fn x_skipname(mut buf: *mut u8, mut len: u32, mut pos: u32) -> u32 {
-    pos = dns_packet_skipname(buf as (*const u8), len, pos);
+    pos = dns::packet::skipname(buf as (*const u8), len, pos);
     if pos == 0 {
         die_parse();
     }
@@ -388,7 +381,7 @@ pub unsafe extern "C" fn doit(mut buf: *mut u8, mut len: u32, mut pos: u32) -> u
         0u32
     } else {
         len = pos.wrapping_add(dlen as (u32));
-        (if dns_domain_suffix(d1 as (*const u8), zone as (*const u8)) == 0 {
+        (if dns::domain::suffix(d1 as (*const u8), zone as (*const u8)) == 0 {
              len
          } else if byte::diff(
             data.as_mut_ptr().offset(2isize),
@@ -434,7 +427,7 @@ pub unsafe extern "C" fn doit(mut buf: *mut u8, mut len: u32, mut pos: u32) -> u
                                 0
                     {
                          return 0u32;
-                     } else if dns_domain_todot_cat(
+                     } else if dns::domain::todot_cat(
                         &mut line as (*mut StrAlloc),
                         d1 as (*const u8),
                     ) == 0
@@ -444,7 +437,7 @@ pub unsafe extern "C" fn doit(mut buf: *mut u8, mut len: u32, mut pos: u32) -> u
                                 0
                     {
                          return 0u32;
-                     } else if dns_domain_todot_cat(
+                     } else if dns::domain::todot_cat(
                         &mut line as (*mut StrAlloc),
                         d2 as (*const u8),
                     ) == 0
@@ -456,7 +449,7 @@ pub unsafe extern "C" fn doit(mut buf: *mut u8, mut len: u32, mut pos: u32) -> u
                     ) == 0
                     {
                          return 0u32;
-                     } else if dns_domain_todot_cat(
+                     } else if dns::domain::todot_cat(
                         &mut line as (*mut StrAlloc),
                         d3 as (*const u8),
                     ) == 0
@@ -515,7 +508,7 @@ pub unsafe extern "C" fn doit(mut buf: *mut u8, mut len: u32, mut pos: u32) -> u
                  } else if byte::diff(d1, 2u32, (*b"\x01*\0").as_ptr() as (*mut u8)) == 0 {
                      errno::set_errno(Errno(libc::EPROTO));
                      return 0u32;
-                 } else if dns_domain_todot_cat(
+                 } else if dns::domain::todot_cat(
                     &mut line as (*mut StrAlloc),
                     d1 as (*const u8),
                 ) == 0
@@ -525,7 +518,7 @@ pub unsafe extern "C" fn doit(mut buf: *mut u8, mut len: u32, mut pos: u32) -> u
                      return 0u32;
                  } else {
                      x_getname(buf, len, pos, &mut d1 as (*mut *mut u8));
-                     if dns_domain_todot_cat(&mut line as (*mut StrAlloc), d1 as (*const u8)) == 0 {
+                     if dns::domain::todot_cat(&mut line as (*mut StrAlloc), d1 as (*const u8)) == 0 {
                          return 0u32;
                      } else if StrAlloc::cats(&mut line as (*mut StrAlloc), (*b".\0").as_ptr()) ==
                                 0
@@ -541,7 +534,7 @@ pub unsafe extern "C" fn doit(mut buf: *mut u8, mut len: u32, mut pos: u32) -> u
             {
                  if StrAlloc::copys(&mut line as (*mut StrAlloc), (*b"C\0").as_ptr()) == 0 {
                      return 0u32;
-                 } else if dns_domain_todot_cat(
+                 } else if dns::domain::todot_cat(
                     &mut line as (*mut StrAlloc),
                     d1 as (*const u8),
                 ) == 0
@@ -551,7 +544,7 @@ pub unsafe extern "C" fn doit(mut buf: *mut u8, mut len: u32, mut pos: u32) -> u
                      return 0u32;
                  } else {
                      x_getname(buf, len, pos, &mut d1 as (*mut *mut u8));
-                     if dns_domain_todot_cat(&mut line as (*mut StrAlloc), d1 as (*const u8)) == 0 {
+                     if dns::domain::todot_cat(&mut line as (*mut StrAlloc), d1 as (*const u8)) == 0 {
                          return 0u32;
                      } else if StrAlloc::cats(&mut line as (*mut StrAlloc), (*b".\0").as_ptr()) ==
                                 0
@@ -567,7 +560,7 @@ pub unsafe extern "C" fn doit(mut buf: *mut u8, mut len: u32, mut pos: u32) -> u
             {
                  if StrAlloc::copys(&mut line as (*mut StrAlloc), (*b"^\0").as_ptr()) == 0 {
                      return 0u32;
-                 } else if dns_domain_todot_cat(
+                 } else if dns::domain::todot_cat(
                     &mut line as (*mut StrAlloc),
                     d1 as (*const u8),
                 ) == 0
@@ -577,7 +570,7 @@ pub unsafe extern "C" fn doit(mut buf: *mut u8, mut len: u32, mut pos: u32) -> u
                      return 0u32;
                  } else {
                      x_getname(buf, len, pos, &mut d1 as (*mut *mut u8));
-                     if dns_domain_todot_cat(&mut line as (*mut StrAlloc), d1 as (*const u8)) == 0 {
+                     if dns::domain::todot_cat(&mut line as (*mut StrAlloc), d1 as (*const u8)) == 0 {
                          return 0u32;
                      } else if StrAlloc::cats(&mut line as (*mut StrAlloc), (*b".\0").as_ptr()) ==
                                 0
@@ -594,7 +587,7 @@ pub unsafe extern "C" fn doit(mut buf: *mut u8, mut len: u32, mut pos: u32) -> u
                  let mut dist: u16;
                  if StrAlloc::copys(&mut line as (*mut StrAlloc), (*b"@\0").as_ptr()) == 0 {
                      return 0u32;
-                 } else if dns_domain_todot_cat(
+                 } else if dns::domain::todot_cat(
                     &mut line as (*mut StrAlloc),
                     d1 as (*const u8),
                 ) == 0
@@ -606,7 +599,7 @@ pub unsafe extern "C" fn doit(mut buf: *mut u8, mut len: u32, mut pos: u32) -> u
                      pos = x_copy(buf, len, pos, data.as_mut_ptr(), 2u32);
                      uint16::unpack_big(data.as_mut_ptr() as (*const u8), &mut dist as (*mut u16));
                      x_getname(buf, len, pos, &mut d1 as (*mut *mut u8));
-                     if dns_domain_todot_cat(&mut line as (*mut StrAlloc), d1 as (*const u8)) == 0 {
+                     if dns::domain::todot_cat(&mut line as (*mut StrAlloc), d1 as (*const u8)) == 0 {
                          return 0u32;
                      } else if StrAlloc::cats(
                         &mut line as (*mut StrAlloc),
@@ -632,7 +625,7 @@ pub unsafe extern "C" fn doit(mut buf: *mut u8, mut len: u32, mut pos: u32) -> u
                  let mut ipstr: [u8; 20];
                  if StrAlloc::copys(&mut line as (*mut StrAlloc), (*b"+\0").as_ptr()) == 0 {
                      return 0u32;
-                 } else if dns_domain_todot_cat(
+                 } else if dns::domain::todot_cat(
                     &mut line as (*mut StrAlloc),
                     d1 as (*const u8),
                 ) == 0
@@ -656,7 +649,7 @@ pub unsafe extern "C" fn doit(mut buf: *mut u8, mut len: u32, mut pos: u32) -> u
                  let mut ch2: u8;
                  if StrAlloc::copys(&mut line as (*mut StrAlloc), (*b":\0").as_ptr()) == 0 {
                      return 0u32;
-                 } else if dns_domain_todot_cat(
+                 } else if dns::domain::todot_cat(
                     &mut line as (*mut StrAlloc),
                     d1 as (*const u8),
                 ) == 0
@@ -809,7 +802,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     {
         die_usage();
     }
-    if dns_domain_fromdot(
+    if dns::domain::fromdot(
         &mut zone as (*mut *mut u8),
         *argv as (*const u8),
         libc::strlen(*argv as *const i8) as u32,
@@ -817,7 +810,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     {
         die_generate();
     }
-    zonelen = dns_domain_length(zone as (*const u8));
+    zonelen = dns::domain::length(zone as (*const u8));
     if (*{
             argv = argv.offset(1isize);
             argv
@@ -925,7 +918,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
         die_parse();
     }
     pos = x_getname(packet.s, packet.len, pos, &mut d1 as (*mut *mut u8));
-    if dns_domain_equal(zone as (*const u8), d1 as (*const u8)) == 0 {
+    if dns::domain::equal(zone as (*const u8), d1 as (*const u8)) == 0 {
         errno::set_errno(Errno(libc::EPROTO));
         die_parse();
     }

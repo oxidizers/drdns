@@ -1,4 +1,5 @@
 use buffer::{Buffer, STDOUT_BUFFER};
+use dns::{self, DnsTransmit};
 use errno::errno;
 use libc;
 use stralloc::StrAlloc;
@@ -8,11 +9,6 @@ use taia::TaiA;
 use uint16;
 
 extern "C" {
-    fn dns_domain_fromdot(arg1: *mut *mut u8, arg2: *const u8, arg3: u32) -> i32;
-    fn dns_domain_todot_cat(arg1: *mut StrAlloc, arg2: *const u8) -> i32;
-    fn dns_random_init(arg1: *const u8);
-    fn dns_resolve(arg1: *const u8, arg2: *const u8) -> i32;
-    static mut dns_resolve_tx: dns_transmit;
     fn parsetype(arg1: *mut u8, arg2: *mut u8) -> i32;
     fn printpacket_cat(arg1: *mut StrAlloc, arg2: *mut u8, arg3: u32) -> u32;
 }
@@ -76,34 +72,10 @@ fn main() {
     ::std::process::exit(ret);
 }
 
-#[derive(Copy)]
-#[repr(C)]
-pub struct dns_transmit {
-    pub query: *mut u8,
-    pub querylen: u32,
-    pub packet: *mut u8,
-    pub packetlen: u32,
-    pub s1: i32,
-    pub tcpstate: i32,
-    pub udploop: u32,
-    pub curserver: u32,
-    pub deadline: TaiA,
-    pub pos: u32,
-    pub servers: *const u8,
-    pub localip: [u8; 4],
-    pub qtype: [u8; 2],
-}
-
-impl Clone for dns_transmit {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
 #[no_mangle]
 pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     let mut u16: u16;
-    dns_random_init(seed.as_mut_ptr() as (*const u8));
+    dns::random::init(seed.as_mut_ptr() as (*const u8));
     if (*argv).is_null() {
         usage();
     }
@@ -124,7 +96,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     {
         usage();
     }
-    if dns_domain_fromdot(
+    if dns::domain::fromdot(
         &mut q as (*mut *mut u8),
         *argv as (*const u8),
         libc::strlen(*argv as *const i8) as u32,
@@ -149,13 +121,13 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     if StrAlloc::cats(&mut out as (*mut StrAlloc), (*b" \0").as_ptr()) == 0 {
         oops();
     }
-    if dns_domain_todot_cat(&mut out as (*mut StrAlloc), q as (*const u8)) == 0 {
+    if dns::domain::todot_cat(&mut out as (*mut StrAlloc), q as (*const u8)) == 0 {
         oops();
     }
     if StrAlloc::cats(&mut out as (*mut StrAlloc), (*b":\n\0").as_ptr()) == 0 {
         oops();
     }
-    if dns_resolve(q as (*const u8), type_.as_mut_ptr() as (*const u8)) == -1i32 {
+    if dns::resolve::resolve(q as (*const u8), type_.as_mut_ptr() as (*const u8)) == -1i32 {
         if StrAlloc::cats(&mut out as (*mut StrAlloc), libc::strerror(errno().0)) == 0 {
             oops();
         }
@@ -163,19 +135,19 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
             oops();
         }
     } else {
-        if dns_resolve_tx.packetlen < 4u32 {
+        if resolve::TX.packetlen < 4u32 {
             oops();
         }
         let _rhs = !1i32;
-        let _lhs = &mut *dns_resolve_tx.packet.offset(2isize);
+        let _lhs = &mut *resolve::TX.packet.offset(2isize);
         *_lhs = (*_lhs as (i32) & _rhs) as (u8);
         let _rhs = !128i32;
-        let _lhs = &mut *dns_resolve_tx.packet.offset(3isize);
+        let _lhs = &mut *resolve::TX.packet.offset(3isize);
         *_lhs = (*_lhs as (i32) & _rhs) as (u8);
         if printpacket_cat(
             &mut out as (*mut StrAlloc),
-            dns_resolve_tx.packet,
-            dns_resolve_tx.packetlen,
+            resolve::TX.packet,
+            resolve::TX.packetlen,
         ) == 0
         {
             oops();

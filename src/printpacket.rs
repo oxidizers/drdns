@@ -1,13 +1,11 @@
 use byte;
+use dns;
 use errno::{self, Errno};
 use libc;
 use stralloc::StrAlloc;
 use uint16;
 
 extern "C" {
-    fn dns_domain_todot_cat(arg1: *mut StrAlloc, arg2: *const u8) -> i32;
-    fn dns_packet_copy(arg1: *const u8, arg2: u32, arg3: u32, arg4: *mut u8, arg5: u32) -> u32;
-    fn dns_packet_getname(arg1: *const u8, arg2: u32, arg3: u32, arg4: *mut *mut u8) -> u32;
     fn printrecord_cat(
         arg1: *mut StrAlloc,
         arg2: *const u8,
@@ -34,7 +32,7 @@ pub unsafe extern "C" fn printpacket_cat(
     let mut pos: u32;
     let mut data: [u8; 12];
     let mut type_: u16;
-    pos = dns_packet_copy(buf as (*const u8), len, 0u32, data.as_mut_ptr(), 12u32);
+    pos = dns::packet::copy(buf as (*const u8), len, 0u32, data.as_mut_ptr(), 12u32);
     if pos == 0 {
         0u32
     } else {
@@ -143,7 +141,7 @@ pub unsafe extern "C" fn printpacket_cat(
                           _currentBlock = 71;
                           break;
                       }
-                      pos = dns_packet_getname(
+                      pos = dns::packet::getname(
                         buf as (*const u8),
                         len,
                         pos,
@@ -153,7 +151,7 @@ pub unsafe extern "C" fn printpacket_cat(
                           _currentBlock = 70;
                           break;
                       }
-                      pos = dns_packet_copy(buf as (*const u8), len, pos, data.as_mut_ptr(), 4u32);
+                      pos = dns::packet::copy(buf as (*const u8), len, pos, data.as_mut_ptr(), 4u32);
                       if pos == 0 {
                           _currentBlock = 69;
                           break;
@@ -181,7 +179,7 @@ pub unsafe extern "C" fn printpacket_cat(
                               _currentBlock = 63;
                               break;
                           }
-                          if dns_domain_todot_cat(out, d as (*const u8)) == 0 {
+                          if dns::domain::todot_cat(out, d as (*const u8)) == 0 {
                               _currentBlock = 62;
                               break;
                           }

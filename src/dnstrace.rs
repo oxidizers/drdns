@@ -1,8 +1,10 @@
 use alloc;
 use buffer::{Buffer, STDOUT_BUFFER};
 use byte;
+use dns::{self, DnsTransmit};
 use errno::{self, Errno};
 use ip4;
+use iopause::iopause;
 use libc;
 use stralloc::StrAlloc;
 use strerr::StrErr;
@@ -12,27 +14,7 @@ use uint16;
 
 extern "C" {
     fn dd(arg1: *const u8, arg2: *const u8, arg3: *mut u8) -> i32;
-    fn dns_domain_copy(arg1: *mut *mut u8, arg2: *const u8) -> i32;
-    fn dns_domain_equal(arg1: *const u8, arg2: *const u8) -> i32;
-    fn dns_domain_fromdot(arg1: *mut *mut u8, arg2: *const u8, arg3: u32) -> i32;
-    fn dns_domain_suffix(arg1: *const u8, arg2: *const u8) -> i32;
-    fn dns_domain_todot_cat(arg1: *mut StrAlloc, arg2: *const u8) -> i32;
-    fn dns_ip4_qualify(arg1: *mut StrAlloc, arg2: *mut StrAlloc, arg3: *const StrAlloc) -> i32;
-    fn dns_packet_copy(arg1: *const u8, arg2: u32, arg3: u32, arg4: *mut u8, arg5: u32) -> u32;
-    fn dns_packet_getname(arg1: *const u8, arg2: u32, arg3: u32, arg4: *mut *mut u8) -> u32;
-    fn dns_packet_skipname(arg1: *const u8, arg2: u32, arg3: u32) -> u32;
-    fn dns_random_init(arg1: *const u8);
-    fn dns_transmit_get(arg1: *mut dns_transmit, arg2: *const pollfd, arg3: *const TaiA) -> i32;
-    fn dns_transmit_io(arg1: *mut dns_transmit, arg2: *mut pollfd, arg3: *mut TaiA);
-    fn dns_transmit_start(
-        arg1: *mut dns_transmit,
-        arg2: *const u8,
-        arg3: i32,
-        arg4: *const u8,
-        arg5: *const u8,
-        arg6: *const u8,
-    ) -> i32;
-    fn iopause(arg1: *mut pollfd, arg2: u32, arg3: *mut TaiA, arg4: *mut TaiA);
+    fn ip4_fmt(arg1: *mut u8, arg2: *const u8) -> u32;
     fn parsetype(arg1: *mut u8, arg2: *mut u8) -> i32;
     fn printrecord(
         arg1: *mut StrAlloc,
@@ -92,37 +74,13 @@ pub unsafe extern "C" fn printdomain(mut d: *const u8) {
     if StrAlloc::copys(&mut tmp as (*mut StrAlloc), (*b"\0").as_ptr()) == 0 {
         nomem();
     }
-    if dns_domain_todot_cat(&mut tmp as (*mut StrAlloc), d) == 0 {
+    if dns::domain::todot_cat(&mut tmp as (*mut StrAlloc), d) == 0 {
         nomem();
     }
     Buffer::put(STDOUT_BUFFER.as_mut_ptr(), tmp.s as (*const u8), tmp.len);
 }
 
-#[derive(Copy)]
-#[repr(C)]
-pub struct dns_transmit {
-    pub query: *mut u8,
-    pub querylen: u32,
-    pub packet: *mut u8,
-    pub packetlen: u32,
-    pub s1: i32,
-    pub tcpstate: i32,
-    pub udploop: u32,
-    pub curserver: u32,
-    pub deadline: TaiA,
-    pub pos: u32,
-    pub servers: *const u8,
-    pub localip: [u8; 4],
-    pub qtype: [u8; 2],
-}
-
-impl Clone for dns_transmit {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
-static mut tx: dns_transmit = dns_transmit {
+static mut tx: DnsTransmit = DnsTransmit {
     query: 0 as (*mut u8),
     querylen: 0u32,
     packet: 0 as (*mut u8),
@@ -168,8 +126,8 @@ pub unsafe extern "C" fn resolve(mut q: *mut u8, mut qtype: *mut u8, mut ip: *mu
     TaiA::now(&mut start as (*mut TaiA));
     byte::zero(servers.as_mut_ptr(), 64u32);
     byte::copy(servers.as_mut_ptr(), 4u32, ip);
-    if dns_transmit_start(
-        &mut tx as (*mut dns_transmit),
+    if DnsTramsit::start(
+        &mut tx as (*mut DnsTransmit),
         servers.as_mut_ptr() as (*const u8),
         0i32,
         q as (*const u8),
@@ -187,8 +145,8 @@ pub unsafe extern "C" fn resolve(mut q: *mut u8, mut qtype: *mut u8, mut ip: *mu
                 &mut deadline as (*mut TaiA) as (*const TaiA),
                 &mut stamp as (*mut TaiA) as (*const TaiA),
             );
-            dns_transmit_io(
-                &mut tx as (*mut dns_transmit),
+            DnsTramsit::io(
+                &mut tx as (*mut DnsTransmit),
                 x.as_mut_ptr(),
                 &mut deadline as (*mut TaiA),
             );
@@ -198,8 +156,8 @@ pub unsafe extern "C" fn resolve(mut q: *mut u8, mut qtype: *mut u8, mut ip: *mu
                 &mut deadline as (*mut TaiA),
                 &mut stamp as (*mut TaiA),
             );
-            r = dns_transmit_get(
-                &mut tx as (*mut dns_transmit),
+            r = DnsTramsit::get(
+                &mut tx as (*mut DnsTransmit),
                 x.as_mut_ptr() as (*const pollfd),
                 &mut stamp as (*mut TaiA) as (*const TaiA),
             );
@@ -590,8 +548,8 @@ pub unsafe extern "C" fn qt_add(
                 _currentBlock = 3;
                 break;
             }
-            if dns_domain_equal((*qt.s.offset(i as (isize))).owner as (*const u8), q) != 0 {
-                if dns_domain_equal(
+            if dns::domain::equal((*qt.s.offset(i as (isize))).owner as (*const u8), q) != 0 {
+                if dns::domain::equal(
                     (*qt.s.offset(i as (isize))).control as (*const u8),
                     control,
                 ) != 0
@@ -621,10 +579,10 @@ pub unsafe extern "C" fn qt_add(
                 &mut x as (*mut qt) as (*mut u8),
                 ::std::mem::size_of::<qt>() as (u32),
             );
-             if dns_domain_copy(&mut x.owner as (*mut *mut u8), q) == 0 {
+             if dns::domain::copy(&mut x.owner as (*mut *mut u8), q) == 0 {
                  nomem();
              }
-             if dns_domain_copy(&mut x.control as (*mut *mut u8), control) == 0 {
+             if dns::domain::copy(&mut x.control as (*mut *mut u8), control) == 0 {
                  nomem();
              }
              byte::copy(x.type_.as_mut_ptr(), 2u32, type_ as (*mut u8));
@@ -652,7 +610,7 @@ pub unsafe extern "C" fn query_add(mut owner: *const u8, mut type_: *const u8) {
             _currentBlock = 2;
             break;
         }
-        if dns_domain_equal((*query.s.offset(i as (isize))).owner as (*const u8), owner) != 0 {
+        if dns::domain::equal((*query.s.offset(i as (isize))).owner as (*const u8), owner) != 0 {
             if byte::diff(
                 (*query.s.offset(i as (isize))).type_.as_mut_ptr(),
                 2u32,
@@ -670,7 +628,7 @@ pub unsafe extern "C" fn query_add(mut owner: *const u8, mut type_: *const u8) {
             &mut x as (*mut query) as (*mut u8),
             ::std::mem::size_of::<query>() as (u32),
         );
-        if dns_domain_copy(&mut x.owner as (*mut *mut u8), owner) == 0 {
+        if dns::domain::copy(&mut x.owner as (*mut *mut u8), owner) == 0 {
             nomem();
         }
         byte::copy(x.type_.as_mut_ptr(), 2u32, type_ as (*mut u8));
@@ -686,13 +644,13 @@ pub unsafe extern "C" fn query_add(mut owner: *const u8, mut type_: *const u8) {
             if !(i as (u32) < ns.len) {
                 break;
             }
-            if dns_domain_suffix(owner, (*ns.s.offset(i as (isize))).owner as (*const u8)) != 0 {
+            if dns::domain::suffix(owner, (*ns.s.offset(i as (isize))).owner as (*const u8)) != 0 {
                 j = 0i32;
                 'loop11: loop {
                     if !(j as (u32) < address.len) {
                         break;
                     }
-                    if dns_domain_equal(
+                    if dns::domain::equal(
                         (*ns.s.offset(i as (isize))).ns as (*const u8),
                         (*address.s.offset(j as (isize))).owner as (*const u8),
                     ) != 0
@@ -730,8 +688,8 @@ pub unsafe extern "C" fn ns_add(mut owner: *const u8, mut server: *const u8) {
             _currentBlock = 2;
             break;
         }
-        if dns_domain_equal((*ns.s.offset(i as (isize))).owner as (*const u8), owner) != 0 {
-            if dns_domain_equal((*ns.s.offset(i as (isize))).ns as (*const u8), server) != 0 {
+        if dns::domain::equal((*ns.s.offset(i as (isize))).owner as (*const u8), owner) != 0 {
+            if dns::domain::equal((*ns.s.offset(i as (isize))).ns as (*const u8), server) != 0 {
                 _currentBlock = 21;
                 break;
             }
@@ -744,10 +702,10 @@ pub unsafe extern "C" fn ns_add(mut owner: *const u8, mut server: *const u8) {
             &mut x as (*mut ns) as (*mut u8),
             ::std::mem::size_of::<ns>() as (u32),
         );
-        if dns_domain_copy(&mut x.owner as (*mut *mut u8), owner) == 0 {
+        if dns::domain::copy(&mut x.owner as (*mut *mut u8), owner) == 0 {
             nomem();
         }
-        if dns_domain_copy(&mut x.ns as (*mut *mut u8), server) == 0 {
+        if dns::domain::copy(&mut x.ns as (*mut *mut u8), server) == 0 {
             nomem();
         }
         if ns_alloc_append(
@@ -762,13 +720,13 @@ pub unsafe extern "C" fn ns_add(mut owner: *const u8, mut server: *const u8) {
             if !(i as (u32) < query.len) {
                 break;
             }
-            if dns_domain_suffix((*query.s.offset(i as (isize))).owner as (*const u8), owner) != 0 {
+            if dns::domain::suffix((*query.s.offset(i as (isize))).owner as (*const u8), owner) != 0 {
                 j = 0i32;
                 'loop13: loop {
                     if !(j as (u32) < address.len) {
                         break;
                     }
-                    if dns_domain_equal(
+                    if dns::domain::equal(
                         server,
                         (*address.s.offset(j as (isize))).owner as (*const u8),
                     ) != 0
@@ -810,7 +768,7 @@ pub unsafe extern "C" fn address_add(mut owner: *const u8, mut ip: *const u8) {
             _currentBlock = 2;
             break;
         }
-        if dns_domain_equal(
+        if dns::domain::equal(
             (*address.s.offset(i as (isize))).owner as (*const u8),
             owner,
         ) != 0
@@ -832,7 +790,7 @@ pub unsafe extern "C" fn address_add(mut owner: *const u8, mut ip: *const u8) {
             &mut x as (*mut address) as (*mut u8),
             ::std::mem::size_of::<address>() as (u32),
         );
-        if dns_domain_copy(&mut x.owner as (*mut *mut u8), owner) == 0 {
+        if dns::domain::copy(&mut x.owner as (*mut *mut u8), owner) == 0 {
             nomem();
         }
         byte::copy(x.ip.as_mut_ptr(), 4u32, ip as (*mut u8));
@@ -848,13 +806,13 @@ pub unsafe extern "C" fn address_add(mut owner: *const u8, mut ip: *const u8) {
             if !(i as (u32) < ns.len) {
                 break;
             }
-            if dns_domain_equal((*ns.s.offset(i as (isize))).ns as (*const u8), owner) != 0 {
+            if dns::domain::equal((*ns.s.offset(i as (isize))).ns as (*const u8), owner) != 0 {
                 j = 0i32;
                 'loop11: loop {
                     if !(j as (u32) < query.len) {
                         break;
                     }
-                    if dns_domain_suffix(
+                    if dns::domain::suffix(
                         (*query.s.offset(j as (isize))).owner as (*const u8),
                         (*ns.s.offset(i as (isize))).owner as (*const u8),
                     ) != 0
@@ -920,9 +878,9 @@ pub unsafe extern "C" fn parsepacket(
     let mut flagsoa: i32;
     let mut j: i32;
     let mut x: *const u8;
-    pos = dns_packet_copy(buf, len, 0u32, header.as_mut_ptr(), 12u32);
+    pos = dns::packet::copy(buf, len, 0u32, header.as_mut_ptr(), 12u32);
     if !(pos == 0) {
-        pos = dns_packet_skipname(buf, len, pos);
+        pos = dns::packet::skipname(buf, len, pos);
         if !(pos == 0) {
             pos = pos.wrapping_add(4u32);
             uint16::unpack_big(
@@ -952,17 +910,17 @@ pub unsafe extern "C" fn parsepacket(
                         _currentBlock = 5;
                         break;
                     }
-                    pos = dns_packet_getname(buf, len, pos, &mut t1 as (*mut *mut u8));
+                    pos = dns::packet::getname(buf, len, pos, &mut t1 as (*mut *mut u8));
                     if pos == 0 {
                         _currentBlock = 60;
                         break;
                     }
-                    pos = dns_packet_copy(buf, len, pos, header.as_mut_ptr(), 10u32);
+                    pos = dns::packet::copy(buf, len, pos, header.as_mut_ptr(), 10u32);
                     if pos == 0 {
                         _currentBlock = 60;
                         break;
                     }
-                    if dns_domain_equal(t1 as (*const u8), d) != 0 {
+                    if dns::domain::equal(t1 as (*const u8), d) != 0 {
                         if byte::diff(
                             header.as_mut_ptr().offset(2isize),
                             2u32,
@@ -976,7 +934,7 @@ pub unsafe extern "C" fn parsepacket(
                                 (*b"\0\x05\0").as_ptr(),
                             ) != 0
                             {
-                                if dns_packet_getname(
+                                if dns::packet::getname(
                                     buf,
                                     len,
                                     pos,
@@ -1006,12 +964,12 @@ pub unsafe extern "C" fn parsepacket(
                             _currentBlock = 7;
                             break;
                         }
-                        pos = dns_packet_getname(buf, len, pos, &mut t1 as (*mut *mut u8));
+                        pos = dns::packet::getname(buf, len, pos, &mut t1 as (*mut *mut u8));
                         if pos == 0 {
                             _currentBlock = 60;
                             break;
                         }
-                        pos = dns_packet_copy(buf, len, pos, header.as_mut_ptr(), 10u32);
+                        pos = dns::packet::copy(buf, len, pos, header.as_mut_ptr(), 10u32);
                         if pos == 0 {
                             _currentBlock = 60;
                             break;
@@ -1028,7 +986,7 @@ pub unsafe extern "C" fn parsepacket(
                         ) != 0
                         {
                             flagreferral = 1i32;
-                            if dns_domain_copy(
+                            if dns::domain::copy(
                                 &mut referral as (*mut *mut u8),
                                 t1 as (*const u8),
                             ) == 0
@@ -1050,8 +1008,8 @@ pub unsafe extern "C" fn parsepacket(
                         if flagcname == 0 && (rcode == 0) && (flagout == 0) &&
                             (flagreferral != 0) && (flagsoa == 0)
                         {
-                            if dns_domain_equal(referral as (*const u8), control) != 0 ||
-                                dns_domain_suffix(referral as (*const u8), control) == 0
+                            if dns::domain::equal(referral as (*const u8), control) != 0 ||
+                                dns::domain::suffix(referral as (*const u8), control) == 0
                             {
                                 Buffer::put(STDOUT_BUFFER.as_mut_ptr(), querystr.s as (*const u8), querystr.len);
                                 Buffer::puts(
@@ -1073,12 +1031,12 @@ pub unsafe extern "C" fn parsepacket(
                                 _currentBlock = 11;
                                 break;
                             }
-                            pos = dns_packet_getname(buf, len, pos, &mut t1 as (*mut *mut u8));
+                            pos = dns::packet::getname(buf, len, pos, &mut t1 as (*mut *mut u8));
                             if pos == 0 {
                                 _currentBlock = 60;
                                 break;
                             }
-                            pos = dns_packet_copy(buf, len, pos, header.as_mut_ptr(), 10u32);
+                            pos = dns::packet::copy(buf, len, pos, header.as_mut_ptr(), 10u32);
                             if pos == 0 {
                                 _currentBlock = 60;
                                 break;
@@ -1087,7 +1045,7 @@ pub unsafe extern "C" fn parsepacket(
                                 header.as_mut_ptr().offset(8isize) as (*const u8),
                                 &mut datalen as (*mut u16),
                             );
-                            if dns_domain_suffix(t1 as (*const u8), control) != 0 {
+                            if dns::domain::suffix(t1 as (*const u8), control) != 0 {
                                 if byte::diff(
                                     header.as_mut_ptr().offset(2isize),
                                     2u32,
@@ -1099,7 +1057,7 @@ pub unsafe extern "C" fn parsepacket(
                                         (*b"\0\x02\0").as_ptr(),
                                     ) != 0
                                     {
-                                        if dns_packet_getname(
+                                        if dns::packet::getname(
                                             buf,
                                             len,
                                             pos,
@@ -1116,7 +1074,7 @@ pub unsafe extern "C" fn parsepacket(
                                     ) != 0 &&
                                                (datalen as (i32) == 4i32)
                                     {
-                                        if dns_packet_copy(
+                                        if dns::packet::copy(
                                             buf,
                                             len,
                                             pos,
@@ -1193,7 +1151,7 @@ pub unsafe extern "C" fn parsepacket(
                                     return;
                                 }
                             }
-                        } else if !(dns_domain_suffix(d, referral as (*const u8)) == 0) {
+                        } else if !(dns::domain::suffix(d, referral as (*const u8)) == 0) {
                             Buffer::put(STDOUT_BUFFER.as_mut_ptr(), querystr.s as (*const u8), querystr.len);
                             Buffer::puts(STDOUT_BUFFER.as_mut_ptr(), (*b"see:\0").as_ptr());
                             printdomain(referral as (*const u8));
@@ -1256,7 +1214,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     let mut ip: [u8; 64];
     let mut i: i32;
     let mut u16: u16;
-    dns_random_init(seed.as_mut_ptr() as (*const u8));
+    dns::random::init(seed.as_mut_ptr() as (*const u8));
     if StrAlloc::copys(
         &mut querystr as (*mut StrAlloc),
         (*b"0:.:.:start:\0").as_ptr(),
@@ -1296,7 +1254,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     {
         usage();
     }
-    if dns_domain_fromdot(
+    if dns::domain::fromdot(
         &mut q as (*mut *mut u8),
         *argv as (*const u8),
         libc::strlen(*argv as *const i8) as u32,
@@ -1317,7 +1275,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
         if StrAlloc::copys(&mut udn as (*mut StrAlloc), *argv as (*const u8)) == 0 {
             nomem();
         }
-        if dns_ip4_qualify(
+        if dns::ip4::qualify(
             &mut out as (*mut StrAlloc),
             &mut fqdn as (*mut StrAlloc),
             &mut udn as (*mut StrAlloc) as (*const StrAlloc),
@@ -1339,7 +1297,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
         if !(i as (u32) < qt.len) {
             break;
         }
-        if dns_domain_copy(
+        if dns::domain::copy(
             &mut q as (*mut *mut u8),
             (*qt.s.offset(i as (isize))).owner as (*const u8),
         ) == 0
@@ -1347,7 +1305,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
             nomem();
         }
         control = (*qt.s.offset(i as (isize))).control;
-        if !(dns_domain_suffix(q as (*const u8), control as (*const u8)) == 0) {
+        if !(dns::domain::suffix(q as (*const u8), control as (*const u8)) == 0) {
             byte::copy(
                 type_.as_mut_ptr(),
                 2u32,
@@ -1368,13 +1326,13 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
             if StrAlloc::cats(&mut querystr as (*mut StrAlloc), (*b":\0").as_ptr()) == 0 {
                 nomem();
             }
-            if dns_domain_todot_cat(&mut querystr as (*mut StrAlloc), q as (*const u8)) == 0 {
+            if dns::domain::todot_cat(&mut querystr as (*mut StrAlloc), q as (*const u8)) == 0 {
                 nomem();
             }
             if StrAlloc::cats(&mut querystr as (*mut StrAlloc), (*b":\0").as_ptr()) == 0 {
                 nomem();
             }
-            if dns_domain_todot_cat(&mut querystr as (*mut StrAlloc), control as (*const u8)) == 0 {
+            if dns::domain::todot_cat(&mut querystr as (*mut StrAlloc), control as (*const u8)) == 0 {
                 nomem();
             }
             if StrAlloc::cats(&mut querystr as (*mut StrAlloc), (*b":\0").as_ptr()) == 0 {
@@ -1409,7 +1367,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
                     control as (*const u8),
                 );
             }
-            if dns_domain_equal(q as (*const u8), (*b"\tlocalhost\0\0").as_ptr()) != 0 {
+            if dns::domain::equal(q as (*const u8), (*b"\tlocalhost\0\0").as_ptr()) != 0 {
                 Buffer::put(STDOUT_BUFFER.as_mut_ptr(), querystr.s as (*const u8), querystr.len);
                 Buffer::puts(
                     STDOUT_BUFFER.as_mut_ptr(),

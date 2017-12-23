@@ -1,13 +1,9 @@
 use buffer::{Buffer, STDOUT_BUFFER};
+use dns;
 use ip4;
 use libc;
 use stralloc::StrAlloc;
 use strerr::{StrErr, STRERR_SYS};
-
-extern "C" {
-    fn dns_name4(arg1: *mut StrAlloc, arg2: *const u8) -> i32;
-    fn dns_random_init(arg1: *const u8);
-}
 
 static mut seed: [u8; 128] = [0u8; 128];
 
@@ -40,7 +36,7 @@ fn main() {
 
 #[no_mangle]
 pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
-    dns_random_init(seed.as_mut_ptr() as (*const u8));
+    dns::random::init(seed.as_mut_ptr() as (*const u8));
     if !(*argv).is_null() {
         argv = argv.offset(1isize);
     }
@@ -60,7 +56,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
                 0i32 as (*const StrErr),
             );
         }
-        if dns_name4(&mut out as (*mut StrAlloc), ip.as_mut_ptr() as (*const u8)) == -1i32 {
+        if dns::name::name4(&mut out as (*mut StrAlloc), ip.as_mut_ptr() as (*const u8)) == -1i32 {
             StrErr::die(
                 111i32,
                 (*b"dnsname: fatal: \0").as_ptr(),

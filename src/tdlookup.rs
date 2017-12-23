@@ -1,6 +1,7 @@
 use byte;
 use case;
 use cdb::Cdb;
+use dns;
 use open;
 use tai::Tai;
 use uint16;
@@ -8,12 +9,6 @@ use uint32;
 
 extern "C" {
     fn close(arg1: i32) -> i32;
-    fn dns_domain_equal(arg1: *const u8, arg2: *const u8) -> i32;
-    fn dns_domain_length(arg1: *const u8) -> u32;
-    fn dns_packet_copy(arg1: *const u8, arg2: u32, arg3: u32, arg4: *mut u8, arg5: u32) -> u32;
-    fn dns_packet_getname(arg1: *const u8, arg2: u32, arg3: u32, arg4: *mut *mut u8) -> u32;
-    fn dns_packet_skipname(arg1: *const u8, arg2: u32, arg3: u32) -> u32;
-    fn dns_random(arg1: u32) -> u32;
     static mut response: *mut u8;
     fn response_addbytes(arg1: *const u8, arg2: u32) -> i32;
     fn response_addname(arg1: *const u8) -> i32;
@@ -65,7 +60,7 @@ unsafe extern "C" fn find(mut d: *mut u8, mut flagwild: i32) -> i32 {
         r = Cdb::findnext(
             &mut c as (*mut Cdb),
             d as (*const u8),
-            dns_domain_length(d as (*const u8)),
+            dns::domain::length(d as (*const u8)),
         );
         if r <= 0i32 {
             _currentBlock = 29;
@@ -86,7 +81,7 @@ unsafe extern "C" fn find(mut d: *mut u8, mut flagwild: i32) -> i32 {
             _currentBlock = 27;
             break;
         }
-        dpos = dns_packet_copy(
+        dpos = dns::packet::copy(
             data.as_mut_ptr() as (*const u8),
             dlen,
             0u32,
@@ -97,7 +92,7 @@ unsafe extern "C" fn find(mut d: *mut u8, mut flagwild: i32) -> i32 {
             _currentBlock = 26;
             break;
         }
-        dpos = dns_packet_copy(
+        dpos = dns::packet::copy(
             data.as_mut_ptr() as (*const u8),
             dlen,
             dpos,
@@ -110,7 +105,7 @@ unsafe extern "C" fn find(mut d: *mut u8, mut flagwild: i32) -> i32 {
         }
         if ch as (i32) == b'=' as (i32) + 1i32 || ch as (i32) == b'*' as (i32) + 1i32 {
             ch = (ch as (i32) - 1) as (u8);
-            dpos = dns_packet_copy(
+            dpos = dns::packet::copy(
                 data.as_mut_ptr() as (*const u8),
                 dlen,
                 dpos,
@@ -128,7 +123,7 @@ unsafe extern "C" fn find(mut d: *mut u8, mut flagwild: i32) -> i32 {
         if flagwild != (ch as (i32) == b'*' as (i32)) as (i32) {
             continue;
         }
-        dpos = dns_packet_copy(
+        dpos = dns::packet::copy(
             data.as_mut_ptr() as (*const u8),
             dlen,
             dpos,
@@ -140,7 +135,7 @@ unsafe extern "C" fn find(mut d: *mut u8, mut flagwild: i32) -> i32 {
             break;
         }
         uint32::unpack_big(ttlstr.as_mut_ptr() as (*const u8), &mut ttl as (*mut u32));
-        dpos = dns_packet_copy(
+        dpos = dns::packet::copy(
             data.as_mut_ptr() as (*const u8),
             dlen,
             dpos,
@@ -206,7 +201,7 @@ unsafe extern "C" fn find(mut d: *mut u8, mut flagwild: i32) -> i32 {
 }
 
 unsafe extern "C" fn doname() -> i32 {
-    dpos = dns_packet_getname(
+    dpos = dns::packet::getname(
         data.as_mut_ptr() as (*const u8),
         dlen,
         dpos,
@@ -224,7 +219,7 @@ unsafe extern "C" fn dobytes(mut len: u32) -> i32 {
     if len > 20u32 {
         0i32
     } else {
-        dpos = dns_packet_copy(
+        dpos = dns::packet::copy(
             data.as_mut_ptr() as (*const u8),
             dlen,
             dpos,
@@ -245,7 +240,7 @@ unsafe extern "C" fn want(mut owner: *const u8, mut type_: *const u8) -> i32 {
     static mut d: *mut u8 = 0 as (*mut u8);
     let mut x: [u8; 10];
     let mut datalen: u16;
-    pos = dns_packet_skipname(response as (*const u8), response_len, 12u32);
+    pos = dns::packet::skipname(response as (*const u8), response_len, 12u32);
     if pos == 0 {
         0i32
     } else {
@@ -255,7 +250,7 @@ unsafe extern "C" fn want(mut owner: *const u8, mut type_: *const u8) -> i32 {
                 _currentBlock = 3;
                 break;
             }
-            pos = dns_packet_getname(
+            pos = dns::packet::getname(
                 response as (*const u8),
                 response_len,
                 pos,
@@ -265,7 +260,7 @@ unsafe extern "C" fn want(mut owner: *const u8, mut type_: *const u8) -> i32 {
                 _currentBlock = 11;
                 break;
             }
-            pos = dns_packet_copy(
+            pos = dns::packet::copy(
                 response as (*const u8),
                 response_len,
                 pos,
@@ -276,7 +271,7 @@ unsafe extern "C" fn want(mut owner: *const u8, mut type_: *const u8) -> i32 {
                 _currentBlock = 10;
                 break;
             }
-            if dns_domain_equal(d as (*const u8), owner) != 0 {
+            if dns::domain::equal(d as (*const u8), owner) != 0 {
                 if byte::diff(type_ as (*mut u8), 2u32, x.as_mut_ptr()) == 0 {
                     _currentBlock = 9;
                     break;
@@ -420,7 +415,7 @@ unsafe extern "C" fn doit(mut q: *mut u8, mut qtype: *mut u8) -> i32 {
                     ) == 0 && (dlen.wrapping_sub(dpos) == 4u32)
                     {
                         addrttl = ttl;
-                        i = dns_random((addrnum + 1i32) as (u32)) as (i32);
+                        i = dns::random::random((addrnum + 1i32) as (u32)) as (i32);
                         if i < 8i32 {
                             if i < addrnum && (addrnum < 8i32) {
                                 byte::copy(
@@ -671,12 +666,12 @@ unsafe extern "C" fn doit(mut q: *mut u8, mut qtype: *mut u8) -> i32 {
                 _currentBlock = 82;
                 break;
             }
-            bpos = dns_packet_skipname(response as (*const u8), arpos, bpos);
+            bpos = dns::packet::skipname(response as (*const u8), arpos, bpos);
             if bpos == 0 {
                 _currentBlock = 107;
                 break;
             }
-            bpos = dns_packet_copy(response as (*const u8), arpos, bpos, x.as_mut_ptr(), 10u32);
+            bpos = dns::packet::copy(response as (*const u8), arpos, bpos, x.as_mut_ptr(), 10u32);
             if bpos == 0 {
                 _currentBlock = 106;
                 break;
@@ -685,7 +680,7 @@ unsafe extern "C" fn doit(mut q: *mut u8, mut qtype: *mut u8) -> i32 {
                 byte::diff(x.as_mut_ptr(), 2u32, (*b"\0\x0F\0").as_ptr() as (*mut u8)) == 0
             {
                 if byte::diff(x.as_mut_ptr(), 2u32, (*b"\0\x02\0").as_ptr() as (*mut u8)) == 0 {
-                    if dns_packet_getname(
+                    if dns::packet::getname(
                         response as (*const u8),
                         arpos,
                         bpos,
@@ -695,7 +690,7 @@ unsafe extern "C" fn doit(mut q: *mut u8, mut qtype: *mut u8) -> i32 {
                         _currentBlock = 105;
                         break;
                     }
-                } else if dns_packet_getname(
+                } else if dns::packet::getname(
                     response as (*const u8),
                     arpos,
                     bpos.wrapping_add(2u32),
@@ -705,7 +700,7 @@ unsafe extern "C" fn doit(mut q: *mut u8, mut qtype: *mut u8) -> i32 {
                     _currentBlock = 91;
                     break;
                 }
-                case::lowerb(d1, dns_domain_length(d1 as (*const u8)));
+                case::lowerb(d1, dns::domain::length(d1 as (*const u8)));
                 if want(d1 as (*const u8), (*b"\0\x01\0").as_ptr()) != 0 {
                     Cdb::findstart(&mut c as (*mut Cdb));
                     'loop95: loop {

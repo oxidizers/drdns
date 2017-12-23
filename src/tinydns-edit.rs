@@ -1,5 +1,6 @@
 use buffer::{self, Buffer};
 use byte;
+use dns;
 use ip4;
 use libc;
 use open;
@@ -11,9 +12,6 @@ use ulong;
 extern "C" {
     fn __swbuf(arg1: i32, arg2: *mut __sFILE) -> i32;
     fn close(arg1: i32) -> i32;
-    fn dns_domain_equal(arg1: *const u8, arg2: *const u8) -> i32;
-    fn dns_domain_fromdot(arg1: *mut *mut u8, arg2: *const u8, arg3: u32) -> i32;
-    fn dns_domain_todot_cat(arg1: *mut StrAlloc, arg2: *const u8) -> i32;
     fn fchmod(arg1: i32, arg2: u16) -> i32;
     fn fstat(arg1: i32, arg2: *mut stat) -> i32;
     fn fsync(arg1: i32) -> i32;
@@ -355,7 +353,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     {
         die_usage();
     }
-    if dns_domain_fromdot(
+    if dns::domain::fromdot(
         &mut target as (*mut *mut u8),
         *argv as (*const u8),
         libc::strlen(*argv as (*const i8)) as u32,
@@ -421,10 +419,10 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
             if StrAlloc::cats(&mut f[0usize] as (*mut StrAlloc), (*b".mx.\0").as_ptr()) == 0 {
                 nomem();
             }
-            if dns_domain_todot_cat(&mut f[0usize] as (*mut StrAlloc), target as (*const u8)) == 0 {
+            if dns::domain::todot_cat(&mut f[0usize] as (*mut StrAlloc), target as (*const u8)) == 0 {
                 nomem();
             }
-            if dns_domain_fromdot(
+            if dns::domain::fromdot(
                 &mut names[i as (usize)] as (*mut *mut u8),
                 f[0usize].s as (*const u8),
                 f[0usize].len,
@@ -455,10 +453,10 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
             if StrAlloc::cats(&mut f[0usize] as (*mut StrAlloc), (*b".ns.\0").as_ptr()) == 0 {
                 nomem();
             }
-            if dns_domain_todot_cat(&mut f[0usize] as (*mut StrAlloc), target as (*const u8)) == 0 {
+            if dns::domain::todot_cat(&mut f[0usize] as (*mut StrAlloc), target as (*const u8)) == 0 {
                 nomem();
             }
-            if dns_domain_fromdot(
+            if dns::domain::fromdot(
                 &mut names[i as (usize)] as (*mut *mut u8),
                 f[0usize].s as (*const u8),
                 f[0usize].len,
@@ -536,7 +534,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
             if !(*line.s.offset(0isize) as (i32) == b'@' as (i32)) {
                 continue;
             }
-            if dns_domain_fromdot(
+            if dns::domain::fromdot(
                 &mut d1 as (*mut *mut u8),
                 f[0usize].s as (*const u8),
                 f[0usize].len,
@@ -544,7 +542,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
             {
                 nomem();
             }
-            if dns_domain_equal(d1 as (*const u8), target as (*const u8)) == 0 {
+            if dns::domain::equal(d1 as (*const u8), target as (*const u8)) == 0 {
                 continue;
             }
             if byte::chr(f[2usize].s, f[2usize].len, b'.' as (i32)) >= f[2usize].len {
@@ -560,7 +558,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
                     nomem();
                 }
             }
-            if dns_domain_fromdot(
+            if dns::domain::fromdot(
                 &mut d2 as (*mut *mut u8),
                 f[2usize].s as (*const u8),
                 f[2usize].len,
@@ -579,7 +577,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
                 if !(i < 26i32) {
                     continue 'loop57;
                 }
-                if dns_domain_equal(d2 as (*const u8), names[i as (usize)] as (*const u8)) != 0 {
+                if dns::domain::equal(d2 as (*const u8), names[i as (usize)] as (*const u8)) != 0 {
                     break;
                 }
                 i = i + 1;
@@ -589,7 +587,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
             if !(*line.s.offset(0isize) as (i32) == b'=' as (i32)) {
                 continue;
             }
-            if dns_domain_fromdot(
+            if dns::domain::fromdot(
                 &mut d1 as (*mut *mut u8),
                 f[0usize].s as (*const u8),
                 f[0usize].len,
@@ -597,7 +595,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
             {
                 nomem();
             }
-            if dns_domain_equal(d1 as (*const u8), target as (*const u8)) != 0 {
+            if dns::domain::equal(d1 as (*const u8), target as (*const u8)) != 0 {
                 StrErr::die(
                     100i32,
                     (*b"tinydns-edit: fatal: \0").as_ptr(),
@@ -635,7 +633,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
             if !(*line.s.offset(0isize) as (i32) == mode as (i32)) {
                 continue;
             }
-            if dns_domain_fromdot(
+            if dns::domain::fromdot(
                 &mut d1 as (*mut *mut u8),
                 f[0usize].s as (*const u8),
                 f[0usize].len,
@@ -643,7 +641,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
             {
                 nomem();
             }
-            if dns_domain_equal(d1 as (*const u8), target as (*const u8)) == 0 {
+            if dns::domain::equal(d1 as (*const u8), target as (*const u8)) == 0 {
                 continue;
             }
             if byte::chr(f[2usize].s, f[2usize].len, b'.' as (i32)) >= f[2usize].len {
@@ -659,7 +657,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
                     nomem();
                 }
             }
-            if dns_domain_fromdot(
+            if dns::domain::fromdot(
                 &mut d2 as (*mut *mut u8),
                 f[2usize].s as (*const u8),
                 f[2usize].len,
@@ -678,7 +676,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
                 if !(i < 26i32) {
                     continue 'loop57;
                 }
-                if dns_domain_equal(d2 as (*const u8), names[i as (usize)] as (*const u8)) != 0 {
+                if dns::domain::equal(d2 as (*const u8), names[i as (usize)] as (*const u8)) != 0 {
                     break;
                 }
                 i = i + 1;
@@ -694,7 +692,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     {
         nomem();
     }
-    if dns_domain_todot_cat(&mut f[0usize] as (*mut StrAlloc), target as (*const u8)) == 0 {
+    if dns::domain::todot_cat(&mut f[0usize] as (*mut StrAlloc), target as (*const u8)) == 0 {
         nomem();
     }
     if StrAlloc::cats(&mut f[0usize] as (*mut StrAlloc), (*b":\0").as_ptr()) == 0 {

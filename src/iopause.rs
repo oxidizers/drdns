@@ -1,33 +1,16 @@
-use tai::Tai;
+//! `iopause.rs`: Pause while waiting for I/O
+
+use libc;
 use taia::TaiA;
 
-extern "C" {
-    fn poll(arg1: *mut pollfd, arg2: u32, arg3: i32) -> i32;
-}
-
-#[derive(Copy)]
-#[repr(C)]
-pub struct pollfd {
-    pub fd: i32,
-    pub events: i16,
-    pub revents: i16,
-}
-
-impl Clone for pollfd {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn iopause(
-    mut x: *mut pollfd,
-    mut len: u32,
-    mut deadline: *mut TaiA,
-    mut stamp: *mut TaiA,
+pub unsafe fn iopause(
+    x: *mut libc::pollfd,
+    len: u32,
+    deadline: *mut TaiA,
+    stamp: *mut TaiA,
 ) {
     let mut t: TaiA;
-    let mut millisecs: i32;
+    let millisecs: i32;
     let mut d: f64;
     let mut i: i32;
     if TaiA::less(deadline as (*const TaiA), stamp as (*const TaiA)) != 0 {
@@ -53,5 +36,5 @@ pub unsafe extern "C" fn iopause(
         (*x.offset(i as (isize))).revents = 0i16;
         i = i + 1;
     }
-    poll(x, len, millisecs);
+    libc::poll(x, len as libc::nfds_t, millisecs);
 }

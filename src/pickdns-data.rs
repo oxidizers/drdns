@@ -3,6 +3,7 @@ use buffer::{self, Buffer};
 use byte;
 use case;
 use cdb::CdbMake;
+use dns;
 use ip4;
 use libc;
 use open;
@@ -13,8 +14,6 @@ use ulong;
 extern "C" {
     fn __swbuf(arg1: i32, arg2: *mut __sFILE) -> i32;
     fn close(arg1: i32) -> i32;
-    fn dns_domain_fromdot(arg1: *mut *mut u8, arg2: *const u8, arg3: u32) -> i32;
-    fn dns_domain_length(arg1: *const u8) -> u32;
     fn fsync(arg1: i32) -> i32;
     fn getln(arg1: *mut Buffer, arg2: *mut StrAlloc, arg3: *mut i32, arg4: i32) -> i32;
     fn rename(__old: *const u8, __new: *const u8) -> i32;
@@ -554,7 +553,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
                 &mut t as (*mut address) as (*mut u8),
                 ::std::mem::size_of::<address>() as (u32),
             );
-            if dns_domain_fromdot(
+            if dns::domain::fromdot(
                 &mut t.name as (*mut *mut u8),
                 f[0usize].s as (*const u8),
                 f[0usize].len,
@@ -562,7 +561,7 @@ pub unsafe extern "C" fn _c_main() -> i32 {
             {
                 nomem();
             }
-            t.namelen = dns_domain_length(t.name as (*const u8));
+            t.namelen = dns::domain::length(t.name as (*const u8));
             case::lowerb(t.name, t.namelen);
             if StrAlloc::append(&mut f[1usize] as (*mut StrAlloc), (*b"\0").as_ptr()) == 0 {
                 nomem();

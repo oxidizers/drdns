@@ -1,11 +1,7 @@
 use buffer::{Buffer, STDOUT_BUFFER};
+use dns;
 use libc;
 use ulong;
-
-extern "C" {
-    fn dns_random(arg1: u32) -> u32;
-    fn dns_random_init(arg1: *const u8);
-}
 
 #[no_mangle]
 pub static mut ip: [u8; 4] = [0u8; 4];
@@ -49,7 +45,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
     let mut i: i32;
     let mut j: i32;
     let mut c: u8;
-    dns_random_init(seed.as_mut_ptr() as (*const u8));
+    dns::random::init(seed.as_mut_ptr() as (*const u8));
     i = 0i32;
     'loop1: loop {
         if !(i < 256i32) {
@@ -63,7 +59,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
         if !(j > 0i32) {
             break;
         }
-        i = dns_random(j as (u32)) as (i32);
+        i = dns::random::random(j as (u32)) as (i32);
         c = tab[(j - 1i32) as (usize)];
         tab[(j - 1i32) as (usize)] = tab[i as (usize)];
         tab[i as (usize)] = c;

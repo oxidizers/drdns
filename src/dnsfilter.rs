@@ -1,8 +1,10 @@
 use alloc;
 use buffer::{Buffer, STDOUT_BUFFER};
 use byte;
+use dns::{self, DnsTransmit};
 use errno::errno;
 use ip4;
+use iopause::iopause;
 use libc;
 use stralloc::StrAlloc;
 use strerr::{StrErr, STRERR_SYS};
@@ -11,20 +13,6 @@ use taia::TaiA;
 use ulong;
 
 extern "C" {
-    fn dns_name4_domain(arg1: *mut u8, arg2: *const u8);
-    fn dns_name_packet(arg1: *mut StrAlloc, arg2: *const u8, arg3: u32) -> i32;
-    fn dns_resolvconfip(arg1: *mut u8) -> i32;
-    fn dns_transmit_get(arg1: *mut dns_transmit, arg2: *const pollfd, arg3: *const TaiA) -> i32;
-    fn dns_transmit_io(arg1: *mut dns_transmit, arg2: *mut pollfd, arg3: *mut TaiA);
-    fn dns_transmit_start(
-        arg1: *mut dns_transmit,
-        arg2: *const u8,
-        arg3: i32,
-        arg4: *const u8,
-        arg5: *const u8,
-        arg6: *const u8,
-    ) -> i32;
-    fn iopause(arg1: *mut pollfd, arg2: u32, arg3: *mut TaiA, arg4: *mut TaiA);
     fn sgetoptmine(arg1: i32, arg2: *mut *mut u8, arg3: *const u8) -> i32;
     static mut subgetoptarg: *mut u8;
     static mut subgetoptdone: i32;
@@ -42,30 +30,6 @@ pub unsafe extern "C" fn nomem() {
         0i32 as (*const u8),
         0i32 as (*const StrErr),
     );
-}
-
-#[derive(Copy)]
-#[repr(C)]
-pub struct dns_transmit {
-    pub query: *mut u8,
-    pub querylen: u32,
-    pub packet: *mut u8,
-    pub packetlen: u32,
-    pub s1: i32,
-    pub tcpstate: i32,
-    pub udploop: u32,
-    pub curserver: u32,
-    pub deadline: TaiA,
-    pub pos: u32,
-    pub servers: *const u8,
-    pub localip: [u8; 4],
-    pub qtype: [u8; 2],
-}
-
-impl Clone for dns_transmit {
-    fn clone(&self) -> Self {
-        *self
-    }
 }
 
 #[derive(Copy)]
@@ -88,7 +52,7 @@ pub struct line {
     pub left: StrAlloc,
     pub middle: StrAlloc,
     pub right: StrAlloc,
-    pub dt: dns_transmit,
+    pub dt: DnsTransmit,
     pub flagactive: i32,
     pub io: *mut pollfd,
 }
@@ -119,7 +83,7 @@ pub static mut tmp: line = line {
         len: 0u32,
         a: 0u32,
     },
-    dt: dns_transmit {
+    dt: DnsTransmit {
         query: 0 as (*mut u8),
         querylen: 0u32,
         packet: 0 as (*mut u8),
@@ -335,8 +299,8 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
                     iolen = iolen + 1;
                     _old
                 } as (isize));
-                dns_transmit_io(
-                    &mut (*x.offset(i as (isize))).dt as (*mut dns_transmit),
+                DnsTramsit::io(
+                    &mut (*x.offset(i as (isize))).dt as (*mut DnsTransmit),
                     (*x.offset(i as (isize))).io,
                     &mut deadline as (*mut TaiA),
                 );
@@ -372,8 +336,8 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
                 break;
             }
             if (*x.offset(i as (isize))).flagactive != 0 {
-                r = dns_transmit_get(
-                    &mut (*x.offset(i as (isize))).dt as (*mut dns_transmit),
+                r = DnsTramsit::get(
+                    &mut (*x.offset(i as (isize))).dt as (*mut DnsTransmit),
                     (*x.offset(i as (isize))).io as (*const pollfd),
                     &mut stamp as (*mut TaiA) as (*const TaiA),
                 );
@@ -382,7 +346,7 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
                     (*x.offset(i as (isize))).flagactive = 0i32;
                     numactive = numactive.wrapping_sub(1u32);
                 } else if r == 1i32 {
-                    if dns_name_packet(
+                    if dns::name::packet(
                         &mut (*x.offset(i as (isize))).middle as (*mut StrAlloc),
                         (*x.offset(i as (isize))).dt.packet as (*const u8),
                         (*x.offset(i as (isize))).dt.packetlen,
@@ -508,8 +472,8 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
                             nomem();
                         }
                         if ip4::scan(partial.s as (*const u8), ip.as_mut_ptr()) != 0 {
-                            dns_name4_domain(name.as_mut_ptr(), ip.as_mut_ptr() as (*const u8));
-                            if dns_resolvconfip(servers.as_mut_ptr()) == -1i32 {
+                            dns::name::domain(name.as_mut_ptr(), ip.as_mut_ptr() as (*const u8));
+                            if dns::rcip::resolvconfip(servers.as_mut_ptr()) == -1i32 {
                                 StrErr::die(
                                     111i32,
                                     (*b"dnsfilter: fatal: \0").as_ptr(),
@@ -521,8 +485,8 @@ pub unsafe extern "C" fn _c_main(mut argc: i32, mut argv: *mut *mut u8) -> i32 {
                                     &mut STRERR_SYS as (*mut StrErr) as (*const StrErr),
                                 );
                             }
-                            if dns_transmit_start(
-                                &mut (*x.offset(xnum as (isize))).dt as (*mut dns_transmit),
+                            if DnsTramsit::start(
+                                &mut (*x.offset(xnum as (isize))).dt as (*mut DnsTransmit),
                                 servers.as_mut_ptr() as (*const u8),
                                 1i32,
                                 name.as_mut_ptr() as (*const u8),

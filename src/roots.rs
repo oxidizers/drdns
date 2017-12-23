@@ -1,4 +1,5 @@
 use byte;
+use dns;
 use errno::{self, Errno};
 use ip4;
 use libc;
@@ -11,9 +12,6 @@ extern "C" {
     fn chdir(arg1: *const u8) -> i32;
     fn close(arg1: i32) -> i32;
     fn closedir(arg1: *mut Struct1) -> i32;
-    fn dns_domain_equal(arg1: *const u8, arg2: *const u8) -> i32;
-    fn dns_domain_fromdot(arg1: *mut *mut u8, arg2: *const u8, arg3: u32) -> i32;
-    fn dns_domain_length(arg1: *const u8) -> u32;
     fn fchdir(arg1: i32) -> i32;
     fn opendir(arg1: *const u8) -> *mut Struct1;
     fn readdir(arg1: *mut Struct1) -> *mut dirent;
@@ -38,8 +36,8 @@ unsafe extern "C" fn roots_find(mut q: *mut u8) -> i32 {
             _currentBlock = 2;
             break;
         }
-        j = dns_domain_length(data.s.offset(i as (isize)) as (*const u8)) as (i32);
-        if dns_domain_equal(data.s.offset(i as (isize)) as (*const u8), q as (*const u8)) != 0 {
+        j = dns::domain::length(data.s.offset(i as (isize)) as (*const u8)) as (i32);
+        if dns::domain::equal(data.s.offset(i as (isize)) as (*const u8), q as (*const u8)) != 0 {
             _currentBlock = 5;
             break;
         }
@@ -177,7 +175,7 @@ unsafe extern "C" fn init2(mut dir: *mut Struct1) -> i32 {
         if string::diff(fqdn, (*b"@\0").as_ptr()) == 0 {
             fqdn = (*b".\0").as_ptr();
         }
-        if dns_domain_fromdot(&mut q as (*mut *mut u8), fqdn, libc::strlen(fqdn as *const i8) as u32) == 0 {
+        if dns::domain::fromdot(&mut q as (*mut *mut u8), fqdn, libc::strlen(fqdn as *const i8) as u32) == 0 {
             _currentBlock = 20;
             break;
         }
@@ -209,7 +207,7 @@ unsafe extern "C" fn init2(mut dir: *mut Struct1) -> i32 {
         if StrAlloc::catb(
             &mut data as (*mut StrAlloc),
             q as (*const u8),
-            dns_domain_length(q as (*const u8)),
+            dns::domain::length(q as (*const u8)),
         ) == 0
         {
             _currentBlock = 13;
